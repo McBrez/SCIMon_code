@@ -1,0 +1,32 @@
+#ifndef DEVICE_MESSAGE_HPP
+#define DEVICE_MESSAGE_HPP
+
+#include <string>
+
+using namespace std;
+
+namespace Devices
+{
+
+    /**
+     * @brief Base class for messages that are sent or received from devices.
+     */
+    class DeviceMessage
+    {
+        string payload = "I am a message.";
+
+    public:
+        /**
+         * @brief Dummy function. This should be removed.
+         */
+        void getPayload();
+
+        /**
+         * @brief Serializes the message into a string.
+         * @return A string containing the contents of the message.
+         */
+        virtual string serialize() = 0;
+    };
+}
+
+#endif

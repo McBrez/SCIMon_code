@@ -1,0 +1,3 @@
+[submodule "src/3rd_party/easyloggingpp"]
+	path = src/3rd_party/easyloggingpp
+	url = git@github.com:amrayn/easyloggingpp.git
