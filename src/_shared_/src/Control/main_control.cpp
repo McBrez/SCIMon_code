@@ -2,6 +2,7 @@
 #include <easylogging++.h>
 
 // Project includes
+#include <init_message_impedance_spectrometer.hpp>
 #include <main_control.hpp>
 
 using namespace Devices;
@@ -33,7 +34,7 @@ bool MainControl::run() {
   // Apply the current state.
   if (this->state == MainControlState::INIT) {
     // Send init messages to the devices.
-    this->inputDevices.front()->write(new DeviceMessage());
+    // this->inputDevices.front()->write();
   }
 
   return false;
