@@ -7,7 +7,10 @@
 
 // Project includes
 #include <device_configuration.hpp>
-#include <device_message.hpp>
+#include <init_device_message.hpp>
+#include <read_device_message.hpp>
+#include <write_device_message.hpp>
+
 
 using namespace std;
 
@@ -30,8 +33,9 @@ public:
   virtual bool close() = 0;
 
   bool isConfigured();
-  virtual bool write(shared_ptr<DeviceMessage>) = 0;
-  virtual shared_ptr<DeviceMessage> read() = 0;
+  virtual bool write(shared_ptr<InitDeviceMessage>) = 0;
+  virtual bool write(shared_ptr<WriteDeviceMessage>) = 0;
+  virtual shared_ptr<ReadDeviceMessage> read() = 0;
   list<shared_ptr<DeviceMessage>> readN(unsigned int n);
 };
 } // namespace Devices
