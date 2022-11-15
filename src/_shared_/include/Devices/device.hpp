@@ -11,7 +11,6 @@
 #include <read_device_message.hpp>
 #include <write_device_message.hpp>
 
-
 using namespace std;
 
 namespace Devices {
@@ -23,6 +22,7 @@ namespace Devices {
 class Device {
 protected:
   bool configurationFinished;
+  bool initFinished;
   shared_ptr<DeviceConfiguration> deviceConfiguration;
 
 public:
@@ -33,6 +33,7 @@ public:
   virtual bool close() = 0;
 
   bool isConfigured();
+  bool isInitialized();
   virtual bool write(shared_ptr<InitDeviceMessage>) = 0;
   virtual bool write(shared_ptr<WriteDeviceMessage>) = 0;
   virtual shared_ptr<ReadDeviceMessage> read() = 0;

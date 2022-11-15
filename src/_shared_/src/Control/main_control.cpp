@@ -2,7 +2,6 @@
 #include <easylogging++.h>
 
 // Project includes
-#include <init_message_impedance_spectrometer.hpp>
 #include <main_control.hpp>
 
 using namespace Devices;

@@ -8,10 +8,10 @@ set(3RDPARTY_DIR ../../3rd_party)
 include_directories(
     ${INCLUDE_DIR}
     ${INCLUDE_DIR}/Devices
-    ${INCLUDE_DIR}/Control
+    ${INCLUDE_DIR}/Devices/isx3
     ${3RDPARTY_DIR}/easyloggingpp/src
     ${3RDPARTY_DIR}/ftd2xx/include
-    ${3RDPARTY_DIR}/ftd2xx/catch2
+    ${3RDPARTY_DIR}/catch2/single_include
 )
 
 link_directories(
@@ -25,25 +25,21 @@ add_executable(test_isx3
     ${INCLUDE_DIR}/Devices/device.hpp
     ${INCLUDE_DIR}/Devices/device_configuration.hpp
     ${INCLUDE_DIR}/Devices/device_message.hpp
-    ${INCLUDE_DIR}/Devices/message_impedance_spectrometer.hpp
-    ${INCLUDE_DIR}/Devices/impedance_spectrometer.hpp
-    ${INCLUDE_DIR}/Devices/init_message_impedance_spectrometer.hpp
     ${INCLUDE_DIR}/Devices/read_device_message.hpp
     ${INCLUDE_DIR}/Devices/write_device_message.hpp
     ${INCLUDE_DIR}/Devices/config_device_message.hpp
     ${INCLUDE_DIR}/Devices/init_device_message.hpp
-    ${INCLUDE_DIR}/Control/main_control.hpp
+    ${INCLUDE_DIR}/Devices/isx3/device_isx3.hpp
+    ${INCLUDE_DIR}/Devices/isx3/init_message_isx3.hpp
 
     ${SOURCE_DIR}/Devices/device.cpp
     ${SOURCE_DIR}/Devices/device_configuration.cpp
     ${SOURCE_DIR}/Devices/device_message.cpp
-    ${SOURCE_DIR}/Devices/message_impedance_spectrometer.cpp
-    ${SOURCE_DIR}/Devices/impedance_spectrometer.cpp
-    ${SOURCE_DIR}/Control/main_control.cpp
+    ${SOURCE_DIR}/Devices/isx3/device_isx3.cpp
+    ${SOURCE_DIR}/Devices/isx3/init_message_isx3.cpp
 
-    ${3RDPARTY_DIR}/easyloggingpp/src/easylogging++.cc
-
-    ${3RDPARTY_DIR}/easyloggingpp/src/easylogging++.h
+    ${3RDPARTY_DIR}/catch2/single_include/catch2/catch.hpp
+    
     ${3RDPARTY_DIR}/ftd2xx/include/ftd2xx.h
 )
 
