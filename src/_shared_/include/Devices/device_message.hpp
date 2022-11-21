@@ -9,10 +9,13 @@ using namespace std;
 
 namespace Devices {
 
+class Device;
+
 /**
  * @brief Base class for messages that are sent or received from devices.
  */
 class DeviceMessage {
+private:
   string payload = "I am a message.";
 
 public:

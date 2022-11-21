@@ -1,9 +1,17 @@
+// 3rd party includes
+#include <easylogging++.h>
+
 // Project includes
+#include <ack_message_isx3.hpp>
+#include <config_is_message.hpp>
 #include <device_isx3.hpp>
 
 namespace Devices {
 
-DeviceIsx3::DeviceIsx3() : Device(), handle(new FT_HANDLE()) {}
+const std::vector<unsigned char> DeviceIsx3::knownCommandTags = {
+    ISX3_COMMAND_TAG_ACK, ISX3_COMMAND_TAG_SET_SETUP};
+
+DeviceIsx3::DeviceIsx3() : Device() {}
 
 bool DeviceIsx3::configure(DeviceConfiguration *deviceConfiguration) {
   return true;
@@ -14,88 +22,156 @@ bool DeviceIsx3::open() { return true; }
 bool DeviceIsx3::close() { return true; }
 
 bool DeviceIsx3::write(shared_ptr<InitDeviceMessage> initMsg) {
-  FT_STATUS ftStatus;
-  FT_DEVICE_LIST_INFO_NODE *devInfo;
-  DWORD numDevs;
 
-  // create the device information list
-  ftStatus = FT_CreateDeviceInfoList(&numDevs);
-
-  // allocate storage for list based on numDevs
-  devInfo = (FT_DEVICE_LIST_INFO_NODE *)malloc(
-      sizeof(FT_DEVICE_LIST_INFO_NODE) * numDevs);
-
-  // get the device information list
-  ftStatus = FT_GetDeviceInfoList(devInfo, &numDevs);
-  if (ftStatus != FT_OK) {
-    printf("Error while reading device-count");
-    return false;
-  }
-  printf("Number of devices found: %d\n\n", (int)numDevs);
-  int i;
-  for (i = 0; i < numDevs; i++) {
-    printf("#%i\t%#.4X\t%#.4X\n", i, ((int)devInfo[i].ID >> 16) & 0xFFFF,
-           ((int)devInfo[i].ID) & 0xFFFF);
-  }
-  for (i = 0; i < numDevs; i++) {
-    if ((devInfo[i].ID & 0xFFFF) == ISX3_PID) {
-      ftStatus = FT_Open(i, this->handle.get());
-      if (ftStatus != FT_OK) {
-        printf("Error while connecting to device");
-        return false;
-      }
-      ftStatus = FT_SetBitMode(*handle, 0x00, 0x40);
-      break;
-    }
-  }
-  if (i == numDevs) {
-    printf("No ISX3 found");
-    return false;
-  }
-  return true;
-}
-
-bool DeviceIsx3::write(shared_ptr<WriteDeviceMessage> writeMsg) {
-  int dataCount = 0;
-  char *cmd;
-
-  DWORD bytesWritten;
-  char i;
-  for (i = 0; i < dataCount; i++)
-    printf("%.2X ", cmd[i]);
-  printf("\n");
-  FT_Write(*this->handle, cmd, dataCount, &bytesWritten);
+  std::vector<unsigned char> initCmd1 = {0x15, 0x03, 0xDF, 0xEF, 0xFF, 0x15};
+  std::vector<unsigned char> initCmd2 = {0x0C, 0x01, 0x08, 0x0C};
+  std::vector<unsigned char> initCmd3 = {0x17, 0x00, 0x17};
+  int retVal1 = this->writeToIsx3(initCmd1, true);
+  int retVal2 = this->writeToIsx3(initCmd2, true);
+  int retVal3 = this->writeToIsx3(initCmd3, true);
 
   return true;
 }
+
+bool DeviceIsx3::write(shared_ptr<ConfigDeviceMessage> configMsg) {
+  // Try to downcast the generic config message to impedance spectrometer
+  // config message.
+  shared_ptr<ConfigIsMessage> msg =
+      dynamic_pointer_cast<ConfigIsMessage>(configMsg);
+  if (!msg) {
+    LOG(ERROR) << "Received an invalid message. It will be ingored.";
+    return false;
+  }
+
+  // Encode the contents of configMsg into a command for ISX3.
+  std::vector<unsigned char> buffer;
+
+  // [CT] - command tag
+  buffer.push_back(ISX3_COMMAND_TAG_SET_SETUP);
+  // [LE] - Length of [CD]
+  buffer.push_back(0x16);
+  // [CO] - command option (frequency range)
+  buffer.push_back(0x03);
+  // [CD] - command data
+  // NOTE: It is assumed here, that float always consists of 4 byte. This
+  // obviously will not work on machines that do not follow such conventions.
+  // -- Starting frequency
+  float startFreq = static_cast<float>(msg->frequencyFrom);
+  char startFreqRawBytes[sizeof(float)];
+  memcpy(startFreqRawBytes, &startFreq, sizeof(startFreq));
+  buffer.push_back(startFreqRawBytes[3]);
+  buffer.push_back(startFreqRawBytes[2]);
+  buffer.push_back(startFreqRawBytes[1]);
+  buffer.push_back(startFreqRawBytes[0]);
+  // -- Ending frequency
+  float stopFreq = static_cast<float>(msg->frequencyTo);
+  char stopFreqRawBytes[sizeof(float)];
+  memcpy(stopFreqRawBytes, &stopFreq, sizeof(stopFreq));
+  buffer.push_back(stopFreqRawBytes[3]);
+  buffer.push_back(stopFreqRawBytes[2]);
+  buffer.push_back(stopFreqRawBytes[1]);
+  buffer.push_back(stopFreqRawBytes[0]);
+  // -- count measurement points
+  float measurementPoints = static_cast<float>(msg->measurementPoints);
+  char measurementPointsRawBytes[sizeof(float)];
+  memcpy(measurementPointsRawBytes, &measurementPoints,
+         sizeof(measurementPoints));
+  buffer.push_back(measurementPointsRawBytes[3]);
+  buffer.push_back(measurementPointsRawBytes[2]);
+  buffer.push_back(measurementPointsRawBytes[1]);
+  buffer.push_back(measurementPointsRawBytes[0]);
+  // -- scale
+  unsigned char scale;
+  if (msg->scale == IsScale::LINEAR) {
+    scale = 0x00;
+  } else if (msg->scale == IsScale::LOGARITHMIC) {
+    scale = 0x01;
+  }
+  buffer.push_back(scale);
+  // -- precision
+  // NOTE: Hardcoded to 1.0 at the moment.
+  buffer.push_back(0x3F);
+  buffer.push_back(0x80);
+  buffer.push_back(0x00);
+  buffer.push_back(0x00);
+  // -- amplitude
+  float amplitude = static_cast<float>(msg->amplitude);
+  char amplitudeRawBytes[sizeof(float)];
+  memcpy(amplitudeRawBytes, &amplitude, sizeof(amplitude));
+  buffer.push_back(amplitudeRawBytes[3]);
+  buffer.push_back(amplitudeRawBytes[2]);
+  buffer.push_back(amplitudeRawBytes[1]);
+  buffer.push_back(amplitudeRawBytes[0]);
+
+  // [CT] - command tag
+  buffer.push_back(ISX3_COMMAND_TAG_SET_SETUP);
+
+  int retVal = this->writeToIsx3(buffer);
+  return retVal > 0;
+}
+
+bool DeviceIsx3::write(shared_ptr<WriteDeviceMessage> writeMsg) { return true; }
 
 shared_ptr<ReadDeviceMessage> DeviceIsx3::read() {
-  return shared_ptr<ReadDeviceMessage>();
+  int bytesRead = this->readFromIsx3();
+  LOG(DEBUG) << "Read " << bytesRead << " bytes from ISX3.";
+
+  // Try to extract a frame from the read buffer.
+  return this->interpretBuffer(this->readBuffer);
 }
 
-char DeviceIsx3::readAck() {
-  DWORD availableBytes = 0;
-  DWORD bytesToWrite = 0;
-  DWORD currentStatus = 0;
-  DWORD bytesRead = 0;
-  char *readBuffer;
-  while (availableBytes != 4)
-    FT_GetStatus(*this->handle, &availableBytes, &bytesToWrite, &currentStatus);
-  readBuffer = (char *)malloc(sizeof(char) * availableBytes);
-  FT_Read(*this->handle, readBuffer, availableBytes, &bytesRead);
-  printf("ACK-Frame: ");
-  UINT8 i;
-  for (i = 0; i < availableBytes; i++) {
-    printf("%.2X ", readBuffer[i]);
+shared_ptr<ReadDeviceMessage>
+DeviceIsx3::interpretBuffer(std::vector<unsigned char> &readBuffer) {
+
+  // Iterate over known command tags and look for them in the read buffer.
+  for (auto commandTag : this->knownCommandTags) {
+    auto frameBegin =
+        std::find(this->readBuffer.begin(), this->readBuffer.end(), commandTag);
+
+    if (frameBegin == this->readBuffer.end()) {
+      // command tag has not been found. Continue with the next one.
+      continue;
+    }
+
+    // In a valid command frame, the length is indicated by the byte after the
+    // command tag. Evaluate that now.
+    unsigned char dataLength = *(frameBegin + 1);
+    // In avalid command frame, the command is terminated by the command tag.
+    // Check if that is the case.
+    auto frameEnd = frameBegin + dataLength;
+    if (frameEnd != this->readBuffer.end() && *frameEnd == commandTag) {
+      // This seems to be a valid command frame. Decode it now.
+      shared_ptr<ReadDeviceMessage> decodedMessage;
+
+      // ACKNOWLEDGMENT
+      if (Isx3CmdType::ISX3_COMMAND_TAG_ACK == *frameBegin) {
+        if (*(frameBegin + 1) != 0x01) {
+          LOG(WARNING)
+              << "Malformed Acknowledge frame received. This will be ignored";
+          return shared_ptr<ReadDeviceMessage>();
+        }
+        Isx3AckType ackType = static_cast<Isx3AckType>(*(frameBegin + 2));
+
+        decodedMessage.reset(new AckMessageIsx3(ackType));
+      } else {
+        // A command frame has been detected, but its decoding is not yet
+        // implemented.
+        LOG(DEBUG) << "A command frame has been detected, but its decoding is "
+                      "not yet implemented.";
+      }
+
+      // Remove the bytes from the beginning of the bytes to the end of the
+      // frame. This may delete bytes prior to the detected frame. As most
+      // likely anyhow wont be decoded this should be safe.
+      this->readBuffer.erase(this->readBuffer.begin(), frameEnd + 1);
+
+      return decodedMessage;
+    }
   }
-  printf("\n");
-  if (readBuffer[2] == 0x83) {
-    free(readBuffer);
-    return TRUE;
-  } else {
-    free(readBuffer);
-    return FALSE;
-  }
+
+  LOG(DEBUG) << "Could not extract any frames from the read buffer of length: "
+             << this->readBuffer.size();
+  return shared_ptr<ReadDeviceMessage>();
 }
 
 } // namespace Devices

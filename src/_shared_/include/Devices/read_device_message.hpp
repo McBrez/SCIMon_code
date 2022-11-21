@@ -9,7 +9,15 @@ namespace Devices {
  * @brief Encapsulates a message that shall trigger a reset and initialization
  * of a device.
  */
-class ReadDeviceMessage : public DeviceMessage {};
+class ReadDeviceMessage : public DeviceMessage {
+public:
+  ReadDeviceMessage(string data);
+  string getData();
+  virtual string serialize() override;
+
+private:
+  string data;
+};
 } // namespace Devices
 
 #endif

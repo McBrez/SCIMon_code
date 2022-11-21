@@ -15,7 +15,7 @@ include_directories(
 )
 
 link_directories(
-    ${3RDPARTY_DIR}/ftd2xx/lib
+    ${3RDPARTY_DIR}/ftd2xx/lib/amd64
 )
 
 add_executable(latency_tester
@@ -29,6 +29,7 @@ add_executable(latency_tester
     ${INCLUDE_DIR}/Devices/write_device_message.hpp
     ${INCLUDE_DIR}/Devices/config_device_message.hpp
     ${INCLUDE_DIR}/Devices/init_device_message.hpp
+    ${INCLUDE_DIR}/Devices/read_spectrum_message.hpp
     ${INCLUDE_DIR}/Devices/isx3/device_isx3.hpp
     ${INCLUDE_DIR}/Devices/isx3/init_message_isx3.hpp
     ${INCLUDE_DIR}/Control/main_control.hpp

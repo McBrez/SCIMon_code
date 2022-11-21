@@ -5,6 +5,7 @@
 #include <device_message.hpp>
 
 namespace Devices {
+
 /**
  * @brief Encapsulates a message that shall trigger a reset and initialization
  * of a device.

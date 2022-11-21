@@ -6,6 +6,7 @@
 #include <memory>
 
 // Project includes
+#include <config_device_message.hpp>
 #include <device_configuration.hpp>
 #include <init_device_message.hpp>
 #include <read_device_message.hpp>
@@ -14,6 +15,7 @@
 using namespace std;
 
 namespace Devices {
+
 /**
  * @brief Depicts a physical device, like a measurement aparatus or a
  * pump controller. A device can be configured, can be read to and written
@@ -34,8 +36,11 @@ public:
 
   bool isConfigured();
   bool isInitialized();
+
   virtual bool write(shared_ptr<InitDeviceMessage>) = 0;
+  virtual bool write(shared_ptr<ConfigDeviceMessage>) = 0;
   virtual bool write(shared_ptr<WriteDeviceMessage>) = 0;
+
   virtual shared_ptr<ReadDeviceMessage> read() = 0;
   list<shared_ptr<DeviceMessage>> readN(unsigned int n);
 };
