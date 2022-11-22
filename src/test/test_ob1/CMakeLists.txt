@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(test_isx3)
+project(test_ob1)
 
 set(SOURCE_DIR ../../_shared_/src)
 set(INCLUDE_DIR ../../_shared_/include)
@@ -16,12 +16,12 @@ include_directories(
 )
 
 link_directories(
-    ${3RDPARTY_DIR}/ftd2xx/lib/amd64
+    ${3RDPARTY_DIR}/ftd2xx/lib/i386
 )
 
-add_executable(test_isx3
+add_executable(test_ob1
 
-    test_isx3.cpp
+    test_ob1.cpp
 
     ${INCLUDE_DIR}/Devices/device.hpp
     ${INCLUDE_DIR}/Devices/device_configuration.hpp
@@ -59,7 +59,7 @@ add_executable(test_isx3
 )
 
 if (WIN32)
-    target_sources(test_isx3 PUBLIC
+    target_sources(test_ob1 PUBLIC
         ${INCLUDE_DIR}/Devices/isx3/device_isx3_win.hpp
 
         ${SOURCE_DIR}/Devices/isx3/device_isx3_win.cpp
@@ -71,6 +71,6 @@ endif (UNIX)
 
 
 
-target_link_libraries(test_isx3 
+target_link_libraries(test_ob1 
     ftd2xx
 )
