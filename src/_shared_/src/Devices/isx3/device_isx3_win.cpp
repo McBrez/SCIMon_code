@@ -1,3 +1,7 @@
+#include <stdio.h>
+#include <strsafe.h>
+#include <tchar.h>
+
 // 3rd party includes
 #include <easylogging++.h>
 
@@ -55,41 +59,168 @@ int DeviceIsx3Win::readFromIsx3() {
 }
 
 int DeviceIsx3Win::initIsx3() {
-  this->winHandle = CreateFileA("\\\\.\\COM7",                // port name
-                                GENERIC_READ | GENERIC_WRITE, // Read/Write
-                                0,                            // No Sharing
-                                NULL,                         // No Security
-                                OPEN_EXISTING, // Open existing port only
-                                0,             // Non Overlapped I/O
-                                NULL);         // Null for Comm Devices
+  printf("\n->Start of parent execution.\n");
 
-  if (this->winHandle == INVALID_HANDLE_VALUE)
-    printf("Error in opening serial port");
-  else
-    printf("opening serial port successful");
+  // Set the bInheritHandle flag so pipe handles are inherited.
 
-  DCB dcb;
-  GetCommState(this->winHandle, &dcb);
-  dcb.BaudRate = 768000;
-  dcb.EofChar = 0x0;
-  dcb.ErrorChar = 0x0;
-  dcb.Parity = 0;
-  dcb.fParity = 0;
-  dcb.fOutxCtsFlow = true;
-  dcb.fOutxDsrFlow = true;
-  dcb.XonChar = 0x11;
-  dcb.XoffChar = 0x13;
-  dcb.StopBits = 0;
-  dcb.XonLim = 16;
-  dcb.XoffLim = 1024;
-  dcb.fDtrControl = 0x02;
-  dcb.fInX = true;
-  dcb.fOutX = true;
-  dcb.fRtsControl = 0x02;
+  saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
+  saAttr.bInheritHandle = TRUE;
+  saAttr.lpSecurityDescriptor = NULL;
 
-  bool setCommStateStatus = SetCommState(this->winHandle, &dcb);
+  // Create a pipe for the child process's STDOUT.
 
-  return this->winHandle != nullptr && setCommStateStatus;
+  if (!CreatePipe(&g_hChildStd_OUT_Rd, &g_hChildStd_OUT_Wr, &saAttr, 0))
+    ErrorExit(TEXT("StdoutRd CreatePipe"));
+
+  // Ensure the read handle to the pipe for STDOUT is not inherited.
+
+  if (!SetHandleInformation(g_hChildStd_OUT_Rd, HANDLE_FLAG_INHERIT, 0))
+    ErrorExit(TEXT("Stdout SetHandleInformation"));
+
+  // Create a pipe for the child process's STDIN.
+
+  if (!CreatePipe(&g_hChildStd_IN_Rd, &g_hChildStd_IN_Wr, &saAttr, 0))
+    ErrorExit(TEXT("Stdin CreatePipe"));
+
+  // Ensure the write handle to the pipe for STDIN is not inherited.
+
+  if (!SetHandleInformation(g_hChildStd_IN_Wr, HANDLE_FLAG_INHERIT, 0))
+    ErrorExit(TEXT("Stdin SetHandleInformation"));
+
+  // Create the child process.
+
+  this->createChildProcess();
+}
+
+void DeviceIsx3Win::createChildProcess()
+// Create a child process that uses the previously created pipes for STDIN and
+// STDOUT.
+{
+  TCHAR szCmdline[] = TEXT("child");
+  PROCESS_INFORMATION piProcInfo;
+  STARTUPINFO siStartInfo;
+  BOOL bSuccess = FALSE;
+
+  // Set up members of the PROCESS_INFORMATION structure.
+
+  ZeroMemory(&piProcInfo, sizeof(PROCESS_INFORMATION));
+
+  // Set up members of the STARTUPINFO structure.
+  // This structure specifies the STDIN and STDOUT handles for redirection.
+
+  ZeroMemory(&siStartInfo, sizeof(STARTUPINFO));
+  siStartInfo.cb = sizeof(STARTUPINFO);
+  siStartInfo.hStdError = g_hChildStd_OUT_Wr;
+  siStartInfo.hStdOutput = g_hChildStd_OUT_Wr;
+  siStartInfo.hStdInput = g_hChildStd_IN_Rd;
+  siStartInfo.dwFlags |= STARTF_USESTDHANDLES;
+
+  // Create the child process.
+
+  bSuccess = CreateProcess(NULL,
+                           szCmdline,    // command line
+                           NULL,         // process security attributes
+                           NULL,         // primary thread security attributes
+                           TRUE,         // handles are inherited
+                           0,            // creation flags
+                           NULL,         // use parent's environment
+                           NULL,         // use parent's current directory
+                           &siStartInfo, // STARTUPINFO pointer
+                           &piProcInfo); // receives PROCESS_INFORMATION
+
+  // If an error occurs, exit the application.
+  if (!bSuccess)
+    ErrorExit(TEXT("CreateProcess"));
+  else {
+    // Close handles to the child process and its primary thread.
+    // Some applications might keep these handles to monitor the status
+    // of the child process, for example.
+
+    CloseHandle(piProcInfo.hProcess);
+    CloseHandle(piProcInfo.hThread);
+
+    // Close handles to the stdin and stdout pipes no longer needed by the child
+    // process. If they are not explicitly closed, there is no way to recognize
+    // that the child process has ended.
+
+    CloseHandle(g_hChildStd_OUT_Wr);
+    CloseHandle(g_hChildStd_IN_Rd);
+  }
+}
+
+void DeviceIsx3Win::WriteToPipe(void)
+
+// Read from a file and write its contents to the pipe for the child's STDIN.
+// Stop when there is no more data.
+{
+  DWORD dwRead, dwWritten;
+  CHAR chBuf[BUFSIZE];
+  BOOL bSuccess = FALSE;
+
+  for (;;) {
+    bSuccess = ReadFile(g_hInputFile, chBuf, BUFSIZE, &dwRead, NULL);
+    if (!bSuccess || dwRead == 0)
+      break;
+
+    bSuccess = WriteFile(g_hChildStd_IN_Wr, chBuf, dwRead, &dwWritten, NULL);
+    if (!bSuccess)
+      break;
+  }
+
+  // Close the pipe handle so the child process stops reading.
+
+  if (!CloseHandle(g_hChildStd_IN_Wr))
+    ErrorExit(TEXT("StdInWr CloseHandle"));
+}
+
+void DeviceIsx3Win::ReadFromPipe(void)
+
+// Read output from the child process's pipe for STDOUT
+// and write to the parent process's pipe for STDOUT.
+// Stop when there is no more data.
+{
+  DWORD dwRead, dwWritten;
+  CHAR chBuf[BUFSIZE];
+  BOOL bSuccess = FALSE;
+  HANDLE hParentStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+
+  for (;;) {
+    bSuccess = ReadFile(g_hChildStd_OUT_Rd, chBuf, BUFSIZE, &dwRead, NULL);
+    if (!bSuccess || dwRead == 0)
+      break;
+
+    bSuccess = WriteFile(hParentStdOut, chBuf, dwRead, &dwWritten, NULL);
+    if (!bSuccess)
+      break;
+  }
+}
+
+void DeviceIsx3Win::ErrorExit(PTSTR lpszFunction)
+
+// Format a readable error message, display a message box,
+// and exit from the application.
+{
+  LPVOID lpMsgBuf;
+  LPVOID lpDisplayBuf;
+  DWORD dw = GetLastError();
+
+  FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
+                    FORMAT_MESSAGE_IGNORE_INSERTS,
+                NULL, dw, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                (LPTSTR)&lpMsgBuf, 0, NULL);
+
+  lpDisplayBuf =
+      (LPVOID)LocalAlloc(LMEM_ZEROINIT, (lstrlen((LPCTSTR)lpMsgBuf) +
+                                         lstrlen((LPCTSTR)lpszFunction) + 40) *
+                                            sizeof(TCHAR));
+  StringCchPrintf((LPTSTR)lpDisplayBuf, LocalSize(lpDisplayBuf) / sizeof(TCHAR),
+                  TEXT("%s failed with error %d: %s"), lpszFunction, dw,
+                  lpMsgBuf);
+  MessageBox(NULL, (LPCTSTR)lpDisplayBuf, TEXT("Error"), MB_OK);
+
+  LocalFree(lpMsgBuf);
+  LocalFree(lpDisplayBuf);
+  ExitProcess(1);
 }
 
 } // namespace Devices

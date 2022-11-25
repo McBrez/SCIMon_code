@@ -8,6 +8,7 @@
 #include <device_isx3.hpp>
 
 #define READ_BUFFER_SIZE 254
+#define BUFSIZE 4096
 
 namespace Devices {
 class DeviceIsx3Win : public DeviceIsx3 {
@@ -17,6 +18,13 @@ public:
 private:
   /// Reference to a handle to the device.
   HANDLE winHandle;
+
+  HANDLE g_hChildStd_IN_Rd = NULL;
+  HANDLE g_hChildStd_IN_Wr = NULL;
+  HANDLE g_hChildStd_OUT_Rd = NULL;
+  HANDLE g_hChildStd_OUT_Wr = NULL;
+  HANDLE g_hInputFile = NULL;
+  SECURITY_ATTRIBUTES saAttr;
 
 protected:
   /**
@@ -34,6 +42,15 @@ protected:
   virtual int readFromIsx3() override;
 
   virtual int initIsx3() override;
+
+private:
+  void createChildProcess();
+
+  void WriteToPipe(void);
+
+  void ReadFromPipe(void);
+
+  void ErrorExit(PTSTR lpszFunction);
 };
 } // namespace Devices
 

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(test_isx3)
+project(SCIMon)
 
 set(PROJECT_DIR src/build)
 set(TEST_DIR src/test)
