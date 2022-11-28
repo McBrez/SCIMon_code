@@ -3,11 +3,11 @@
 
 // Project includes
 #include <device_message.hpp>
+#include <write_device_message.hpp>
 
-namespace Devices {
+namespace Messages {
 /**
- * @brief Encapsulates a message that shall trigger a reset and initialization
- * of a device.
+ * A message that has been sent by a device in response to a DeviceWriteMessage.
  */
 class ReadDeviceMessage : public DeviceMessage {
 public:
@@ -17,7 +17,9 @@ public:
 
 private:
   string data;
+  /// Reference to the messsage this message is the response to.
+  shared_ptr<WriteDeviceMessage> originalMessage;
 };
-} // namespace Devices
+} // namespace Messages
 
 #endif

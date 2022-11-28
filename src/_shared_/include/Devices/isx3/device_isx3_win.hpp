@@ -1,30 +1,55 @@
 #ifndef DEVICE_ISX3_WIN_HPP
 #define DEVICE_ISX3_WIN_HPP
 
+// Standard includes
+#include <string>
+
 // 3rd party includes
 #include "windows.h"
 
 // Project includes
 #include <device_isx3.hpp>
 
-#define READ_BUFFER_SIZE 254
-#define BUFSIZE 4096
+#define READ_BUFFER_SIZE 4096
 
 namespace Devices {
+/// @brief
 class DeviceIsx3Win : public DeviceIsx3 {
 public:
+  /// The name of the executable, that is used to communicate via telnet.
+  static const std::string telnetExecutableName;
+
+  /// The template for the reset command.
+  static const std::string cmdTemplateReset;
+
+  /// The template for the setupParams command.
+  static const std::string cmdTemplateSetupParams;
+
+  /// The template for the getDeviceStatus command.
+  static const std::string cmdTemplateGetDeviceStatus;
+
+  /// The count of seconds it is waited on the response of the device during
+  /// init.
+  static const double initTimeout;
+
+  /**
+   * @brief Construct a new object.
+   */
   DeviceIsx3Win();
 
-private:
-  /// Reference to a handle to the device.
-  HANDLE winHandle;
+  /**
+   * @brief Closes all the handles of this object.
+   */
+  virtual ~DeviceIsx3Win() override;
 
+private:
   HANDLE g_hChildStd_IN_Rd = NULL;
   HANDLE g_hChildStd_IN_Wr = NULL;
   HANDLE g_hChildStd_OUT_Rd = NULL;
   HANDLE g_hChildStd_OUT_Wr = NULL;
-  HANDLE g_hInputFile = NULL;
+  PROCESS_INFORMATION telnetSubprocessHandle;
   SECURITY_ATTRIBUTES saAttr;
+  OVERLAPPED readPipeOverlappedStructure;
 
 protected:
   /**
@@ -41,16 +66,67 @@ protected:
 
   virtual int readFromIsx3() override;
 
-  virtual int initIsx3() override;
+  virtual int initIsx3(shared_ptr<InitMessageIsx3> initMsg) override;
 
 private:
-  void createChildProcess();
+  bool createChildProcess(const std::string &host, int port);
 
-  void WriteToPipe(void);
+  int WriteToPipe(const unsigned char *buffer, unsigned int len);
 
-  void ReadFromPipe(void);
+  int ReadFromPipe(unsigned char *buffer, unsigned int bytesToRead);
 
-  void ErrorExit(PTSTR lpszFunction);
+  /**
+   * @brief Builds the RESET command.
+   *
+   * @return The RESET command.
+   */
+  std::vector<unsigned char> buildCmdReset();
+
+  /**
+   * @brief Builds the GetDeviceStatus command.
+   *
+   * @return The GetDeviceStatus command.
+   */
+  std::vector<unsigned char> buildCmdGetDeviceStatus();
+
+  /**
+   * The CreatePipeEx API is used to create an anonymous pipe I/O device.
+   * Unlike CreatePipe FILE_FLAG_OVERLAPPED may be specified for one or
+   * both handles.
+   * Two handles to the device are created.  One handle is opened for
+   * reading and the other is opened for writing.  These handles may be
+   * used in subsequent calls to ReadFile and WriteFile to transmit data
+   * through the pipe.
+   * Taken from:
+   * @link
+   * https://stackoverflow.com/questions/60645/overlapped-i-o-on-anonymous-pipe
+   *
+   * @param lpReadPipe Returns a handle to the read side of the pipe. Data may
+   * be read from the pipe by specifying this handle value in a subsequent call
+   * to ReadFile.
+   * @param lpWritePipe Returns a handle to the write side of the pipe.
+   * Data may be written to the pipe by specifying this handle value in a
+   * subsequent call to WriteFile.
+   * @param lpPipeAttributes An optional parameter that may be used to
+   * specify the attributes of the new pipe.  If the parameter is not specified,
+   * then the pipe is created without a security descriptor, and the resulting
+   * handles are not inherited on process creation.  Otherwise, the optional
+   * security attributes are used on the pipe, and the inherit handles flag
+   * effects both pipe handles.
+   * @param nSize Supplies the requested buffer size for the pipe.  This is
+   * only a suggestion and is used by the operating system to
+   * calculate an appropriate buffering mechanism.  A value of zero
+   * indicates that the system is to choose the default buffering
+   * scheme.
+   *
+   * @return TRUE - The operation was successful. FALSE/NULL - The operation
+   * failed. Extended error status is available using GetLastError.
+   */
+  BOOL APIENTRY MyCreatePipeEx(OUT LPHANDLE lpReadPipe,
+                               OUT LPHANDLE lpWritePipe,
+                               IN LPSECURITY_ATTRIBUTES lpPipeAttributes,
+                               IN DWORD nSize, DWORD dwReadMode,
+                               DWORD dwWriteMode);
 };
 } // namespace Devices
 

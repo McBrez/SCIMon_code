@@ -7,12 +7,9 @@
 
 using namespace std;
 
-namespace Devices {
-
-class Device;
-
+namespace Messages {
 /**
- * @brief Base class for messages that are sent or received from devices.
+ * @brief Base class for messages that are sent or received from or by devices.
  */
 class DeviceMessage {
 private:
@@ -39,6 +36,6 @@ public:
    */
   static shared_ptr<DeviceMessage> deserialize(string data);
 };
-} // namespace Devices
+} // namespace Messages
 
 #endif

@@ -6,6 +6,8 @@
 
 namespace Devices {
 
+const string Isx3DeviceTypeName = "Sciospec ISX-3";
+
 enum Isx3CmdType {
   ISX3_COMMAND_TAG_ACK = 0x18,
   ISX3_COMMAND_TAG_SET_SETUP = 0xB6

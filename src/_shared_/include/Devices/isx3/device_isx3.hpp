@@ -6,16 +6,25 @@
 
 // Project includes
 #include <device.hpp>
+#include <init_message_isx3.hpp>
 #include <isx3_constants.hpp>
 
 namespace Devices {
 class DeviceIsx3 : public Device {
 public:
   DeviceIsx3();
+  virtual ~DeviceIsx3() = 0;
 
   virtual bool configure(DeviceConfiguration *deviceConfiguration) override;
   virtual bool open() override;
   virtual bool close() override;
+
+  /**
+   * @brief Return the name of the device type.
+   *
+   * @return The device type name.
+   */
+  virtual string getDeviceTypeName() override;
 
   bool isConfigured();
   virtual bool write(shared_ptr<InitDeviceMessage> initMsg) override;
@@ -27,6 +36,10 @@ private:
   /// Vector of known command tags.
   static const std::vector<unsigned char> knownCommandTags;
 
+protected:
+  /// Buffer for read operations to the device.
+  std::vector<unsigned char> readBuffer;
+
   /**
    * @brief Interprets the buffer and generates corresponding messages.
    *
@@ -36,12 +49,8 @@ private:
   shared_ptr<ReadDeviceMessage>
   interpretBuffer(std::vector<unsigned char> &readBuffer);
 
-protected:
-  /// Buffer for read operations to the device.
-  std::vector<unsigned char> readBuffer;
-
   /**
-   * @brief Writes to the ISX3 device.
+   * The OS-specific part of the write operation.
    *
    * @param command The command that shall be written to the device.
    * @param force If TRUE, forces the write operation. I.e. checks if the device
@@ -54,7 +63,14 @@ protected:
 
   virtual int readFromIsx3() = 0;
 
-  virtual int initIsx3() = 0;
+  /**
+   * The OS-specific part of the initialization. Is called, when an
+   * initialization message has been received.
+   *
+   * @param initMsg The init message that triggered this call.
+   * @return 0 If no error occured. Error code otherwise.
+   */
+  virtual int initIsx3(shared_ptr<InitMessageIsx3> initMsg) = 0;
 };
 } // namespace Devices
 

@@ -4,12 +4,11 @@
 // Project includes
 #include <device_message.hpp>
 
-namespace Devices {
+namespace Messages {
 /**
- * @brief Encapsulates a message that shall trigger a reset and initialization
- * of a device.
+ * @brief A message that is meant to trigger certain processes in a device.
  */
 class WriteDeviceMessage : public DeviceMessage {};
-} // namespace Devices
+} // namespace Messages
 
 #endif

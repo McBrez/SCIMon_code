@@ -4,11 +4,11 @@
 // Project includes
 #include <device_message.hpp>
 
-namespace Devices {
+namespace Messages {
 void DeviceMessage::getPayload() { std::cout << this->payload << std::endl; }
 
 shared_ptr<DeviceMessage> DeviceMessage::deserialize(string data) {
   return shared_ptr<DeviceMessage>();
 }
 
-} // namespace Devices
+} // namespace Messages

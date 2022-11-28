@@ -9,7 +9,7 @@
 
 // using Impedance = std::complex<double>;
 
-namespace Devices {
+namespace Messages {
 class ReadSpectrumMessage : public ReadDeviceMessage {
 public:
   ReadSpectrumMessage(double frequency, std::complex<double> impedance,
@@ -19,6 +19,6 @@ private:
   double frequency;
   std::complex<double> impedance;
 };
-} // namespace Devices
+} // namespace Messages
 
 #endif

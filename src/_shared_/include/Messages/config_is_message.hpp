@@ -3,7 +3,7 @@
 
 #include <config_device_message.hpp>
 
-namespace Devices {
+namespace Messages {
 
 enum IsScale { LINEAR, LOGARITHMIC };
 
@@ -23,6 +23,6 @@ public:
   const double amplitude;
   const bool singleFrequency;
 };
-} // namespace Devices
+} // namespace Messages
 
 #endif

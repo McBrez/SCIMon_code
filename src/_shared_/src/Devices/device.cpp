@@ -3,6 +3,8 @@
 namespace Devices {
 Device::Device() : configurationFinished(false) {}
 
+Device::~Device() {}
+
 bool Device::isConfigured() { return this->configurationFinished; }
 
 bool Device::isInitialized() { return this->initFinished; }

@@ -2,9 +2,9 @@
 #include <easylogging++.h>
 
 // Project includes
-#include <ack_message_isx3.hpp>
 #include <config_is_message.hpp>
 #include <device_isx3.hpp>
+#include <utility.hpp>
 
 namespace Devices {
 
@@ -12,6 +12,8 @@ const std::vector<unsigned char> DeviceIsx3::knownCommandTags = {
     ISX3_COMMAND_TAG_ACK, ISX3_COMMAND_TAG_SET_SETUP};
 
 DeviceIsx3::DeviceIsx3() : Device() {}
+
+DeviceIsx3::~DeviceIsx3(){};
 
 bool DeviceIsx3::configure(DeviceConfiguration *deviceConfiguration) {
   return true;
@@ -22,15 +24,17 @@ bool DeviceIsx3::open() { return true; }
 bool DeviceIsx3::close() { return true; }
 
 bool DeviceIsx3::write(shared_ptr<InitDeviceMessage> initMsg) {
+  // Try to cast the init message.
+  shared_ptr<InitMessageIsx3> castedMsg =
+      dynamic_pointer_cast<InitMessageIsx3>(initMsg);
+  if (!castedMsg) {
+    // Casting was not successful. Return here with an error code.
+    return false;
+  }
 
-  std::vector<unsigned char> initCmd1 = {0x15, 0x03, 0xDF, 0xEF, 0xFF, 0x15};
-  std::vector<unsigned char> initCmd2 = {0x0C, 0x01, 0x08, 0x0C};
-  std::vector<unsigned char> initCmd3 = {0x17, 0x00, 0x17};
-  int retVal1 = this->writeToIsx3(initCmd1, true);
-  int retVal2 = this->writeToIsx3(initCmd2, true);
-  int retVal3 = this->writeToIsx3(initCmd3, true);
-
-  return true;
+  // Start the OS specific initialization.
+  int retVal = this->initIsx3(castedMsg);
+  return retVal == 0 ? true : false;
 }
 
 bool DeviceIsx3::write(shared_ptr<ConfigDeviceMessage> configMsg) {
@@ -116,62 +120,35 @@ shared_ptr<ReadDeviceMessage> DeviceIsx3::read() {
   int bytesRead = this->readFromIsx3();
   LOG(DEBUG) << "Read " << bytesRead << " bytes from ISX3.";
 
+  std::string bufferContent;
+  for (char ch : this->readBuffer) {
+    bufferContent += ch;
+  }
+
+  LOG(DEBUG) << "Buffer content: " << bufferContent;
+
   // Try to extract a frame from the read buffer.
   return this->interpretBuffer(this->readBuffer);
 }
 
 shared_ptr<ReadDeviceMessage>
 DeviceIsx3::interpretBuffer(std::vector<unsigned char> &readBuffer) {
-
-  // Iterate over known command tags and look for them in the read buffer.
-  for (auto commandTag : this->knownCommandTags) {
-    auto frameBegin =
-        std::find(this->readBuffer.begin(), this->readBuffer.end(), commandTag);
-
-    if (frameBegin == this->readBuffer.end()) {
-      // command tag has not been found. Continue with the next one.
-      continue;
-    }
-
-    // In a valid command frame, the length is indicated by the byte after the
-    // command tag. Evaluate that now.
-    unsigned char dataLength = *(frameBegin + 1);
-    // In avalid command frame, the command is terminated by the command tag.
-    // Check if that is the case.
-    auto frameEnd = frameBegin + dataLength;
-    if (frameEnd != this->readBuffer.end() && *frameEnd == commandTag) {
-      // This seems to be a valid command frame. Decode it now.
-      shared_ptr<ReadDeviceMessage> decodedMessage;
-
-      // ACKNOWLEDGMENT
-      if (Isx3CmdType::ISX3_COMMAND_TAG_ACK == *frameBegin) {
-        if (*(frameBegin + 1) != 0x01) {
-          LOG(WARNING)
-              << "Malformed Acknowledge frame received. This will be ignored";
-          return shared_ptr<ReadDeviceMessage>();
-        }
-        Isx3AckType ackType = static_cast<Isx3AckType>(*(frameBegin + 2));
-
-        decodedMessage.reset(new AckMessageIsx3(ackType));
-      } else {
-        // A command frame has been detected, but its decoding is not yet
-        // implemented.
-        LOG(DEBUG) << "A command frame has been detected, but its decoding is "
-                      "not yet implemented.";
-      }
-
-      // Remove the bytes from the beginning of the bytes to the end of the
-      // frame. This may delete bytes prior to the detected frame. As most
-      // likely anyhow wont be decoded this should be safe.
-      this->readBuffer.erase(this->readBuffer.begin(), frameEnd + 1);
-
-      return decodedMessage;
-    }
+  // Find new line character, which terminates commands.
+  auto cmdTermination = std::find(readBuffer.begin(), readBuffer.end(), "\n");
+  if (cmdTermination == readBuffer.end()) {
+    // No command found. Return here.
+    return shared_ptr<ReadDeviceMessage>();
   }
 
-  LOG(DEBUG) << "Could not extract any frames from the read buffer of length: "
-             << this->readBuffer.size();
+  // Parse buffer into string.
+  string command = "";
+
+  if (command == "RESET") {
+  }
+
   return shared_ptr<ReadDeviceMessage>();
 }
+
+string DeviceIsx3::getDeviceTypeName() { return Isx3DeviceTypeName; }
 
 } // namespace Devices

@@ -7,6 +7,7 @@
 #include <config_is_message.hpp>
 #include <device_isx3_win.hpp>
 #include <init_message_isx3.hpp>
+#include <isx3_software_mocker.hpp>
 
 using namespace Devices;
 
@@ -16,21 +17,45 @@ TEST_CASE("Testing the implementation of the Sciospec ISX3 device",
           "[Devices]") {
 
   SECTION("Initializing") {
-    DeviceIsx3 &dut = DeviceIsx3Win();
-    REQUIRE(dut.write(shared_ptr<InitMessageIsx3>()) == true);
-    auto ackMsg = dut.read();
-    REQUIRE(ackMsg);
-    REQUIRE(ackMsg->getData() == "ACK");
+    // Create the ISX3 sofware mocker.
+    int telnetPort = 23;
+    Isx3SoftwareMocker softwareMocker(telnetPort);
+    softwareMocker.run();
+
+    // Create the DUT.
+    DeviceIsx3 *dut = new DeviceIsx3Win();
+    // Create an init message.
+    shared_ptr<InitDeviceMessage> initMsg(
+        new InitMessageIsx3("127.0.0.1", telnetPort));
+    REQUIRE(dut->write(initMsg) == true);
+
+    // After an init message, an empty response is expected.
+    shared_ptr<DeviceMessage> response = dut->read();
+    REQUIRE(!response);
+
+    softwareMocker.stop();
+    // Delete the dut again.
+    delete dut;
   }
 
   SECTION("Configure a setup") {
-    DeviceIsx3 &dut = DeviceIsx3Win();
-    REQUIRE(dut.write(shared_ptr<InitMessageIsx3>()) == true);
+    // Create the ISX3 sofware mocker.
+    int telnetPort = 23;
+    Isx3SoftwareMocker softwareMocker(telnetPort);
+    softwareMocker.run();
 
-    shared_ptr<ConfigIsMessage> configMessage(new ConfigIsMessage(
-        10.0, 100.0, 10, IsScale::LINEAR, 1.0, 0.25, false));
-    REQUIRE(dut.write(configMessage) == true);
-    auto ackMsg = dut.read();
-    REQUIRE(ackMsg->getData() == "ACK");
+    // Create the DUT.
+    DeviceIsx3 *dut = new DeviceIsx3Win();
+    // Create an init message.
+    shared_ptr<InitDeviceMessage> initMsg(
+        new InitMessageIsx3("127.0.0.1", telnetPort));
+    REQUIRE(dut->write(initMsg) == true);
+
+    // After an init message, an empty response is expected.
+    shared_ptr<DeviceMessage> response = dut->read();
+    REQUIRE(!response);
+
+    // Delete the dut again.
+    delete dut;
   }
 }

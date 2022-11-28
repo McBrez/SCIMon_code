@@ -13,6 +13,7 @@
 #include <write_device_message.hpp>
 
 using namespace std;
+using namespace Messages;
 
 namespace Devices {
 
@@ -29,6 +30,7 @@ protected:
 
 public:
   Device();
+  virtual ~Device() = 0;
 
   virtual bool configure(DeviceConfiguration *deviceConfiguration) = 0;
   virtual bool open() = 0;
@@ -36,6 +38,13 @@ public:
 
   bool isConfigured();
   bool isInitialized();
+
+  /**
+   * @brief Return the name of the device type.
+   *
+   * @return The device type name.
+   */
+  virtual string getDeviceTypeName() = 0;
 
   virtual bool write(shared_ptr<InitDeviceMessage>) = 0;
   virtual bool write(shared_ptr<ConfigDeviceMessage>) = 0;

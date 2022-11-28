@@ -1,6 +1,6 @@
 #include <config_is_message.hpp>
 
-namespace Devices {
+namespace Messages {
 
 ConfigIsMessage::ConfigIsMessage(double frequencyFrom, double frequencyTo,
                                  int measurementPoints, IsScale scale,
@@ -16,4 +16,4 @@ string ConfigIsMessage::serialize() {
   retStr += this->frequencyFrom;
   return retStr;
 }
-} // namespace Devices
+} // namespace Messages
