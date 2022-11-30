@@ -15,7 +15,6 @@ public:
   DeviceIsx3();
   virtual ~DeviceIsx3() = 0;
 
-  virtual bool configure(DeviceConfiguration *deviceConfiguration) override;
   virtual bool open() override;
   virtual bool close() override;
 

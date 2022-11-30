@@ -2,9 +2,9 @@
 #include <easylogging++.h>
 
 // Project includes
-#include <config_is_message.hpp>
 #include <device_isx3.hpp>
 #include <device_status_message.hpp>
+#include <is_configuration.hpp>
 #include <utilities.hpp>
 
 namespace Devices {
@@ -15,10 +15,6 @@ const std::vector<unsigned char> DeviceIsx3::knownCommandTags = {
 DeviceIsx3::DeviceIsx3() : Device() {}
 
 DeviceIsx3::~DeviceIsx3(){};
-
-bool DeviceIsx3::configure(DeviceConfiguration *deviceConfiguration) {
-  return true;
-}
 
 bool DeviceIsx3::open() { return true; }
 
@@ -39,80 +35,8 @@ bool DeviceIsx3::write(shared_ptr<InitDeviceMessage> initMsg) {
 }
 
 bool DeviceIsx3::write(shared_ptr<ConfigDeviceMessage> configMsg) {
-  // Try to downcast the generic config message to impedance spectrometer
-  // config message.
-  shared_ptr<ConfigIsMessage> msg =
-      dynamic_pointer_cast<ConfigIsMessage>(configMsg);
-  if (!msg) {
-    LOG(ERROR) << "Received an invalid message. It will be ingored.";
-    return false;
-  }
-
-  // Encode the contents of configMsg into a command for ISX3.
-  std::vector<unsigned char> buffer;
-
-  // [CT] - command tag
-  buffer.push_back(ISX3_COMMAND_TAG_SET_SETUP);
-  // [LE] - Length of [CD]
-  buffer.push_back(0x16);
-  // [CO] - command option (frequency range)
-  buffer.push_back(0x03);
-  // [CD] - command data
-  // NOTE: It is assumed here, that float always consists of 4 byte. This
-  // obviously will not work on machines that do not follow such conventions.
-  // -- Starting frequency
-  float startFreq = static_cast<float>(msg->frequencyFrom);
-  char startFreqRawBytes[sizeof(float)];
-  memcpy(startFreqRawBytes, &startFreq, sizeof(startFreq));
-  buffer.push_back(startFreqRawBytes[3]);
-  buffer.push_back(startFreqRawBytes[2]);
-  buffer.push_back(startFreqRawBytes[1]);
-  buffer.push_back(startFreqRawBytes[0]);
-  // -- Ending frequency
-  float stopFreq = static_cast<float>(msg->frequencyTo);
-  char stopFreqRawBytes[sizeof(float)];
-  memcpy(stopFreqRawBytes, &stopFreq, sizeof(stopFreq));
-  buffer.push_back(stopFreqRawBytes[3]);
-  buffer.push_back(stopFreqRawBytes[2]);
-  buffer.push_back(stopFreqRawBytes[1]);
-  buffer.push_back(stopFreqRawBytes[0]);
-  // -- count measurement points
-  float measurementPoints = static_cast<float>(msg->measurementPoints);
-  char measurementPointsRawBytes[sizeof(float)];
-  memcpy(measurementPointsRawBytes, &measurementPoints,
-         sizeof(measurementPoints));
-  buffer.push_back(measurementPointsRawBytes[3]);
-  buffer.push_back(measurementPointsRawBytes[2]);
-  buffer.push_back(measurementPointsRawBytes[1]);
-  buffer.push_back(measurementPointsRawBytes[0]);
-  // -- scale
-  unsigned char scale;
-  if (msg->scale == IsScale::LINEAR) {
-    scale = 0x00;
-  } else if (msg->scale == IsScale::LOGARITHMIC) {
-    scale = 0x01;
-  }
-  buffer.push_back(scale);
-  // -- precision
-  // NOTE: Hardcoded to 1.0 at the moment.
-  buffer.push_back(0x3F);
-  buffer.push_back(0x80);
-  buffer.push_back(0x00);
-  buffer.push_back(0x00);
-  // -- amplitude
-  float amplitude = static_cast<float>(msg->amplitude);
-  char amplitudeRawBytes[sizeof(float)];
-  memcpy(amplitudeRawBytes, &amplitude, sizeof(amplitude));
-  buffer.push_back(amplitudeRawBytes[3]);
-  buffer.push_back(amplitudeRawBytes[2]);
-  buffer.push_back(amplitudeRawBytes[1]);
-  buffer.push_back(amplitudeRawBytes[0]);
-
-  // [CT] - command tag
-  buffer.push_back(ISX3_COMMAND_TAG_SET_SETUP);
-
-  int retVal = this->writeToIsx3(buffer);
-  return retVal > 0;
+  // Configure ISX3 according to the given data.
+  return this->configure(configMsg->getConfiguration());
 }
 
 bool DeviceIsx3::write(shared_ptr<WriteDeviceMessage> writeMsg) { return true; }

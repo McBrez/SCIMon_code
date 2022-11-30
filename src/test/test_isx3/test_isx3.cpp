@@ -4,7 +4,6 @@
 #include <easylogging++.h>
 
 // Project includes
-#include <config_is_message.hpp>
 #include <device_isx3_win.hpp>
 #include <init_message_isx3.hpp>
 #include <isx3_software_mocker.hpp>
@@ -17,10 +16,10 @@ TEST_CASE("Testing the implementation of the Sciospec ISX3 device",
           "[Devices]") {
 
   // Uncomment, if ISX3 Software shall be mocked.
-  // #define MOCK_ISX3_SOFTWARE
+#define MOCK_ISX3_SOFTWARE
 
   SECTION("Initializing") {
-    int telnetPort = 23;
+    int telnetPort = 2811;
 #ifdef MOCK_ISX3_SOFTWARE
     // Create the ISX3 sofware mocker.
     Isx3SoftwareMocker softwareMocker(telnetPort);

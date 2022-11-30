@@ -33,25 +33,28 @@ add_executable(test_isx3
     ${INCLUDE_DIR}/Messages/read_spectrum_message.hpp
     ${INCLUDE_DIR}/Messages/write_device_message.hpp
     ${INCLUDE_DIR}/Messages/config_device_message.hpp
-    ${INCLUDE_DIR}/Messages/config_is_message.hpp
     ${INCLUDE_DIR}/Messages/init_device_message.hpp   
     ${INCLUDE_DIR}/Messages/device_status_message.hpp
     ${INCLUDE_DIR}/Messages/isx3/init_message_isx3.hpp
+    ${INCLUDE_DIR}/Messages/message_factory.hpp
     ${INCLUDE_DIR}/Devices/isx3/isx3_constants.hpp
     ${INCLUDE_DIR}/Devices/isx3/device_isx3.hpp
     ${INCLUDE_DIR}/Devices/device.hpp
     ${INCLUDE_DIR}/Devices/device_configuration.hpp
+    ${INCLUDE_DIR}/Devices/is_configuration.hpp
     ${INCLUDE_DIR}/Utilities/utilities.hpp
 
     ${SOURCE_DIR}/Messages/device_message.cpp
     ${SOURCE_DIR}/Messages/isx3/init_message_isx3.cpp
     ${SOURCE_DIR}/Messages/config_device_message.cpp
     ${SOURCE_DIR}/Messages/read_spectrum_message.cpp
-    ${SOURCE_DIR}/Messages/config_is_message.cpp
     ${SOURCE_DIR}/Messages/read_device_message.cpp
     ${SOURCE_DIR}/Messages/device_status_message.cpp
+    ${SOURCE_DIR}/Messages/write_device_message.cpp
+    ${SOURCE_DIR}/Messages/message_factory.cpp
     ${SOURCE_DIR}/Devices/device.cpp
     ${SOURCE_DIR}/Devices/device_configuration.cpp
+    ${SOURCE_DIR}/Devices/is_configuration.cpp
     ${SOURCE_DIR}/Devices/isx3/device_isx3.cpp
     ${SOURCE_DIR}/Utilities/utilities.cpp
 

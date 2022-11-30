@@ -9,6 +9,7 @@
 
 // Project includes
 #include <device_isx3.hpp>
+#include <is_configuration.hpp>
 
 #define READ_BUFFER_SIZE 4096
 
@@ -41,6 +42,16 @@ public:
    * @brief Closes all the handles of this object.
    */
   virtual ~DeviceIsx3Win() override;
+
+  /**
+   * Configures the device according to the given configuration.
+   *
+   * @param deviceConfiguration The configuration that shall be applied to the
+   * device.
+   * @return TRUE if configuration was successful. False otherwise.
+   */
+  virtual bool
+  configure(shared_ptr<DeviceConfiguration> deviceConfiguration) override;
 
 private:
   HANDLE g_hChildStd_IN_Rd = NULL;
@@ -88,6 +99,13 @@ private:
    * @return The GetDeviceStatus command.
    */
   std::vector<unsigned char> buildCmdGetDeviceStatus();
+
+  std::vector<unsigned char>
+  buildCmdSetupParams(shared_ptr<IsConfiguration> config);
+  std::vector<unsigned char>
+  buildCmdSetupParams(double minF, double maxF, IsScale logScale, int count,
+                      int repetitions, string channel, double precision,
+                      double amplitude, int impedanceRange, int frequencyRange);
 
   /**
    * The CreatePipeEx API is used to create an anonymous pipe I/O device.

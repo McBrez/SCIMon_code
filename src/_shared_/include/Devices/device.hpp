@@ -32,7 +32,15 @@ public:
   Device();
   virtual ~Device() = 0;
 
-  virtual bool configure(DeviceConfiguration *deviceConfiguration) = 0;
+  /**
+   * Configures the device according to the given configuration.
+   *
+   * @param deviceConfiguration The configuration that shall be applied to the
+   * device.
+   * @return TRUE if configuration was successful. False otherwise.
+   */
+  virtual bool
+  configure(shared_ptr<DeviceConfiguration> deviceConfiguration) = 0;
   virtual bool open() = 0;
   virtual bool close() = 0;
 

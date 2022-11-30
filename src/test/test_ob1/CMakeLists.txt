@@ -25,28 +25,26 @@ add_executable(test_ob1
 
     ${INCLUDE_DIR}/Devices/device.hpp
     ${INCLUDE_DIR}/Devices/device_configuration.hpp
-    ${INCLUDE_DIR}/Messages/device_message.hpp
-    ${INCLUDE_DIR}/Messages/read_device_message.hpp
-    ${INCLUDE_DIR}/Messages/read_spectrum_message.hpp
-    ${INCLUDE_DIR}/Devices/isx3/device_isx3.hpp
-    ${INCLUDE_DIR}/Messages/isx3/init_message_isx3.hpp
     ${INCLUDE_DIR}/Devices/isx3/isx3_constants.hpp
     ${INCLUDE_DIR}/Devices/elveflow_ob1/device_ob1.hpp
     ${INCLUDE_DIR}/Devices/elveflow_ob1/device_ob1_win.hpp
+    ${INCLUDE_DIR}/Devices/isx3/device_isx3.hpp
+    ${INCLUDE_DIR}/Messages/device_message.hpp
+    ${INCLUDE_DIR}/Messages/read_device_message.hpp
+    ${INCLUDE_DIR}/Messages/read_spectrum_message.hpp
+    ${INCLUDE_DIR}/Messages/isx3/init_message_isx3.hpp
     ${INCLUDE_DIR}/Messages/write_device_message.hpp
     ${INCLUDE_DIR}/Messages/config_device_message.hpp
-    ${INCLUDE_DIR}/Messages/config_is_message.hpp
     ${INCLUDE_DIR}/Messages/init_device_message.hpp
 
     ${SOURCE_DIR}/Devices/device.cpp
     ${SOURCE_DIR}/Devices/device_configuration.cpp
-    ${SOURCE_DIR}/Messages/device_message.cpp
     ${SOURCE_DIR}/Devices/isx3/device_isx3.cpp    
-    ${SOURCE_DIR}/Messages/isx3/init_message_isx3.cpp
     ${SOURCE_DIR}/Devices/elveflow_ob1/device_ob1.cpp
     ${SOURCE_DIR}/Devices/elveflow_ob1/device_ob1_win.cpp
+    ${SOURCE_DIR}/Messages/device_message.cpp
+    ${SOURCE_DIR}/Messages/isx3/init_message_isx3.cpp
     ${SOURCE_DIR}/Messages/read_spectrum_message.cpp
-    ${SOURCE_DIR}/Messages/config_is_message.cpp
     ${SOURCE_DIR}/Messages/read_device_message.cpp
 
     ${3RDPARTY_DIR}/catch2/single_include/catch2/catch.hpp

@@ -338,4 +338,67 @@ BOOL DeviceIsx3Win::MyCreatePipeEx(OUT LPHANDLE lpReadPipe,
   return (TRUE);
 }
 
+bool DeviceIsx3Win::configure(
+    shared_ptr<DeviceConfiguration> deviceConfiguration) {
+
+  if (!this->isInitialized()) {
+    // Cant configure a device that is not initialized.
+    LOG(ERROR) << "Can not configure a device that is not initialized.";
+    return false;
+  }
+
+  // Check if the config message contains data for an impedance measurement.
+  shared_ptr<IsConfiguration> configuration =
+      dynamic_pointer_cast<IsConfiguration>(deviceConfiguration);
+  if (!configuration) {
+    LOG(ERROR) << "Received an invalid message. It will be ingored.";
+    return false;
+  }
+
+  vector<unsigned char> setupCmd = this->buildCmdSetupParams(configuration);
+
+  int retVal = this->writeToIsx3(setupCmd);
+  return retVal == -1 ? false : true;
+}
+
+std::vector<unsigned char>
+DeviceIsx3Win::buildCmdSetupParams(shared_ptr<IsConfiguration> config) {
+  return this->buildCmdSetupParams(
+      config->frequencyFrom, config->frequencyTo, config->scale,
+      config->measurementPoints, config->repetitions, config->channel,
+      config->precision, config->amplitude, config->impedanceRange,
+      config->frequencyRange);
+}
+std::vector<unsigned char>
+DeviceIsx3Win::buildCmdSetupParams(double minF, double maxF, IsScale logScale,
+                                   int count, int repetitions, string channel,
+                                   double precision, double amplitude,
+                                   int impedanceRange, int frequencyRange) {
+  std::vector<unsigned char> retVal;
+
+  // Resolve the scale value.
+  int logScaleValue;
+  if (IsScale::LINEAR_SCALE == logScale) {
+    logScaleValue = 0;
+  } else if (IsScale::LOGARITHMIC_SCALE == logScale) {
+    logScaleValue = 1;
+  } else {
+    LOG(WARNING) << "Unknown scale value. Assuming default of LINEAR_SCALE";
+    logScaleValue = 0;
+  }
+
+  std::string_view commandView = DeviceIsx3Win::cmdTemplateSetupParams;
+  std::string commandStr = std::vformat(
+      commandView, std::make_format_args(
+                       minF, maxF, logScaleValue, count, repetitions, channel,
+                       precision, amplitude, impedanceRange, frequencyRange));
+
+  // Parse string into vector.
+  for (auto ch : commandStr) {
+    retVal.push_back(ch);
+  }
+
+  return retVal;
+}
+
 } // namespace Devices
