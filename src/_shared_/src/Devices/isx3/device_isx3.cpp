@@ -4,7 +4,8 @@
 // Project includes
 #include <config_is_message.hpp>
 #include <device_isx3.hpp>
-#include <utility.hpp>
+#include <device_status_message.hpp>
+#include <utilities.hpp>
 
 namespace Devices {
 
@@ -134,19 +135,55 @@ shared_ptr<ReadDeviceMessage> DeviceIsx3::read() {
 shared_ptr<ReadDeviceMessage>
 DeviceIsx3::interpretBuffer(std::vector<unsigned char> &readBuffer) {
   // Find new line character, which terminates commands.
-  auto cmdTermination = std::find(readBuffer.begin(), readBuffer.end(), "\n");
+  auto cmdTermination = std::find(readBuffer.begin(), readBuffer.end(), '\n');
   if (cmdTermination == readBuffer.end()) {
     // No command found. Return here.
     return shared_ptr<ReadDeviceMessage>();
   }
-
   // Parse buffer into string.
   string command = "";
+  for (auto it = readBuffer.begin(); it <= cmdTermination; ++it) {
+    command += *it;
+  }
+  // Remove the extracted string from the buffer.
+  // TODO: Erasing from the front of a vector is quite inefficient. Replacing
+  // the vector with a list should be more efficient.
+  readBuffer.erase(readBuffer.begin(), ++cmdTermination);
 
-  if (command == "RESET") {
+  // Split the extracted string.
+  unsigned char commandSplitToken = ' ';
+
+  vector<string> splittedCmd = Utilities::split(command, commandSplitToken);
+  if (splittedCmd.size() == 0) {
+    // No command found. Return here.
+    return shared_ptr<ReadDeviceMessage>();
   }
 
-  return shared_ptr<ReadDeviceMessage>();
+  // Check the first field.
+  if ("ack" == splittedCmd[0]) {
+    // This is an acknowledge. Return it.
+    return shared_ptr<ReadDeviceMessage>(new ReadDeviceMessage("ack"));
+  } else if ("deviceStatus" == splittedCmd[0]) {
+    // This is a response to the getDeviceStatus command. The second field
+    // contains the device status. Check if the decoded string vector is long
+    // enough.
+    if (splittedCmd.size() < 2) {
+      // It is not. Return here.
+      return shared_ptr<ReadDeviceMessage>();
+    }
+
+    // Check the status.
+    if ("busy" == splittedCmd[1]) {
+      return shared_ptr<ReadDeviceMessage>(
+          new DeviceStatusMessage(DeviceStatus::BUSY));
+    } else if ("idle" == splittedCmd[1]) {
+      return shared_ptr<ReadDeviceMessage>(
+          new DeviceStatusMessage(DeviceStatus::IDLE));
+    } else {
+      return shared_ptr<ReadDeviceMessage>(
+          new DeviceStatusMessage(DeviceStatus::UNKNOWN_DEVICE_STATUS));
+    }
+  }
 }
 
 string DeviceIsx3::getDeviceTypeName() { return Isx3DeviceTypeName; }

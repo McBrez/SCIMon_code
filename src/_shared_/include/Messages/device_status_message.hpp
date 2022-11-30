@@ -6,7 +6,14 @@
 
 namespace Messages {
 /// Identifies the possible stati of a device.
-enum DeviceStatus { UNKNOWN_DEVICE_STATUS, INIT, CONFIGURE, OPERATING, IDLE };
+enum DeviceStatus {
+  UNKNOWN_DEVICE_STATUS,
+  INIT,
+  CONFIGURE,
+  OPERATING,
+  IDLE,
+  BUSY
+};
 
 /**
  * @brief A message containing the status of the queried devices.

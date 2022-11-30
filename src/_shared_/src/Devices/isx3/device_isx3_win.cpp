@@ -144,16 +144,18 @@ int DeviceIsx3Win::initIsx3(shared_ptr<InitMessageIsx3> initMsg) {
   std::time_t start = std::time(0);
   shared_ptr<DeviceMessage> response;
   double timeDiff = 0;
+  LOG(DEBUG) << "Waiting on response from ISX3 after INIT ...";
   do {
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
     this->readFromIsx3();
     response = this->interpretBuffer(this->readBuffer);
     timeDiff = std::difftime(std::time(NULL), start);
-    LOG(DEBUG) << "Waiting on init for " << timeDiff << " seconds.";
+
   } while (!response && timeDiff < DeviceIsx3Win::initTimeout);
 
   // Has a response arrived?
   if (response) {
+    LOG(DEBUG) << "Got response from ISX3.";
     // A response has arrived. Check if it has the expected content.
     shared_ptr<DeviceStatusMessage> statusMsg =
         dynamic_pointer_cast<DeviceStatusMessage>(response);
@@ -172,6 +174,7 @@ int DeviceIsx3Win::initIsx3(shared_ptr<InitMessageIsx3> initMsg) {
     }
   } else {
     // Init failed. Return here.
+    LOG(DEBUG) << "Got no response from ISX3.";
     return -1;
   }
 }

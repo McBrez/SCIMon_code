@@ -1,5 +1,5 @@
-#ifndef UTILITY_HPP
-#define UTILITY_HPP
+#ifndef UTILITIES_HPP
+#define UTILITIES_HPP
 
 // Standard includes
 #include <string>
@@ -7,7 +7,7 @@
 
 using namespace std;
 
-namespace Utility {
+namespace Utilities {
 
 /**
  * @brief Splits a string at the given token and returns a list of strings.
@@ -16,6 +16,6 @@ namespace Utility {
  * @param token The token at which shall be split.
  * @return The splitted strings.
  */
-vector<string> split(const string &str, char token);
-} // namespace Utility
+vector<string> split(const string &str, unsigned char token);
+} // namespace Utilities
 #endif

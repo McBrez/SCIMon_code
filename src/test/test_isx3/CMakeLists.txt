@@ -12,7 +12,7 @@ include_directories(
     ${INCLUDE_DIR}/Devices/isx3
     ${INCLUDE_DIR}/Messages
     ${INCLUDE_DIR}/Messages/isx3
-    ${INCLUDE_DIR}/Utility
+    ${INCLUDE_DIR}/Utilities
     ${3RDPARTY_DIR}/easyloggingpp/src
     ${3RDPARTY_DIR}/ftd2xx/include
     ${3RDPARTY_DIR}/catch2/single_include
@@ -41,7 +41,7 @@ add_executable(test_isx3
     ${INCLUDE_DIR}/Devices/isx3/device_isx3.hpp
     ${INCLUDE_DIR}/Devices/device.hpp
     ${INCLUDE_DIR}/Devices/device_configuration.hpp
-    ${INCLUDE_DIR}/Utility/utility.hpp
+    ${INCLUDE_DIR}/Utilities/utilities.hpp
 
     ${SOURCE_DIR}/Messages/device_message.cpp
     ${SOURCE_DIR}/Messages/isx3/init_message_isx3.cpp
@@ -53,7 +53,7 @@ add_executable(test_isx3
     ${SOURCE_DIR}/Devices/device.cpp
     ${SOURCE_DIR}/Devices/device_configuration.cpp
     ${SOURCE_DIR}/Devices/isx3/device_isx3.cpp
-    ${SOURCE_DIR}/Utility/utility.cpp
+    ${SOURCE_DIR}/Utilities/utilities.cpp
 
     ${3RDPARTY_DIR}/catch2/single_include/catch2/catch.hpp
     ${3RDPARTY_DIR}/easyloggingpp/src/easylogging++.cc

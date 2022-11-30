@@ -16,24 +16,31 @@ INITIALIZE_EASYLOGGINGPP
 TEST_CASE("Testing the implementation of the Sciospec ISX3 device",
           "[Devices]") {
 
+  // Uncomment, if ISX3 Software shall be mocked.
+  // #define MOCK_ISX3_SOFTWARE
+
   SECTION("Initializing") {
-    // Create the ISX3 sofware mocker.
     int telnetPort = 23;
+#ifdef MOCK_ISX3_SOFTWARE
+    // Create the ISX3 sofware mocker.
     Isx3SoftwareMocker softwareMocker(telnetPort);
     softwareMocker.run();
+#endif
 
     // Create the DUT.
     DeviceIsx3 *dut = new DeviceIsx3Win();
     // Create an init message.
     shared_ptr<InitDeviceMessage> initMsg(
         new InitMessageIsx3("127.0.0.1", telnetPort));
-    REQUIRE(dut->write(initMsg) == true);
+    REQUIRE(dut->write(initMsg) == 0);
 
     // After an init message, an empty response is expected.
     shared_ptr<DeviceMessage> response = dut->read();
-    REQUIRE(!response);
+    REQUIRE(response);
 
+#ifdef MOCK_ISX3_SOFTWARE
     softwareMocker.stop();
+#endif
     // Delete the dut again.
     delete dut;
   }
