@@ -19,7 +19,11 @@ enum WriteDeviceTopic {
   /// Invalid topic
   INVALID_TOPIC,
   /// The device shall start its operation with a previously sent configuration.
-  RUN_TOPIC
+  RUN_TOPIC,
+  /// The device shall stop its operation.
+  STOP_TOPIC,
+  /// The message contains data for the device.
+  DATA_TOPIC
 };
 
 /**

@@ -41,8 +41,21 @@ public:
    */
   virtual bool
   configure(shared_ptr<DeviceConfiguration> deviceConfiguration) = 0;
-  virtual bool open() = 0;
-  virtual bool close() = 0;
+
+  /**
+   * @brief Starts the operation of the device, provided that there is an valid
+   * configuration.
+   *
+   * @return TRUE if device has been started. FALSE if an error occured.
+   */
+  virtual bool start() = 0;
+
+  /**
+   * @brief Stops the operation of the device.
+   *
+   * @return TRUE if device has been started. FALSE if an error occured.
+   */
+  virtual bool stop() = 0;
 
   bool isConfigured();
   bool isInitialized();

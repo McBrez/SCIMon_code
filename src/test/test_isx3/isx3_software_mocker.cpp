@@ -38,6 +38,8 @@ void Isx3SoftwareMocker::worker() {
   int iSendResult;
   const int recvbuflen = this->bufferLength;
   char *recvbuf = new char[recvbuflen];
+  const int sendbuflen = this->bufferLength;
+  char *sendbuf = new char[recvbuflen];
 
   // Initialize Winsock
   iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
@@ -106,9 +108,20 @@ void Isx3SoftwareMocker::worker() {
   // Receive until the peer shuts down the connection
   do {
 
+    ZeroMemory(recvbuf, recvbuflen);
     iResult = recv(ClientSocket, recvbuf, recvbuflen, 0);
     if (iResult > 0) {
       printf("Bytes received: %d\n", iResult);
+      printf("Received the following: %s\n", recvbuf);
+
+      std::string received(recvbuf);
+
+      int pos = received.find("getDeviceStatus");
+      if (pos >= 0) {
+        std::string sendBuffer = "deviceStatus idle";
+        const char *charBuffer = sendBuffer.c_str();
+        iSendResult = send(ClientSocket, charBuffer, iResult, 0);
+      }
 
       // Echo the buffer back to the sender
       iSendResult = send(ClientSocket, recvbuf, iResult, 0);

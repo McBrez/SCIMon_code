@@ -2,7 +2,7 @@
 #define INIT_DEVICE_MESSAGE_HPP
 
 // Project includes
-#include <write_device_message.hpp>
+#include <device_message.hpp>
 
 namespace Messages {
 
@@ -10,6 +10,6 @@ namespace Messages {
  * @brief Encapsulates a message that shall trigger a reset and initialization
  * of a device.
  */
-class InitDeviceMessage : public WriteDeviceMessage {};
+class InitDeviceMessage : public DeviceMessage {};
 } // namespace Messages
 #endif

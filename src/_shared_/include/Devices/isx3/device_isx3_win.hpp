@@ -29,6 +29,9 @@ public:
   /// The template for the getDeviceStatus command.
   static const std::string cmdTemplateGetDeviceStatus;
 
+  /// The template for the sendSetup command.
+  static const std::string cmdTemplateSendSetup;
+
   /// The count of seconds it is waited on the response of the device during
   /// init.
   static const double initTimeout;
@@ -52,6 +55,21 @@ public:
    */
   virtual bool
   configure(shared_ptr<DeviceConfiguration> deviceConfiguration) override;
+
+  /**
+   * @brief Starts the operation of the device, provided that there is an valid
+   * configuration.
+   *
+   * @return TRUE if device has been started. FALSE if an error occured.
+   */
+  virtual bool start() override;
+
+  /**
+   * @brief Stops the operation of the device.
+   *
+   * @return TRUE if device has been started. FALSE if an error occured.
+   */
+  virtual bool stop() override;
 
 private:
   HANDLE g_hChildStd_IN_Rd = NULL;
@@ -106,6 +124,8 @@ private:
   buildCmdSetupParams(double minF, double maxF, IsScale logScale, int count,
                       int repetitions, string channel, double precision,
                       double amplitude, int impedanceRange, int frequencyRange);
+
+  std::vector<unsigned char> buildCmdSendSetup();
 
   /**
    * The CreatePipeEx API is used to create an anonymous pipe I/O device.

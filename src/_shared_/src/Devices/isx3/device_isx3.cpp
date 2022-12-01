@@ -16,10 +16,6 @@ DeviceIsx3::DeviceIsx3() : Device() {}
 
 DeviceIsx3::~DeviceIsx3(){};
 
-bool DeviceIsx3::open() { return true; }
-
-bool DeviceIsx3::close() { return true; }
-
 bool DeviceIsx3::write(shared_ptr<InitDeviceMessage> initMsg) {
   // Try to cast the init message.
   shared_ptr<InitMessageIsx3> castedMsg =
@@ -39,7 +35,15 @@ bool DeviceIsx3::write(shared_ptr<ConfigDeviceMessage> configMsg) {
   return this->configure(configMsg->getConfiguration());
 }
 
-bool DeviceIsx3::write(shared_ptr<WriteDeviceMessage> writeMsg) { return true; }
+bool DeviceIsx3::write(shared_ptr<WriteDeviceMessage> writeMsg) {
+  if (WriteDeviceTopic::RUN_TOPIC == writeMsg->getTopic()) {
+    // Start the device.
+
+  } else {
+    // Unusupported topic.
+    return false;
+  }
+}
 
 shared_ptr<ReadDeviceMessage> DeviceIsx3::read() {
   int bytesRead = this->readFromIsx3();
@@ -59,20 +63,20 @@ shared_ptr<ReadDeviceMessage> DeviceIsx3::read() {
 shared_ptr<ReadDeviceMessage>
 DeviceIsx3::interpretBuffer(std::vector<unsigned char> &readBuffer) {
   // Find new line character, which terminates commands.
+  LOG(DEBUG) << "Interpreting the buffer content: "
+             << string(this->readBuffer.begin(), this->readBuffer.end());
   auto cmdTermination = std::find(readBuffer.begin(), readBuffer.end(), '\n');
   if (cmdTermination == readBuffer.end()) {
     // No command found. Return here.
+    LOG(DEBUG) << "No command terminator found. Returning empty message";
     return shared_ptr<ReadDeviceMessage>();
   }
   // Parse buffer into string.
-  string command = "";
-  for (auto it = readBuffer.begin(); it <= cmdTermination; ++it) {
-    command += *it;
-  }
+  string command(readBuffer.begin(), cmdTermination - 1);
   // Remove the extracted string from the buffer.
   // TODO: Erasing from the front of a vector is quite inefficient. Replacing
   // the vector with a list should be more efficient.
-  readBuffer.erase(readBuffer.begin(), ++cmdTermination);
+  this->readBuffer.erase(readBuffer.begin(), ++cmdTermination);
 
   // Split the extracted string.
   unsigned char commandSplitToken = ' ';
@@ -80,14 +84,18 @@ DeviceIsx3::interpretBuffer(std::vector<unsigned char> &readBuffer) {
   vector<string> splittedCmd = Utilities::split(command, commandSplitToken);
   if (splittedCmd.size() == 0) {
     // No command found. Return here.
+    LOG(DEBUG) << "No command found. Returning empty message";
     return shared_ptr<ReadDeviceMessage>();
   }
 
   // Check the first field.
   if ("ack" == splittedCmd[0]) {
     // This is an acknowledge. Return it.
+    LOG(DEBUG) << "Found acknowledge";
     return shared_ptr<ReadDeviceMessage>(new ReadDeviceMessage("ack"));
-  } else if ("deviceStatus" == splittedCmd[0]) {
+  }
+
+  else if ("deviceStatus" == splittedCmd[0]) {
     // This is a response to the getDeviceStatus command. The second field
     // contains the device status. Check if the decoded string vector is long
     // enough.
@@ -107,6 +115,20 @@ DeviceIsx3::interpretBuffer(std::vector<unsigned char> &readBuffer) {
       return shared_ptr<ReadDeviceMessage>(
           new DeviceStatusMessage(DeviceStatus::UNKNOWN_DEVICE_STATUS));
     }
+  }
+
+  else if ("error" == splittedCmd[0]) {
+    // Error has been returned. They are not handled yet, so return an empty
+    // message.
+    LOG(DEBUG) << "Device returner an error: \"" << command << "\".";
+    return shared_ptr<ReadDeviceMessage>();
+  }
+
+  else {
+    // Could not extract a valid message. Return the analyzed part of the buffer
+    // as message.
+    LOG(DEBUG) << "Found unsupported message: " << command;
+    return shared_ptr<ReadDeviceMessage>(new ReadDeviceMessage(command));
   }
 }
 

@@ -16,7 +16,7 @@
 namespace Devices {
 
 const std::string DeviceIsx3Win::telnetExecutableName =
-    "plink -telnet -P {0} {1}";
+    "plink -batch -telnet -P {0} {1}";
 
 const std::string DeviceIsx3Win::cmdTemplateReset = "reset\n";
 
@@ -34,7 +34,9 @@ const std::string DeviceIsx3Win::cmdTemplateGetDeviceStatus =
 // {8} ... impedance range; 0 for kilo ohm, 1 for mega ohm
 // {9} ... frequency resolution; 1 for <100kHz, 2 for <1Mhz, 3 for <10Mhz
 const std::string DeviceIsx3Win::cmdTemplateSetupParams =
-    "setupParams {0},{1},{2},{3},{4},{5},{6},{7},{8},{9}\n";
+    "setupParams {0:.1f},{1:.1f},{2},{3},{4},{5},{6:.1f},{7:.1f},{8},{9}\n";
+
+const std::string DeviceIsx3Win::cmdTemplateSendSetup = "sendSetup\n";
 
 const double DeviceIsx3Win::initTimeout = 10;
 
@@ -52,6 +54,7 @@ DeviceIsx3Win::~DeviceIsx3Win() {
   // Close handles to the child process and its primary thread.
   // Some applications might keep these handles to monitor the status
   // of the child process, for example.
+  TerminateProcess(this->telnetSubprocessHandle.hProcess, 0);
   CloseHandle(this->telnetSubprocessHandle.hProcess);
   CloseHandle(this->telnetSubprocessHandle.hThread);
 }
@@ -137,6 +140,7 @@ int DeviceIsx3Win::initIsx3(shared_ptr<InitMessageIsx3> initMsg) {
 
   // Send reset command to ISX3.
   this->writeToIsx3(this->buildCmdReset(), true);
+
   // Check if the device is ready.
   this->writeToIsx3(this->buildCmdGetDeviceStatus(), true);
   // Try to read from device, until a response has been received or until a
@@ -146,11 +150,10 @@ int DeviceIsx3Win::initIsx3(shared_ptr<InitMessageIsx3> initMsg) {
   double timeDiff = 0;
   LOG(DEBUG) << "Waiting on response from ISX3 after INIT ...";
   do {
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    this->readFromIsx3();
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    int bytesRead = this->readFromIsx3();
     response = this->interpretBuffer(this->readBuffer);
     timeDiff = std::difftime(std::time(NULL), start);
-
   } while (!response && timeDiff < DeviceIsx3Win::initTimeout);
 
   // Has a response arrived?
@@ -355,12 +358,51 @@ bool DeviceIsx3Win::configure(
     return false;
   }
 
-  vector<unsigned char> setupCmd = this->buildCmdSetupParams(configuration);
+  //  vector<unsigned char> setupCmd = this->buildCmdSetupParams(configuration);
+  string testConfigStr =
+      "setupParams 500.0,5.0E6,1,80,10,MEA 36 66,1.0,100.,1,2\n";
+  vector<unsigned char> testConfigVec(testConfigStr.begin(),
+                                      testConfigStr.end());
+  int retVal = this->writeToIsx3(testConfigVec);
 
-  int retVal = this->writeToIsx3(setupCmd);
-  return retVal == -1 ? false : true;
+  // Catch the next message from the device, in order to check if the
+  // configuration was succesful.
+  std::time_t start = std::time(0);
+  shared_ptr<ReadDeviceMessage> response;
+  double timeDiff = 0;
+  LOG(DEBUG) << "Waiting on response from ISX3 after configuration...";
+  do {
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    this->readFromIsx3();
+    response = this->interpretBuffer(this->readBuffer);
+    timeDiff = std::difftime(std::time(NULL), start);
+
+  } while (!response && timeDiff < DeviceIsx3Win::initTimeout);
+
+  // Has a response arrived?
+  if (response) {
+    // A response arrived. Check if it is the expected one.
+    LOG(DEBUG)
+        << "Got response from ISX3. Check if it was an acknowledgment...";
+    if (response->getData() == "ack") {
+      LOG(DEBUG) << "Returned message was an acknowledgment. Device seems to "
+                    "have been configured successfuly. ";
+      this->configurationFinished = true;
+
+      return true;
+    } else {
+      LOG(DEBUG) << "Returned message was no acknowledgment. Device is in "
+                    "unknown state.";
+      this->configurationFinished = false;
+      return false;
+    }
+  } else {
+    // No response has been received. Configuration failed.
+    LOG(DEBUG) << "Got no response from ISX3 after configuration.";
+    this->configurationFinished = false;
+    return false;
+  }
 }
-
 std::vector<unsigned char>
 DeviceIsx3Win::buildCmdSetupParams(shared_ptr<IsConfiguration> config) {
   return this->buildCmdSetupParams(
@@ -395,6 +437,24 @@ DeviceIsx3Win::buildCmdSetupParams(double minF, double maxF, IsScale logScale,
 
   // Parse string into vector.
   for (auto ch : commandStr) {
+    retVal.push_back(ch);
+  }
+
+  return retVal;
+}
+
+bool DeviceIsx3Win::start() {
+  int retVal = this->writeToIsx3(this->buildCmdSendSetup());
+
+  return retVal > 0;
+}
+
+bool DeviceIsx3Win::stop() { return false; }
+
+std::vector<unsigned char> DeviceIsx3Win::buildCmdSendSetup() {
+  std::vector<unsigned char> retVal;
+
+  for (unsigned char ch : DeviceIsx3Win::cmdTemplateSendSetup) {
     retVal.push_back(ch);
   }
 

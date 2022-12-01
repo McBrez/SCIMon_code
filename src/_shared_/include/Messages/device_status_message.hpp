@@ -13,8 +13,8 @@ enum DeviceStatus {
   OPERATING,
   IDLE,
   BUSY
-};
 
+};
 /**
  * @brief A message containing the status of the queried devices.
  *

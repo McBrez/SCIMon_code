@@ -4,12 +4,18 @@
 #include <device.hpp>
 
 namespace Devices {
+/**
+ * @brief Provides the implementation of the interface to the OB1 microfluidics
+ * pump controller.
+ */
 class DeviceOb1 : public Device {
 public:
   DeviceOb1();
-  virtual bool configure(DeviceConfiguration *deviceConfiguration) override;
-  virtual bool open() override;
-  virtual bool close() override;
+  virtual ~DeviceOb1() override;
+  virtual bool
+  configure(shared_ptr<DeviceConfiguration> deviceConfiguration) override;
+  virtual bool start() override;
+  virtual bool stop() override;
 
   bool isConfigured();
   bool isInitialized();
@@ -18,8 +24,14 @@ public:
   virtual bool write(shared_ptr<ConfigDeviceMessage>) override;
   virtual bool write(shared_ptr<WriteDeviceMessage>) override;
 
+  /**
+   * @brief Return the name of the device type.
+   *
+   * @return The device type name.
+   */
+  virtual string getDeviceTypeName() override;
+
   virtual shared_ptr<ReadDeviceMessage> read() override;
-  list<shared_ptr<DeviceMessage>> readN(unsigned int n);
 };
 } // namespace Devices
 

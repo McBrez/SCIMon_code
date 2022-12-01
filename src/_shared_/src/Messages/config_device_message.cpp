@@ -10,4 +10,6 @@ shared_ptr<DeviceConfiguration> ConfigDeviceMessage::getConfiguration() {
   return this->deviceConfiguration;
 }
 
+string ConfigDeviceMessage::serialize() { return ""; }
+
 } // namespace Messages

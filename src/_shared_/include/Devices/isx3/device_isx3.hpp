@@ -15,9 +15,6 @@ public:
   DeviceIsx3();
   virtual ~DeviceIsx3() = 0;
 
-  virtual bool open() override;
-  virtual bool close() override;
-
   /**
    * @brief Return the name of the device type.
    *
