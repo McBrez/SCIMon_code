@@ -1,3 +1,5 @@
+#undef _HAS_STD_BYTE
+
 // Standard includes
 #include <thread>
 

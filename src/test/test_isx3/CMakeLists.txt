@@ -74,7 +74,7 @@ target_link_libraries(test_isx3
 
 if (WIN32)
     target_link_libraries(test_isx3
-        Ws2_32
+        Ws2_32 # Isx3SoftwareMocker requires Winsock2 
     )
     target_sources(test_isx3 PRIVATE
         ${INCLUDE_DIR}/Devices/isx3/device_isx3_win.hpp

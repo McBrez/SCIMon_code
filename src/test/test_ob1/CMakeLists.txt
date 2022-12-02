@@ -10,13 +10,10 @@ include_directories(
     ${INCLUDE_DIR}/Devices
     ${INCLUDE_DIR}/Devices/elveflow_ob1
     ${INCLUDE_DIR}/Messages
-    ${3RDPARTY_DIR}/easyloggingpp/src
-    ${3RDPARTY_DIR}/ftd2xx/include
-    ${3RDPARTY_DIR}/catch2/single_include
-)
 
-link_directories(
-    ${3RDPARTY_DIR}/ftd2xx/lib/amd64
+    ${3RDPARTY_DIR}/easyloggingpp/src
+    ${3RDPARTY_DIR}/elveflow/x64
+    ${3RDPARTY_DIR}/catch2/single_include
 )
 
 add_executable(test_ob1
@@ -27,6 +24,7 @@ add_executable(test_ob1
     ${INCLUDE_DIR}/Devices/device_configuration.hpp
     ${INCLUDE_DIR}/Devices/elveflow_ob1/device_ob1.hpp
     ${INCLUDE_DIR}/Devices/elveflow_ob1/device_ob1_win.hpp
+    ${INCLUDE_DIR}/Devices/elveflow_ob1/ob1_constants.hpp
     ${INCLUDE_DIR}/Messages/device_message.hpp
     ${INCLUDE_DIR}/Messages/read_device_message.hpp
     ${INCLUDE_DIR}/Messages/write_device_message.hpp
@@ -38,6 +36,7 @@ add_executable(test_ob1
     ${SOURCE_DIR}/Devices/elveflow_ob1/device_ob1.cpp
     ${SOURCE_DIR}/Devices/elveflow_ob1/device_ob1_win.cpp
     ${SOURCE_DIR}/Messages/device_message.cpp
+    ${SOURCE_DIR}/Messages/init_device_message.cpp
     ${SOURCE_DIR}/Messages/read_device_message.cpp
 
     ${3RDPARTY_DIR}/catch2/single_include/catch2/catch.hpp
@@ -45,18 +44,40 @@ add_executable(test_ob1
 
     ${3RDPARTY_DIR}/easyloggingpp/src/easylogging++.h
     ${3RDPARTY_DIR}/ftd2xx/include/ftd2xx.h
+    ${3RDPARTY_DIR}/elveflow/x64/Elveflow64.h
+)
+
+link_directories(
+    ${3RDPARTY_DIR}/elveflow/x64
+)
+
+target_link_libraries(test_ob1 PUBLIC
+C:/DEV/Diplomarbait/SCIMon_code/src/3rd_party/elveflow/x64/Elveflow64.lib
 )
 
 # Enforce C++20
 set_property(TARGET test_ob1 PROPERTY CXX_STANDARD 20)
 
+# Platform-specific settings
 if (WIN32)
-    target_sources(test_ob1 PUBLIC)
+    # Disable the "byte" type, introduced by MSVC in newer versions. Otherwise, 
+    # it would clash with the std::byte type. 
+    add_compile_definitions(_HAS_STD_BYTE=0)
+
+    # Winows specific sources
+    target_sources(test_ob1 PUBLIC
+        ${INCLUDE_DIR}/Devices/elveflow_ob1/device_ob1_win.hpp
+    
+        ${SOURCE_DIR}/Devices/elveflow_ob1/device_ob1_win.cpp
+    )
+
+    # Add post-build step that copies the DLLs to the output directory. 
+    add_custom_command(TARGET test_ob1 POST_BUILD       
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different 
+    C:/DEV/Diplomarbait/SCIMon_code/src/3rd_party/elveflow/x64/Elveflow64.dll
+        $<TARGET_FILE_DIR:test_ob1>) 
 endif (WIN32)
 if (UNIX)
-    
+    target_sources(test_ob1 PUBLIC)
 endif (UNIX)
 
-target_link_libraries(test_ob1 
-    ftd2xx
-)
