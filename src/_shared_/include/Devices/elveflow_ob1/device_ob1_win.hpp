@@ -39,7 +39,10 @@ public:
   virtual shared_ptr<ReadDeviceMessage> read() override;
 
 private:
-  int MyOB1_ID;
+  /// Id of the OB1 device. Used by the OB1 driver.
+  int ob1Id;
+
+  /// Array of double values holding the calibration.
   double *calibration;
 };
 } // namespace Devices

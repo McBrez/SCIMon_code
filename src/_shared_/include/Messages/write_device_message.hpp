@@ -17,13 +17,15 @@ namespace Messages {
  */
 enum WriteDeviceTopic {
   /// Invalid topic
-  INVALID_TOPIC,
+  WRITE_TOPIC_INVALID,
   /// The device shall start its operation with a previously sent configuration.
-  RUN_TOPIC,
+  WRITE_TOPIC_RUN,
   /// The device shall stop its operation.
-  STOP_TOPIC,
+  WRITE_TOPIC_STOP,
   /// The message contains data for the device.
-  DATA_TOPIC
+  WRITE_TOPIC_DATA,
+  /// The targeted device shall respond with its current state.
+  WRITE_TOPIC_QUERY_STATE
 };
 
 /**
@@ -31,16 +33,41 @@ enum WriteDeviceTopic {
  */
 class WriteDeviceMessage : public DeviceMessage {
 public:
+  /**
+   * @brief Creates a message with the given topic.
+   * @param topic The topic of the message.
+   */
   WriteDeviceMessage(WriteDeviceTopic topic);
+  /**
+   * @brief Creates a message with the given topic and appends additional data.
+   * @param topic The topic of the message.
+   * @param additionalData Additional data, that shall be appended to the
+   * message.
+   */
   WriteDeviceMessage(WriteDeviceTopic topic, AdditionalData additionalData);
 
+  /**
+   * @brief Returns the additional data, held by the message.
+   * @return The additional data object, held by the message.
+   */
   AdditionalData getAdditionalData();
+
+  /**
+   * @brief Returns the topic of the message.
+   * @return The topic of the message.
+   */
   WriteDeviceTopic getTopic();
 
+  /**
+   * @brief Serializes the contents of the message into a human-readable string.
+   * @return The string representation of the message.
+   */
   virtual string serialize() override;
 
 private:
+  /// The additional data.
   AdditionalData additionalData;
+  /// The topic of the message.
   WriteDeviceTopic topic;
 };
 } // namespace Messages

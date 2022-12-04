@@ -2,17 +2,13 @@
 #define INIT_DEVICE_MESSAGE_HPP
 
 // Project includes
+#include <device_id.hpp>
 #include <device_message.hpp>
+#include <init_payload.hpp>
+
+using namespace Devices;
 
 namespace Messages {
-
-struct InitPayload {
-  string deviceName;
-  int channelOneConnfig;
-  int channelTwoConnfig;
-  int channelThreeConnfig;
-  int channelFourConnfig;
-};
 
 /**
  * @brief Encapsulates a message that shall trigger a reset and initialization
@@ -20,15 +16,38 @@ struct InitPayload {
  */
 class InitDeviceMessage : public DeviceMessage {
 public:
-  InitDeviceMessage();
+  /**
+   * @brief Construct a new Init Device Message object
+   * @param initPayload Pointer to the initialization data. The message takes
+   * ownership of the pointer, hence the pointer has to stay valid.
+   * @param targetDeviceId The id of the target device.
+   */
+  InitDeviceMessage(InitPayload *initPayload, DeviceId targetDeviceId);
 
-  // TODO: remove me. and set the payload in the constructor.
-  void setPayload(InitPayload *initPayload);
+  /**
+   * @brief Returns the initialization data.
+   * @return The initialization data.
+   */
   shared_ptr<InitPayload> returnPayload();
+
+  /**
+   * @brief Serializes the message into a human-readable string.
+   * @return A human-readable representation of the message.
+   */
   string serialize() override;
 
+  /**
+   * @brief Returns the device id of the targeted device.
+   * @return The device id.
+   */
+  DeviceId getTargetDeviceId();
+
 private:
-  shared_ptr<InitPayload> payload;
+  /// Reference to the initialization data.
+  shared_ptr<InitPayload> initPayload;
+
+  /// The id of the target device.
+  DeviceId targetDeviceId;
 };
 
 } // namespace Messages

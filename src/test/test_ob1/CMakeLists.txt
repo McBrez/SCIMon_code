@@ -21,10 +21,15 @@ add_executable(test_ob1
     test_ob1.cpp
 
     ${INCLUDE_DIR}/Devices/device.hpp
+    ${INCLUDE_DIR}/Devices/device_id.hpp
     ${INCLUDE_DIR}/Devices/device_configuration.hpp
+    ${INCLUDE_DIR}/Devices/init_payload.hpp
+    ${INCLUDE_DIR}/Devices/read_payload.hpp
+    ${INCLUDE_DIR}/Devices/elveflow_ob1/read_payload_ob1.hpp
     ${INCLUDE_DIR}/Devices/elveflow_ob1/device_ob1.hpp
     ${INCLUDE_DIR}/Devices/elveflow_ob1/device_ob1_win.hpp
     ${INCLUDE_DIR}/Devices/elveflow_ob1/ob1_constants.hpp
+    ${INCLUDE_DIR}/Devices/elveflow_ob1/init_payload_ob1.hpp
     ${INCLUDE_DIR}/Messages/device_message.hpp
     ${INCLUDE_DIR}/Messages/read_device_message.hpp
     ${INCLUDE_DIR}/Messages/write_device_message.hpp
@@ -32,9 +37,12 @@ add_executable(test_ob1
     ${INCLUDE_DIR}/Messages/init_device_message.hpp
 
     ${SOURCE_DIR}/Devices/device.cpp
+    ${SOURCE_DIR}/Devices/device_id.cpp
     ${SOURCE_DIR}/Devices/device_configuration.cpp
     ${SOURCE_DIR}/Devices/elveflow_ob1/device_ob1.cpp
     ${SOURCE_DIR}/Devices/elveflow_ob1/device_ob1_win.cpp
+    ${SOURCE_DIR}/Devices/elveflow_ob1/init_payload_ob1.cpp
+    ${SOURCE_DIR}/Devices/elveflow_ob1/read_payload_ob1.cpp
     ${SOURCE_DIR}/Messages/device_message.cpp
     ${SOURCE_DIR}/Messages/init_device_message.cpp
     ${SOURCE_DIR}/Messages/read_device_message.cpp
@@ -47,12 +55,11 @@ add_executable(test_ob1
     ${3RDPARTY_DIR}/elveflow/x64/Elveflow64.h
 )
 
-link_directories(
-    ${3RDPARTY_DIR}/elveflow/x64
-)
+# Find libraries
+find_library(LIB_ELVEFLOW Elveflow64 ${3RDPARTY_DIR}/elveflow/x64)
 
 target_link_libraries(test_ob1 PUBLIC
-C:/DEV/Diplomarbait/SCIMon_code/src/3rd_party/elveflow/x64/Elveflow64.lib
+    ${LIB_ELVEFLOW}
 )
 
 # Enforce C++20
@@ -72,10 +79,12 @@ if (WIN32)
     )
 
     # Add post-build step that copies the DLLs to the output directory. 
+    find_file(DLL_ELVEFLOW Elveflow64.dll ${3RDPARTY_DIR}/elveflow/x64)
     add_custom_command(TARGET test_ob1 POST_BUILD       
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different 
-    C:/DEV/Diplomarbait/SCIMon_code/src/3rd_party/elveflow/x64/Elveflow64.dll
-        $<TARGET_FILE_DIR:test_ob1>) 
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different 
+        ${DLL_ELVEFLOW}
+        $<TARGET_FILE_DIR:test_ob1>
+    ) 
 endif (WIN32)
 if (UNIX)
     target_sources(test_ob1 PUBLIC)

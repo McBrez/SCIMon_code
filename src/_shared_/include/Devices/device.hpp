@@ -17,6 +17,15 @@ using namespace Messages;
 
 namespace Devices {
 
+enum DeviceStatus {
+  UNKNOWN_DEVICE_STATUS,
+  INIT,
+  CONFIGURE,
+  OPERATING,
+  IDLE,
+  BUSY
+};
+
 /**
  * @brief Depicts a physical device, like a measurement aparatus or a
  * pump controller. A device can be configured, can be read to and written
@@ -24,12 +33,26 @@ namespace Devices {
  */
 class Device {
 protected:
+  /// Flag, that indicates whether the device has been successfully configured.
   bool configurationFinished;
+  /// Flag, that indicates whether the device has been succesfully initialized.
   bool initFinished;
+  /// Reference to the currently active device configuration.
   shared_ptr<DeviceConfiguration> deviceConfiguration;
+  /// The unique id of the device.
+  DeviceId deviceId;
+  /// The state of the device.
+  DeviceStatus deviceState;
 
 public:
+  /**
+   * @brief Construct a new Device object
+   */
   Device();
+
+  /**
+   * Destroys the device object.
+   */
   virtual ~Device() = 0;
 
   /**
@@ -58,6 +81,7 @@ public:
   virtual bool stop() = 0;
 
   bool isConfigured();
+
   bool isInitialized();
 
   /**
@@ -66,6 +90,18 @@ public:
    * @return The device type name.
    */
   virtual string getDeviceTypeName() = 0;
+
+  /**
+   * @brief Returns the unique id of the device.
+   * @return The unique id of the device.
+   */
+  DeviceId getDeviceId();
+
+  /**
+   * @brief Returns the status of the device.
+   * @return The status of the device.
+   */
+  DeviceStatus getDeviceStatus();
 
   virtual bool write(shared_ptr<InitDeviceMessage>) = 0;
   virtual bool write(shared_ptr<ConfigDeviceMessage>) = 0;

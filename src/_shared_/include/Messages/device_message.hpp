@@ -12,14 +12,12 @@ namespace Messages {
  * @brief Base class for messages that are sent or received from or by devices.
  */
 class DeviceMessage {
-private:
-  string payload = "I am a message.";
-
 public:
   /**
-   * @brief Dummy function. This should be removed.
+   * @brief Constructs the object.
+   *
    */
-  void getPayload();
+  DeviceMessage();
 
   /**
    * @brief Serializes the message into a string.
@@ -35,6 +33,22 @@ public:
    * @return false
    */
   static shared_ptr<DeviceMessage> deserialize(string data);
+
+  /**
+   * @brief Returns the unique id of this message.
+   * @return The unique id of this message.
+   */
+  int getMessageId();
+
+private:
+  // The unique id of the mssage.
+  int messageId;
+
+  /**
+   * @brief Generates an unique id.
+   * @return An unique id.
+   */
+  int generateId();
 };
 } // namespace Messages
 

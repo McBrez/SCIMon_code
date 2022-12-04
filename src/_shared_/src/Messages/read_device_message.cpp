@@ -3,10 +3,14 @@
 
 namespace Messages {
 
-ReadDeviceMessage::ReadDeviceMessage(string data) : data(data) {}
+ReadDeviceMessage::ReadDeviceMessage(ReadDeviceTopic topic,
+                                     ReadPayload *readPayloadData)
+    : topic(topic), readPayload(readPayloadData) {}
 
-string ReadDeviceMessage::getData() { return this->data; }
+string ReadDeviceMessage::serialize() { return ""; }
 
-string ReadDeviceMessage::serialize() { return this->data; }
+shared_ptr<ReadPayload> ReadDeviceMessage::getReadPaylod() {
+  return this->readPayload;
+}
 
 } // namespace Messages

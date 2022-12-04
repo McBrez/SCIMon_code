@@ -6,6 +6,7 @@
 
 // Project includes
 #include <device_ob1_win.hpp>
+#include <init_payload_ob1.hpp>
 
 using namespace Devices;
 using namespace Messages;
@@ -23,16 +24,15 @@ TEST_CASE("Testing the implementation of the ElveFlow OB1 device",
 #endif
 
   SECTION("Initializing") {
-
-    shared_ptr<InitDeviceMessage> initMsg(new InitDeviceMessage());
-    InitPayload *payload = new InitPayload();
-    payload->deviceName = "01F8E63F";
-    payload->channelOneConnfig = Z_regulator_type__0_2000_mbar;
-    payload->channelTwoConnfig = Z_regulator_type__0_2000_mbar;
-    payload->channelThreeConnfig = Z_regulator_type_none;
-    payload->channelFourConnfig = Z_regulator_type_none;
-    initMsg->setPayload(payload);
+    // Create init payload and init message and send it to the DUT.
+    InitPayloadOb1 *initPayload = new InitPayloadOb1(
+        "01F8E63F",
+        make_tuple(Z_regulator_type__0_2000_mbar, Z_regulator_type__0_2000_mbar,
+                   Z_regulator_type_none, Z_regulator_type_none));
+    shared_ptr<InitDeviceMessage> initMsg(
+        new InitDeviceMessage(initPayload, dut->getDeviceId()));
     REQUIRE(dut->write(initMsg) == true);
+
     auto ackMsg = dut->read();
     REQUIRE(!ackMsg);
   }
