@@ -9,6 +9,8 @@ namespace Messages {
 
 DeviceMessage::DeviceMessage() : messageId(this->generateId()) {}
 
+DeviceMessage::~DeviceMessage() {}
+
 shared_ptr<DeviceMessage> DeviceMessage::deserialize(string data) {
   return shared_ptr<DeviceMessage>();
 }

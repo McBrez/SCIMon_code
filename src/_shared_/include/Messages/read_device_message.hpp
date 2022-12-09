@@ -20,8 +20,8 @@ enum ReadDeviceTopic {
   /// The message contains the status of the device.
   READ_TOPIC_DEVICE_STATUS,
 
-  /// Message contains device image of an Elveflow OB1 device.
-  READ_TOPIC_OB1_DEVICE_IMAGE
+  /// A device specific message.
+  READ_TOPIC_DEVICE_SPECIFIC_MSG
 };
 
 /**
@@ -35,8 +35,11 @@ public:
    * payload.
    * @param topic The topic of the message.
    * @param readPayload The payload of the message.
+   * @param originalMessage Reference to the message, this message is the
+   * response to.
    */
-  ReadDeviceMessage(ReadDeviceTopic topic, ReadPayload *readPayload);
+  ReadDeviceMessage(ReadDeviceTopic topic, ReadPayload *readPayload,
+                    shared_ptr<WriteDeviceMessage> originalMessage);
 
   /**
    * @brief Serializes the message into a human-readable string.
@@ -49,6 +52,18 @@ public:
    * @return The payload, held by this message.
    */
   shared_ptr<ReadPayload> getReadPaylod();
+
+  /**
+   * @brief Returns the message, this object is the response to.
+   * @return Reference to the message, this object is the respons to.
+   */
+  shared_ptr<WriteDeviceMessage> getOriginalMessage();
+
+  /**
+   * @brief Returns the topic of this message.
+   * @return The topic of this message.
+   */
+  ReadDeviceTopic getTopic();
 
 private:
   /// Reference to the messsage this message is the response to.

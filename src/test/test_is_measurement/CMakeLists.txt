@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(test_ob1)
+project(test_is_measurement)
 
 set(SOURCE_DIR ../../_shared_/src)
 set(INCLUDE_DIR ../../_shared_/include)
@@ -9,17 +9,20 @@ include_directories(
     ${INCLUDE_DIR}
     ${INCLUDE_DIR}/Devices
     ${INCLUDE_DIR}/Devices/elveflow_ob1
+    ${INCLUDE_DIR}/Devices/elveflow_isx3
     ${INCLUDE_DIR}/Messages
     ${INCLUDE_DIR}/Messages/elveflow_ob1
+    ${INCLUDE_DIR}/Control
+    ${INCLUDE_DIR}/Workers
 
     ${3RDPARTY_DIR}/easyloggingpp/src
     ${3RDPARTY_DIR}/elveflow/x64
     ${3RDPARTY_DIR}/catch2/single_include
 )
 
-add_executable(test_ob1
+add_executable(test_is_measurement
 
-    test_ob1.cpp
+    test_is_measurement.cpp
 
     ${INCLUDE_DIR}/Devices/device.hpp
     ${INCLUDE_DIR}/Devices/device_id.hpp
@@ -65,12 +68,12 @@ add_executable(test_ob1
 # Find libraries
 find_library(LIB_ELVEFLOW Elveflow64 ${3RDPARTY_DIR}/elveflow/x64)
 
-target_link_libraries(test_ob1 PUBLIC
+target_link_libraries(test_is_measurement PUBLIC
     ${LIB_ELVEFLOW}
 )
 
 # Enforce C++20
-set_property(TARGET test_ob1 PROPERTY CXX_STANDARD 20)
+set_property(TARGET test_is_measurement PROPERTY CXX_STANDARD 20)
 
 # Platform-specific settings
 if (WIN32)
@@ -79,7 +82,7 @@ if (WIN32)
     add_compile_definitions(_HAS_STD_BYTE=0)
 
     # Winows specific sources
-    target_sources(test_ob1 PUBLIC
+    target_sources(test_is_measurement PUBLIC
         ${INCLUDE_DIR}/Devices/elveflow_ob1/device_ob1_win.hpp
     
         ${SOURCE_DIR}/Devices/elveflow_ob1/device_ob1_win.cpp
@@ -87,13 +90,13 @@ if (WIN32)
 
     # Add post-build step that copies the DLLs to the output directory. 
     find_file(DLL_ELVEFLOW Elveflow64.dll ${3RDPARTY_DIR}/elveflow/x64)
-    add_custom_command(TARGET test_ob1 POST_BUILD       
+    add_custom_command(TARGET test_is_measurement POST_BUILD       
         COMMAND ${CMAKE_COMMAND} -E copy_if_different 
         ${DLL_ELVEFLOW}
         $<TARGET_FILE_DIR:test_ob1>
     ) 
 endif (WIN32)
 if (UNIX)
-    target_sources(test_ob1 PUBLIC)
+    target_sources(test_is_measurement PUBLIC)
 endif (UNIX)
 

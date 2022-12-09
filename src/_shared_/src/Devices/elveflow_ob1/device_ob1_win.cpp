@@ -7,6 +7,7 @@
 #include <init_payload_ob1.hpp>
 #include <ob1_constants.hpp>
 #include <read_payload_ob1.hpp>
+#include <write_message_ob1.hpp>
 
 namespace Devices {
 
@@ -17,6 +18,9 @@ DeviceOb1Win::DeviceOb1Win()
 DeviceOb1Win::~DeviceOb1Win() {
   OB1_Destructor(ob1Id);
   delete[] calibration;
+  if (this->configurationThread) {
+    this->configurationThread->join();
+  }
 }
 
 bool DeviceOb1Win::write(shared_ptr<InitDeviceMessage> initMsg) {
@@ -49,47 +53,121 @@ bool DeviceOb1Win::write(shared_ptr<InitDeviceMessage> initMsg) {
   if (this->ob1Id != -1) {
     // It was.
     this->initFinished = true;
+    this->deviceState = DeviceStatus::INIT;
     return true;
   } else {
     // It was not.
     this->initFinished = false;
-    return true;
+    this->deviceState = DeviceStatus::UNKNOWN_DEVICE_STATUS;
+    return false;
   }
 }
 
 bool DeviceOb1Win::configure(
     shared_ptr<DeviceConfiguration> deviceConfiguration) {
-
+  this->deviceState = DeviceStatus::CONFIGURE;
+  this->configurationFinished = false;
+  LOG(INFO) << "Starting calibration of OB1.";
   int retVal = Elveflow_Calibration_Default(this->calibration,
                                             Constants::Ob1CalibrationArrayLen);
+  if (retVal == 0) {
+    LOG(INFO) << "Finished calibration of OB1 successfully.";
+    this->configurationFinished = true;
+    this->deviceState = DeviceStatus::IDLE;
+    return true;
+  } else {
+    LOG(INFO) << "Finished calibration of OB1 with an error.";
+    this->configurationFinished = false;
+    this->deviceState = DeviceStatus::UNKNOWN_DEVICE_STATUS;
+    return false;
+  }
 
   return retVal == 0;
 }
 
-bool DeviceOb1Win::start() { return false; }
+bool DeviceOb1Win::start() {
+  if (this->initFinished == true && this->configurationFinished == true) {
+    if (this->deviceState == DeviceStatus::IDLE) {
+      LOG(DEBUG) << "Starting OB1...";
+      this->deviceState = DeviceStatus::OPERATING;
+      return true;
+    } else {
+      LOG(WARNING) << "OB1 can not be started, as it is already running, or in "
+                      "an invalid state.";
+      return false;
+    }
+  } else {
+    LOG(WARNING)
+        << "OB1 cannot be started, as it is not yet initialized or configured.";
+  }
+}
 
 bool DeviceOb1Win::stop() { return false; }
 
-bool DeviceOb1Win::write(shared_ptr<ConfigDeviceMessage>) { return false; }
+bool DeviceOb1Win::write(shared_ptr<ConfigDeviceMessage> configMsg) {
+  // Create a new thread and start it.
+  this->configurationThread.reset(new thread(
+      &DeviceOb1Win::configure, this, shared_ptr<DeviceConfiguration>()));
+  return true;
+}
 
-bool DeviceOb1Win::write(shared_ptr<WriteDeviceMessage>) { return false; }
+shared_ptr<ReadDeviceMessage> DeviceOb1Win::specificRead() {
+  // Only read, when in the correct state.
+  if (this->deviceState != DeviceStatus::OPERATING) {
+    return shared_ptr<ReadDeviceMessage>();
+  }
 
-shared_ptr<ReadDeviceMessage> DeviceOb1Win::read() {
   double pressureCh1;
   double pressureCh2;
   double pressureCh3;
   double pressureCh4;
-  OB1_Get_Press(this->ob1Id, 0, 1, this->calibration, &pressureCh1, 1000);
-  OB1_Get_Press(this->ob1Id, 1, 0, this->calibration, &pressureCh2, 1000);
-  OB1_Get_Press(this->ob1Id, 2, 0, this->calibration, &pressureCh3, 1000);
-  OB1_Get_Press(this->ob1Id, 3, 0, this->calibration, &pressureCh4, 1000);
+  OB1_Get_Press(this->ob1Id, 0, 1, this->calibration, &pressureCh1,
+                Constants::Ob1CalibrationArrayLen);
+  OB1_Get_Press(this->ob1Id, 1, 0, this->calibration, &pressureCh2,
+                Constants::Ob1CalibrationArrayLen);
+  OB1_Get_Press(this->ob1Id, 2, 0, this->calibration, &pressureCh3,
+                Constants::Ob1CalibrationArrayLen);
+  OB1_Get_Press(this->ob1Id, 3, 0, this->calibration, &pressureCh4,
+                Constants::Ob1CalibrationArrayLen);
 
   ReadPayloadOb1 *readPayload = new ReadPayloadOb1(
       make_tuple(pressureCh1, pressureCh2, pressureCh3, pressureCh4));
 
   LOG(DEBUG) << readPayload->serialize();
-  return shared_ptr<ReadDeviceMessage>(new ReadDeviceMessage(
-      ReadDeviceTopic::READ_TOPIC_OB1_DEVICE_IMAGE, readPayload));
+  return shared_ptr<ReadDeviceMessage>(
+      new ReadDeviceMessage(ReadDeviceTopic::READ_TOPIC_DEVICE_SPECIFIC_MSG,
+                            readPayload, shared_ptr<WriteDeviceMessage>()));
+}
+
+bool DeviceOb1Win::specificWrite(shared_ptr<WriteDeviceMessage> writeMsg) {
+  LOG(DEBUG) << "OB1 received a device specific message.";
+  // Try to cast the message to an OB1 specific message.
+  auto ob1Msg = dynamic_pointer_cast<WriteMessageOb1SetPressure>(writeMsg);
+  if (!ob1Msg) {
+    LOG(ERROR) << "Could not cast message for OB1.";
+    return false;
+  }
+  if (Ob1Topic::OB1_TOPIC_SET_PRESSURE == ob1Msg->getOb1Topic()) {
+    // Check if device is in correct state.
+    if (this->deviceState != DeviceStatus::IDLE &&
+        this->deviceState != DeviceStatus::OPERATING) {
+
+      LOG(WARNING) << "Can not set pressure of OB1 in its current state";
+      return false;
+    }
+    map<int, double> pressures = ob1Msg->getSetPressure();
+    for (auto it : pressures) {
+      int retVal =
+          OB1_Set_Press(this->ob1Id, it.first, it.second, this->calibration,
+                        Constants::Ob1CalibrationArrayLen);
+      LOG(DEBUG) << "Set pressure " << it.second << " on channel " << it.first
+                 << ", with return value " << retVal;
+    }
+    return true;
+  } else {
+    LOG(ERROR) << "Got invalid OB1 topic.";
+    return false;
+  }
 }
 
 } // namespace Devices

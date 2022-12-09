@@ -27,10 +27,20 @@ public:
    * @param deviceType The device type this configuration is targeting.
    */
   DeviceConfiguration(DeviceType deviceType);
-  virtual ~DeviceConfiguration() = 0;
+
+  /**
+   * @brief Destroy the Device Configuration object
+   */
+  virtual ~DeviceConfiguration();
+
+  /**
+   * @brief Returns the device type, this object is targeting.
+   * @return The targeted device type.
+   */
   DeviceType getDeviceType();
 
 protected:
+  /// The device type this object is targeting.
   DeviceType deviceType;
 };
 

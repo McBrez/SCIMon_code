@@ -10,12 +10,14 @@ namespace Devices {
  */
 class DeviceOb1 : public Device {
 public:
+  /**
+   * @brief Construct the object.
+   */
   DeviceOb1();
   virtual ~DeviceOb1() override;
 
   /**
    * @brief Return the name of the device type.
-   *
    * @return The device type name.
    */
   virtual string getDeviceTypeName() override;

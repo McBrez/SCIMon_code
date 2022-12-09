@@ -3,14 +3,22 @@
 
 namespace Messages {
 
-ReadDeviceMessage::ReadDeviceMessage(ReadDeviceTopic topic,
-                                     ReadPayload *readPayloadData)
-    : topic(topic), readPayload(readPayloadData) {}
+ReadDeviceMessage::ReadDeviceMessage(
+    ReadDeviceTopic topic, ReadPayload *readPayloadData,
+    shared_ptr<WriteDeviceMessage> originalMessage)
+    : topic(topic), readPayload(readPayloadData),
+      originalMessage(originalMessage) {}
 
 string ReadDeviceMessage::serialize() { return ""; }
 
 shared_ptr<ReadPayload> ReadDeviceMessage::getReadPaylod() {
   return this->readPayload;
 }
+
+shared_ptr<WriteDeviceMessage> ReadDeviceMessage::getOriginalMessage() {
+  return this->originalMessage;
+}
+
+ReadDeviceTopic ReadDeviceMessage::getTopic() { return this->topic; }
 
 } // namespace Messages

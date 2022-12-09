@@ -4,6 +4,7 @@
 // Standard includes
 #include <list>
 #include <memory>
+#include <thread>
 
 // Project includes
 #include <device.hpp>
@@ -12,47 +13,49 @@ using namespace std;
 using namespace Devices;
 
 namespace Control {
+
+/**
+ * @brief Identifies the states of the main control loop.
+ */
 enum MainControlState {
-  INVALID_CONTROL_STATE = -1,
-  INIT,
-  CALIBRATION,
-  IDLE,
-  RUNNING
+  /// Invalid main control state.
+  MAIN_CONTROL_INVALID,
+  /// Main control is initializing.
+  MAIN_CONTROL_INIT,
+  /// Main control has been started and is running.
+  MAIN_CONTROL_STARTED,
+  /// Main control has been stopped.
+  MAIN_CONTROL_STOPPED
 };
 
 /**
- * @brief Encapsulates a state machine that implements a control logic.
+ * @brief Encapsulates a control loop, that is executed in a separate thread.
  */
 class MainControl {
 private:
-  /// The previously active main control state.
-  MainControlState previousState;
+  /// A list of references to devices, which are
+  list<shared_ptr<Device>> devices;
 
-  /// The currently active main control state.
-  MainControlState state;
+  /// Reference to the thread, that executes the worker function.
+  unique_ptr<thread> workerThread;
 
-  /// A list of references to input devices.
-  list<shared_ptr<Device>> inputDevices;
-
-  /// A list of references to output devices.
-  list<shared_ptr<Device>> outputDevices;
+  /// The state of the main control loop.
+  MainControlState mainControlState;
 
 public:
-  MainControl(list<shared_ptr<Device>> inputDevices,
-              list<shared_ptr<Device>> outputDevices);
+  MainControl();
 
-  /**
-   * The main control function. Has to be called in a loop.
-   * @return False if the main control had do abort due to some error. True
-   * otherwise.
-   */
-  bool run();
+  bool start();
 
-  /**
-   * Initializes the main control.
-   * @return True if initialization was successfull. False otherwise.
-   */
-  bool init();
+  bool stop();
+
+  void work();
+
+  bool addDevice();
+  bool removeDevice();
+
+  bool addAction();
+  bool removeAction();
 };
 } // namespace Control
 

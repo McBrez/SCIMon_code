@@ -3,6 +3,7 @@
 
 namespace Messages {
 WriteDeviceMessage::WriteDeviceMessage(WriteDeviceTopic topic) : topic(topic) {}
+
 WriteDeviceMessage::WriteDeviceMessage(WriteDeviceTopic topic,
                                        AdditionalData additionalData)
     : topic(topic), additionalData(additionalData) {}

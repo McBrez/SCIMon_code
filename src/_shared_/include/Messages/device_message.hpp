@@ -20,6 +20,11 @@ public:
   DeviceMessage();
 
   /**
+   * @brief Destroy the Device Message object
+   */
+  virtual ~DeviceMessage() = 0;
+
+  /**
    * @brief Serializes the message into a string.
    * @return A string containing the contents of the message.
    */

@@ -25,7 +25,9 @@ enum WriteDeviceTopic {
   /// The message contains data for the device.
   WRITE_TOPIC_DATA,
   /// The targeted device shall respond with its current state.
-  WRITE_TOPIC_QUERY_STATE
+  WRITE_TOPIC_QUERY_STATE,
+  /// A device specific write topic.
+  WRITE_TOPIC_DEVICE_SPECIFIC
 };
 
 /**

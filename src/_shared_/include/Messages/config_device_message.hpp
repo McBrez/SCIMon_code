@@ -22,6 +22,11 @@ public:
   ConfigDeviceMessage(DeviceConfiguration *deviceConfiguration);
 
   /**
+   * @brief Destroy the Config Device Message object
+   */
+  virtual ~ConfigDeviceMessage() override;
+
+  /**
    * @brief Returns a reference to the held configuration.
    *
    * @return The held configuration.
