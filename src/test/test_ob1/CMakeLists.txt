@@ -11,6 +11,7 @@ include_directories(
     ${INCLUDE_DIR}/Devices/elveflow_ob1
     ${INCLUDE_DIR}/Messages
     ${INCLUDE_DIR}/Messages/elveflow_ob1
+    ${INCLUDE_DIR}/Utilities
 
     ${3RDPARTY_DIR}/easyloggingpp/src
     ${3RDPARTY_DIR}/elveflow/x64
@@ -22,7 +23,6 @@ add_executable(test_ob1
     test_ob1.cpp
 
     ${INCLUDE_DIR}/Devices/device.hpp
-    ${INCLUDE_DIR}/Devices/device_id.hpp
     ${INCLUDE_DIR}/Devices/device_configuration.hpp
     ${INCLUDE_DIR}/Devices/init_payload.hpp
     ${INCLUDE_DIR}/Devices/read_payload.hpp
@@ -32,27 +32,32 @@ add_executable(test_ob1
     ${INCLUDE_DIR}/Devices/elveflow_ob1/device_ob1_win.hpp
     ${INCLUDE_DIR}/Devices/elveflow_ob1/ob1_constants.hpp
     ${INCLUDE_DIR}/Devices/elveflow_ob1/init_payload_ob1.hpp
+    ${INCLUDE_DIR}/Messages/message_interface.hpp
+    ${INCLUDE_DIR}/Messages/user_id.hpp
     ${INCLUDE_DIR}/Messages/device_message.hpp
     ${INCLUDE_DIR}/Messages/read_device_message.hpp
     ${INCLUDE_DIR}/Messages/write_device_message.hpp
     ${INCLUDE_DIR}/Messages/config_device_message.hpp
     ${INCLUDE_DIR}/Messages/init_device_message.hpp
     ${INCLUDE_DIR}/Messages/elveflow_ob1/write_message_ob1.hpp
+    ${INCLUDE_DIR}/Utilities/utilities.hpp
 
     ${SOURCE_DIR}/Devices/device.cpp
-    ${SOURCE_DIR}/Devices/device_id.cpp
     ${SOURCE_DIR}/Devices/status_payload.cpp
     ${SOURCE_DIR}/Devices/device_configuration.cpp
     ${SOURCE_DIR}/Devices/elveflow_ob1/device_ob1.cpp
     ${SOURCE_DIR}/Devices/elveflow_ob1/device_ob1_win.cpp
     ${SOURCE_DIR}/Devices/elveflow_ob1/init_payload_ob1.cpp
     ${SOURCE_DIR}/Devices/elveflow_ob1/read_payload_ob1.cpp
+    ${SOURCE_DIR}/Messages/message_interface.cpp
     ${SOURCE_DIR}/Messages/device_message.cpp
+    ${SOURCE_DIR}/Messages/user_id.cpp
     ${SOURCE_DIR}/Messages/init_device_message.cpp
     ${SOURCE_DIR}/Messages/read_device_message.cpp
     ${SOURCE_DIR}/Messages/write_device_message.cpp
     ${SOURCE_DIR}/Messages/config_device_message.cpp
     ${SOURCE_DIR}/Messages/elveflow_ob1/write_message_ob1.cpp
+    ${SOURCE_DIR}/Utilities/utilities.cpp
 
     ${3RDPARTY_DIR}/catch2/single_include/catch2/catch.hpp
     ${3RDPARTY_DIR}/easyloggingpp/src/easylogging++.cc
@@ -79,7 +84,7 @@ if (WIN32)
     add_compile_definitions(_HAS_STD_BYTE=0)
 
     # Winows specific sources
-    target_sources(test_ob1 PUBLIC
+    target_sources(test_ob1 PRIVATE
         ${INCLUDE_DIR}/Devices/elveflow_ob1/device_ob1_win.hpp
     
         ${SOURCE_DIR}/Devices/elveflow_ob1/device_ob1_win.cpp
@@ -94,6 +99,6 @@ if (WIN32)
     ) 
 endif (WIN32)
 if (UNIX)
-    target_sources(test_ob1 PUBLIC)
+    target_sources(test_ob1 PRIVATE)
 endif (UNIX)
 

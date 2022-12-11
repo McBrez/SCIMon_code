@@ -2,15 +2,22 @@
 #define MAIN_CONTROL_STATE_HPP
 
 // Standard includes
+#include <chrono>
 #include <list>
 #include <memory>
 #include <thread>
 
 // Project includes
 #include <device.hpp>
+#include <message_distributor.hpp>
+#include <utilities.hpp>
+#include <worker.hpp>
 
+using namespace Utilities;
 using namespace std;
+using namespace chrono_literals;
 using namespace Devices;
+using namespace Workers;
 
 namespace Control {
 
@@ -29,12 +36,16 @@ enum MainControlState {
 };
 
 /**
- * @brief Encapsulates a control loop, that is executed in a separate thread.
+ * @brief Encapsulates a control loop, that tries to achive soft realtime
+ * capabilities.
  */
 class MainControl {
 private:
-  /// A list of references to devices, which are
+  /// A list of references to devices.
   list<shared_ptr<Device>> devices;
+
+  /// A list of references to workers.
+  list<shared_ptr<Worker>> workers;
 
   /// Reference to the thread, that executes the worker function.
   unique_ptr<thread> workerThread;
@@ -42,13 +53,34 @@ private:
   /// The state of the main control loop.
   MainControlState mainControlState;
 
-public:
-  MainControl();
+  /// Reference to the message distributor.
+  unique_ptr<MessageDistributor> messageDistributor;
 
+  /// The loop interval, the control loop tries to achieve. In milliseconds.
+  Duration targetInterval;
+
+  /// The timestamp of the last call to work().
+  TimePoint lastTimestamp;
+
+public:
+  MainControl(Duration targetInterval);
+
+  /**
+   * @brief Starts the main control loop in another thread.
+   * @return TRUE if the control loop has been started. False otherwise.
+   */
   bool start();
 
+  /**
+   * @brief Stops the main control loop. A subsequent call to start() can start
+   * the control loop again.
+   * @return TRUE if the control loop has been stopped. False otherwise.
+   */
   bool stop();
 
+  /**
+   * @brief Implements the worker loop. Runs in a seperate thread.
+   */
   void work();
 
   bool addDevice();
@@ -56,6 +88,8 @@ public:
 
   bool addAction();
   bool removeAction();
+
+  MainControlState getState();
 };
 } // namespace Control
 

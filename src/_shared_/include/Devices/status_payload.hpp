@@ -4,6 +4,7 @@
 // Project include
 #include <device.hpp>
 #include <read_payload.hpp>
+#include <user_id.hpp>
 
 namespace Devices {
 /**
@@ -13,10 +14,10 @@ class StatusPayload : public ReadPayload {
 public:
   /**
    * @brief Constructs the object.
-   * @param deviceId The id of the device, this payload originates from.
+   * @param userId The id of the device, this payload originates from.
    * @param deviceStatus The status of the device.
    */
-  StatusPayload(DeviceId deviceId, DeviceStatus deviceStatus);
+  StatusPayload(UserId deviceId, DeviceStatus deviceStatus);
 
   /**
    * @brief Returns the status of the device.
@@ -28,7 +29,7 @@ public:
    * @brief Returns the id of the device.
    * @return The id of the device.
    */
-  DeviceId getDeviceId();
+  UserId getDeviceId();
 
   /**
    * @brief Serializes the payload into a human-readable string.
@@ -41,7 +42,7 @@ private:
   DeviceStatus deviceStatus;
 
   /// The device id.
-  DeviceId deviceId;
+  UserId deviceId;
 };
 
 } // namespace Devices

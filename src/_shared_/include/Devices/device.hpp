@@ -7,14 +7,12 @@
 #include <queue>
 
 // Project includes
-#include <config_device_message.hpp>
 #include <device_configuration.hpp>
-#include <init_device_message.hpp>
-#include <read_device_message.hpp>
-#include <write_device_message.hpp>
+#include <message_interface.hpp>
 
 using namespace std;
 using namespace Messages;
+using namespace Utilities;
 
 namespace Devices {
 
@@ -32,7 +30,7 @@ enum DeviceStatus {
  * pump controller. A device can be configured, can be read to and written
  * from.
  */
-class Device {
+class Device : public MessageInterface {
 protected:
   /// Flag, that indicates whether the device has been successfully configured.
   bool configurationFinished;
@@ -40,13 +38,8 @@ protected:
   bool initFinished;
   /// Reference to the currently active device configuration.
   shared_ptr<DeviceConfiguration> deviceConfiguration;
-  /// The unique id of the device.
-  DeviceId deviceId;
   /// The state of the device.
   DeviceStatus deviceState;
-
-  /// Queue for outgoing messages.
-  queue<shared_ptr<ReadDeviceMessage>> messageOut;
 
 public:
   /**
@@ -82,8 +75,18 @@ public:
    */
   virtual bool stop() = 0;
 
+  /**
+   * @brief Retruns whether the device has been succesfully configured.
+   * @return True if the device has been successfully configured false
+   * otherwise.
+   */
   bool isConfigured();
 
+  /**
+   * @brief Retruns whether the device has been succesfully initialized.
+   * @return True if the device has been successfully initialized false
+   * otherwise.
+   */
   bool isInitialized();
 
   /**
@@ -93,63 +96,31 @@ public:
   virtual string getDeviceTypeName() = 0;
 
   /**
-   * @brief Returns the unique id of the device.
-   * @return The unique id of the device.
-   */
-  DeviceId getDeviceId();
-
-  /**
    * @brief Returns the status of the device.
    * @return The status of the device.
    */
   DeviceStatus getDeviceStatus();
 
-  /**
-   * @brief Writes an initialization message to the device.
-   * @param initMsg The initialization message. that shall be written to the
-   * device.
-   * @return True if the initialization message has been received successfully.
-   * False otherwise.
-   */
-  virtual bool write(shared_ptr<InitDeviceMessage> initMsg) = 0;
-
-  /**
-   * @brief Writes a configuration message to the device.
-   * @param configMsg The configuration message. that shall be written to the
-   * device.
-   * @return True if the configuration message has been received successfully.
-   * False otherwise.
-   */
-  virtual bool write(shared_ptr<ConfigDeviceMessage> configMsg) = 0;
+  // ----------------------------------------------------- Message Interface --
+  // Pull the write() methods into scope, that are not defined here. Otherwise,
+  // they could be hidden, if only a sub set of the write() methods are defined
+  // here.
+  using MessageInterface::write;
 
   /**
    * @brief Writes a message to the device.
    * @param writeMsg The message that shall be written to the device.
    * @return True if successful. False otherwise.
    */
-  virtual bool write(shared_ptr<WriteDeviceMessage> writeMsg);
-  /**
-   * @brief Handles a device specific message. Called by
-   * write(shared_ptr<WriteDeviceMessage>), if the mssage could not be resolved.
-   * @param writeMsg The device specific message.
-   * @return True if succesful. False otherwise.
-   */
-  virtual bool specificWrite(shared_ptr<WriteDeviceMessage> writeMsg) = 0;
-  /**
-   * @brief Reads one message from the message queue.
-   * @return Reference to the next message from the message queue. May return an
-   * empty pointer, if there was nothing to read.
-   */
-  virtual shared_ptr<ReadDeviceMessage> read();
+  virtual bool write(shared_ptr<WriteDeviceMessage> writeMsg) override;
 
   /**
-   * @brief Device-specific read operation, that is executed on each call of
-   * read(). Appends to the outgoing message queue.
-   * @return A read message.
+   * @brief Reads all messages from the message queue.
+   * @param timestamp The time at which this method is called.
+   * @return List of references to the messages from the message queue. May
+   * return an empty list, if there was nothing to read.
    */
-  virtual shared_ptr<ReadDeviceMessage> specificRead() = 0;
-
-  list<shared_ptr<DeviceMessage>> readN(unsigned int n);
+  virtual list<shared_ptr<DeviceMessage>> read(TimePoint timestamp) override;
 };
 } // namespace Devices
 

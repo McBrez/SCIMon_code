@@ -6,11 +6,12 @@ set(TEST_DIR src/test)
 
 add_subdirectory(${PROJECT_DIR}/latency_tester)
 
-enable_testing()
+
+# enable_testing()
 add_subdirectory(${TEST_DIR}/test_isx3)
 add_subdirectory(${TEST_DIR}/test_ob1)
 add_subdirectory(${TEST_DIR}/test_is_measurement)
 add_subdirectory(${TEST_DIR}/test_utility)
 
-add_test(NAME build_test_utility COMMAND test_utility)
-add_test(NAME build_test_ob1 COMMAND test_ob1)
+#add_test(NAME build_test_utility COMMAND test_utility)
+#add_test(NAME build_test_ob1 COMMAND test_ob1)

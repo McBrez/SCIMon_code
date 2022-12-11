@@ -14,6 +14,10 @@ public:
    * @brief Construct the object.
    */
   DeviceOb1();
+
+  /**
+   * @brief Destroy the object.
+   */
   virtual ~DeviceOb1() override;
 
   /**

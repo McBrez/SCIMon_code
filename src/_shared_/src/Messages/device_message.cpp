@@ -19,7 +19,7 @@ int DeviceMessage::getMessageId() { return this->messageId; }
 
 int DeviceMessage::generateId() {
   // TODO: IDs should not only be unique within an application execution but
-  // also over different procceses. Maybe use an UUID?
+  // also over different proceses. Maybe use an UUID?
   static int currentId = 0;
   if (currentId == INT_MAX) {
     return -1;

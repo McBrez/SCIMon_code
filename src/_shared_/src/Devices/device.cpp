@@ -12,24 +12,18 @@ Device::Device()
 
 Device::~Device() {}
 
-DeviceId Device::getDeviceId() { return this->deviceId; }
-
 DeviceStatus Device::getDeviceStatus() { return this->deviceState; }
 
 bool Device::isConfigured() { return this->configurationFinished; }
 
 bool Device::isInitialized() { return this->initFinished; }
 
-list<shared_ptr<DeviceMessage>> Device::readN(unsigned int n) {
-  return list<shared_ptr<DeviceMessage>>();
-}
-
 bool Device::write(shared_ptr<WriteDeviceMessage> writeMsg) {
 
   if (WriteDeviceTopic::WRITE_TOPIC_QUERY_STATE == writeMsg->getTopic()) {
     this->messageOut.push(shared_ptr<ReadDeviceMessage>(new ReadDeviceMessage(
         ReadDeviceTopic::READ_TOPIC_DEVICE_STATUS,
-        new StatusPayload(this->deviceId, this->deviceState), writeMsg)));
+        new StatusPayload(this->getUserId(), this->deviceState), writeMsg)));
   }
 
   else if (WriteDeviceTopic::WRITE_TOPIC_INVALID == writeMsg->getTopic()) {
@@ -40,7 +34,7 @@ bool Device::write(shared_ptr<WriteDeviceMessage> writeMsg) {
   else if (WriteDeviceTopic::WRITE_TOPIC_DEVICE_SPECIFIC ==
            writeMsg->getTopic()) {
     // Message topic is too specific. Pass it to the sub class.
-    this->specificWrite(writeMsg);
+    return this->specificWrite(writeMsg);
   }
 
   else {
@@ -50,22 +44,28 @@ bool Device::write(shared_ptr<WriteDeviceMessage> writeMsg) {
   }
 }
 
-shared_ptr<ReadDeviceMessage> Device::read() {
+list<shared_ptr<DeviceMessage>> Device::read(TimePoint timestamp) {
   // Call the device-specific read operation.
-  shared_ptr<ReadDeviceMessage> readMsg = this->specificRead();
-
+  list<shared_ptr<DeviceMessage>> readMessages = this->specificRead(timestamp);
   // Append the message, if it was not empty.
-  if (readMsg) {
-    this->messageOut.push(readMsg);
+  if (!readMessages.empty()) {
+    for (auto message : readMessages) {
+      this->messageOut.push(message);
+    }
   }
 
   // Pop the queue, if it is not empty.
   if (this->messageOut.empty()) {
-    return shared_ptr<ReadDeviceMessage>();
+    // Queue is empty. Return an empty list.
+    return list<shared_ptr<DeviceMessage>>();
   } else {
+    // Pop the queue to a list and return it.
+    list<shared_ptr<DeviceMessage>> retVal;
 
-    shared_ptr<ReadDeviceMessage> retVal = this->messageOut.front();
-    this->messageOut.pop();
+    while (!this->messageOut.empty()) {
+      retVal.push_back(this->messageOut.front());
+      this->messageOut.pop();
+    }
     return retVal;
   }
 }

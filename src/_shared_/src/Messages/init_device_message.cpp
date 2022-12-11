@@ -3,14 +3,14 @@
 
 namespace Messages {
 InitDeviceMessage::InitDeviceMessage(InitPayload *initPayload,
-                                     DeviceId targetDeviceId)
-    : initPayload(initPayload), targetDeviceId(targetDeviceId) {}
+                                     UserId targetUserId)
+    : initPayload(initPayload), targetUserId(targetUserId) {}
 
 shared_ptr<InitPayload> InitDeviceMessage::returnPayload() {
   return this->initPayload;
 }
 
-DeviceId InitDeviceMessage::getTargetDeviceId() { return this->targetDeviceId; }
+UserId InitDeviceMessage::getTargetUserId() { return this->targetUserId; }
 
 string InitDeviceMessage::serialize() { return ""; }
 

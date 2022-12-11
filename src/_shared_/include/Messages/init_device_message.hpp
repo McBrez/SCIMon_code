@@ -2,9 +2,9 @@
 #define INIT_DEVICE_MESSAGE_HPP
 
 // Project includes
-#include <device_id.hpp>
 #include <device_message.hpp>
 #include <init_payload.hpp>
+#include <user_id.hpp>
 
 using namespace Devices;
 
@@ -20,9 +20,9 @@ public:
    * @brief Construct a new Init Device Message object
    * @param initPayload Pointer to the initialization data. The message takes
    * ownership of the pointer, hence the pointer has to stay valid.
-   * @param targetDeviceId The id of the target device.
+   * @param targetUserId The id of the target device.
    */
-  InitDeviceMessage(InitPayload *initPayload, DeviceId targetDeviceId);
+  InitDeviceMessage(InitPayload *initPayload, UserId targetUserId);
 
   /**
    * @brief Returns the initialization data.
@@ -40,14 +40,14 @@ public:
    * @brief Returns the device id of the targeted device.
    * @return The device id.
    */
-  DeviceId getTargetDeviceId();
+  UserId getTargetUserId();
 
 private:
   /// Reference to the initialization data.
   shared_ptr<InitPayload> initPayload;
 
   /// The id of the target device.
-  DeviceId targetDeviceId;
+  UserId targetUserId;
 };
 
 } // namespace Messages

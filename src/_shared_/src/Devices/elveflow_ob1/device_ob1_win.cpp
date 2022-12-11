@@ -13,7 +13,8 @@ namespace Devices {
 
 DeviceOb1Win::DeviceOb1Win()
     : DeviceOb1(), ob1Id(-1),
-      calibration(new double[Constants::Ob1CalibrationArrayLen]) {}
+      calibration(new double[Constants::Ob1CalibrationArrayLen]),
+      cachedPressures({{1, 0.0}, {2, 0.0}, {3, 0.0}, {4, 0.0}}) {}
 
 DeviceOb1Win::~DeviceOb1Win() {
   OB1_Destructor(ob1Id);
@@ -25,7 +26,7 @@ DeviceOb1Win::~DeviceOb1Win() {
 
 bool DeviceOb1Win::write(shared_ptr<InitDeviceMessage> initMsg) {
   // Is the payload meant for this device?
-  if (this->deviceId != initMsg->getTargetDeviceId()) {
+  if (this->getUserId() != initMsg->getTargetUserId()) {
     LOG(WARNING)
         << "Received an init message that is not meant for this device.";
     return false;
@@ -89,6 +90,14 @@ bool DeviceOb1Win::start() {
   if (this->initFinished == true && this->configurationFinished == true) {
     if (this->deviceState == DeviceStatus::IDLE) {
       LOG(DEBUG) << "Starting OB1...";
+      // Restore cached pressures.
+      for (auto it : this->cachedPressures) {
+        int retVal =
+            OB1_Set_Press(this->ob1Id, it.first, it.second, this->calibration,
+                          Constants::Ob1CalibrationArrayLen);
+        LOG(DEBUG) << "Set pressure " << it.second << " on channel " << it.first
+                   << ", with return value " << retVal;
+      }
       this->deviceState = DeviceStatus::OPERATING;
       return true;
     } else {
@@ -99,10 +108,33 @@ bool DeviceOb1Win::start() {
   } else {
     LOG(WARNING)
         << "OB1 cannot be started, as it is not yet initialized or configured.";
+    return false;
   }
 }
 
-bool DeviceOb1Win::stop() { return false; }
+bool DeviceOb1Win::stop() {
+  if (this->initFinished == true && this->configurationFinished == true) {
+    if (this->deviceState == DeviceStatus::OPERATING) {
+      LOG(DEBUG) << "Starting OB1...";
+      // Set pressures to zero.
+      for (auto it : this->cachedPressures) {
+        double pressures[] = {0.0, 0.0, 0.0, 0.0};
+        OB1_Set_All_Press(this->ob1Id, pressures, this->calibration, 4,
+                          Constants::Ob1CalibrationArrayLen);
+      }
+      this->deviceState = DeviceStatus::IDLE;
+      return true;
+    } else {
+      LOG(WARNING) << "OB1 can not be stopped, as it is already stopped, or in "
+                      "an invalid state.";
+      return false;
+    }
+  } else {
+    LOG(WARNING)
+        << "OB1 cannot be stopped, as it is not yet initialized or configured.";
+    return false;
+  }
+}
 
 bool DeviceOb1Win::write(shared_ptr<ConfigDeviceMessage> configMsg) {
   // Create a new thread and start it.
@@ -111,10 +143,11 @@ bool DeviceOb1Win::write(shared_ptr<ConfigDeviceMessage> configMsg) {
   return true;
 }
 
-shared_ptr<ReadDeviceMessage> DeviceOb1Win::specificRead() {
+list<shared_ptr<DeviceMessage>>
+DeviceOb1Win::specificRead(TimePoint timestamp) {
   // Only read, when in the correct state.
   if (this->deviceState != DeviceStatus::OPERATING) {
-    return shared_ptr<ReadDeviceMessage>();
+    return list<shared_ptr<DeviceMessage>>();
   }
 
   double pressureCh1;
@@ -134,9 +167,11 @@ shared_ptr<ReadDeviceMessage> DeviceOb1Win::specificRead() {
       make_tuple(pressureCh1, pressureCh2, pressureCh3, pressureCh4));
 
   LOG(DEBUG) << readPayload->serialize();
-  return shared_ptr<ReadDeviceMessage>(
+  list<shared_ptr<DeviceMessage>> retVal;
+  retVal.emplace_back(
       new ReadDeviceMessage(ReadDeviceTopic::READ_TOPIC_DEVICE_SPECIFIC_MSG,
                             readPayload, shared_ptr<WriteDeviceMessage>()));
+  return retVal;
 }
 
 bool DeviceOb1Win::specificWrite(shared_ptr<WriteDeviceMessage> writeMsg) {
@@ -147,6 +182,7 @@ bool DeviceOb1Win::specificWrite(shared_ptr<WriteDeviceMessage> writeMsg) {
     LOG(ERROR) << "Could not cast message for OB1.";
     return false;
   }
+
   if (Ob1Topic::OB1_TOPIC_SET_PRESSURE == ob1Msg->getOb1Topic()) {
     // Check if device is in correct state.
     if (this->deviceState != DeviceStatus::IDLE &&
@@ -160,11 +196,14 @@ bool DeviceOb1Win::specificWrite(shared_ptr<WriteDeviceMessage> writeMsg) {
       int retVal =
           OB1_Set_Press(this->ob1Id, it.first, it.second, this->calibration,
                         Constants::Ob1CalibrationArrayLen);
+      this->cachedPressures[it.first] = it.second;
       LOG(DEBUG) << "Set pressure " << it.second << " on channel " << it.first
                  << ", with return value " << retVal;
     }
     return true;
-  } else {
+  }
+
+  else {
     LOG(ERROR) << "Got invalid OB1 topic.";
     return false;
   }

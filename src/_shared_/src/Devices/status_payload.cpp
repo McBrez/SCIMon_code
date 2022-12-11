@@ -3,12 +3,12 @@
 
 namespace Devices {
 
-StatusPayload::StatusPayload(DeviceId deviceId, DeviceStatus deviceStatus)
+StatusPayload::StatusPayload(UserId deviceId, DeviceStatus deviceStatus)
     : deviceId(deviceId), deviceStatus(deviceStatus) {}
 
 DeviceStatus StatusPayload::getDeviceStatus() { return this->deviceStatus; }
 
-DeviceId StatusPayload::getDeviceId() { return this->deviceId; }
+UserId StatusPayload::getDeviceId() { return this->deviceId; }
 
 string StatusPayload::serialize() { return ""; }
 

@@ -15,7 +15,6 @@ class DeviceMessage {
 public:
   /**
    * @brief Constructs the object.
-   *
    */
   DeviceMessage();
 
