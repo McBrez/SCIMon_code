@@ -169,7 +169,8 @@ DeviceOb1Win::specificRead(TimePoint timestamp) {
   LOG(DEBUG) << readPayload->serialize();
   list<shared_ptr<DeviceMessage>> retVal;
   retVal.emplace_back(
-      new ReadDeviceMessage(ReadDeviceTopic::READ_TOPIC_DEVICE_SPECIFIC_MSG,
+      new ReadDeviceMessage(shared_ptr<MessageInterface>(this),
+                            ReadDeviceTopic::READ_TOPIC_DEVICE_SPECIFIC_MSG,
                             readPayload, shared_ptr<WriteDeviceMessage>()));
   return retVal;
 }

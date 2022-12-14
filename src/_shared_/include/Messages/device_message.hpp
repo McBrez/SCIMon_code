@@ -8,6 +8,11 @@
 using namespace std;
 
 namespace Messages {
+
+/// Forward declaration of the message interface. Can not include it here, as it
+/// would lead to a circular dependency.
+class MessageInterface;
+
 /**
  * @brief Base class for messages that are sent or received from or by devices.
  */
@@ -15,8 +20,9 @@ class DeviceMessage {
 public:
   /**
    * @brief Constructs the object.
+   * @param source The message interface this message originates from.
    */
-  DeviceMessage();
+  DeviceMessage(shared_ptr<const MessageInterface> source);
 
   /**
    * @brief Destroy the Device Message object
@@ -44,9 +50,20 @@ public:
    */
   int getMessageId();
 
+  /**
+   * @brief Returns a reference to the message interface that created this
+   * message.
+   * @return A reference to the message interface that created this
+   * message.
+   */
+  shared_ptr<const MessageInterface> getSource();
+
 private:
   // The unique id of the mssage.
   int messageId;
+
+  /// The message interface this message originates from.
+  shared_ptr<const MessageInterface> source;
 
   /**
    * @brief Generates an unique id.

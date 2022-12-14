@@ -19,12 +19,15 @@ INITIALIZE_EASYLOGGINGPP
 TEST_CASE("Testing the implementation of the ElveFlow OB1 device",
           "[Devices]") {
   // Build up
-  DeviceOb1Win *dut;
+  shared_ptr<MessageInterface> dut;
 #ifdef WIN32
-  dut = new DeviceOb1Win();
+  dut.reset(new DeviceOb1Win());
 #else
 #error Target operating systems other than WIN32 are not yet supported.
 #endif
+  // Prepare a downcasted version of the dut.
+  shared_ptr<DeviceOb1> downcastedDut = dynamic_pointer_cast<DeviceOb1>(dut);
+  REQUIRE(downcastedDut);
 
   SECTION("Initializing") {
     // Create init payload and init message and send it to the DUT.
@@ -32,8 +35,8 @@ TEST_CASE("Testing the implementation of the ElveFlow OB1 device",
         "01F8E63F",
         make_tuple(Z_regulator_type__0_2000_mbar, Z_regulator_type__0_2000_mbar,
                    Z_regulator_type_none, Z_regulator_type_none));
-    shared_ptr<InitDeviceMessage> initMsg(
-        new InitDeviceMessage(initPayload, dut->getUserId()));
+    shared_ptr<InitDeviceMessage> initMsg(new InitDeviceMessage(
+        shared_ptr<MessageInterface>(), initPayload, dut->getUserId()));
     REQUIRE(dut->write(initMsg) == true);
 
     // A read should return an empty message.
@@ -42,6 +45,7 @@ TEST_CASE("Testing the implementation of the ElveFlow OB1 device",
 
     // Configure the DUT.
     shared_ptr<ConfigDeviceMessage> configMsg(new ConfigDeviceMessage(
+        shared_ptr<MessageInterface>(),
         new DeviceConfiguration(DeviceType::PUMP_CONTROLLER)));
     REQUIRE(dut->write(configMsg));
 
@@ -52,7 +56,8 @@ TEST_CASE("Testing the implementation of the ElveFlow OB1 device",
     while (run) {
       this_thread::sleep_for(chrono::seconds(1));
       shared_ptr<WriteDeviceMessage> queryStateMsg(
-          new WriteDeviceMessage(WriteDeviceTopic::WRITE_TOPIC_QUERY_STATE));
+          new WriteDeviceMessage(shared_ptr<MessageInterface>(), dut,
+                                 WriteDeviceTopic::WRITE_TOPIC_QUERY_STATE));
       // Query state messages should always be successful.
       REQUIRE(dut->write(queryStateMsg));
       readMessages = dut->read(chrono::system_clock::now());
@@ -79,9 +84,10 @@ TEST_CASE("Testing the implementation of the ElveFlow OB1 device",
       }
     }
     if (true) {
-      REQUIRE(dut->start());
+      REQUIRE(downcastedDut->start());
       shared_ptr<WriteDeviceMessage> setPressureMsg(
           new WriteMessageOb1SetPressure(
+              shared_ptr<MessageInterface>(), dut,
               map<int, double>({{0, 0.0}, {1, 0.0}})));
       REQUIRE(dut->write(setPressureMsg));
 
@@ -102,6 +108,4 @@ TEST_CASE("Testing the implementation of the ElveFlow OB1 device",
       }
     }
   }
-  // Tear down.
-  delete dut;
 }

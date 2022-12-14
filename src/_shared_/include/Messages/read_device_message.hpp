@@ -33,12 +33,14 @@ public:
   /**
    * @brief Constructs the read device message with the given topic and
    * payload.
+   * @param source Reference to the source of this message.
    * @param topic The topic of the message.
    * @param readPayload The payload of the message.
    * @param originalMessage Reference to the message, this message is the
    * response to.
    */
-  ReadDeviceMessage(ReadDeviceTopic topic, ReadPayload *readPayload,
+  ReadDeviceMessage(shared_ptr<MessageInterface> source, ReadDeviceTopic topic,
+                    ReadPayload *readPayload,
                     shared_ptr<WriteDeviceMessage> originalMessage);
 
   /**

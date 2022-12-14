@@ -37,16 +37,24 @@ class WriteDeviceMessage : public DeviceMessage {
 public:
   /**
    * @brief Creates a message with the given topic.
+   * @param source Reference to the source of this message.
+   * @param destination Reference to the destination of this message.
    * @param topic The topic of the message.
    */
-  WriteDeviceMessage(WriteDeviceTopic topic);
+  WriteDeviceMessage(shared_ptr<MessageInterface> source,
+                     shared_ptr<MessageInterface> destination,
+                     WriteDeviceTopic topic);
   /**
    * @brief Creates a message with the given topic and appends additional data.
+   * @param source Reference to the source of this message.
+   * @param destination Reference to the destination of this message.
    * @param topic The topic of the message.
    * @param additionalData Additional data, that shall be appended to the
    * message.
    */
-  WriteDeviceMessage(WriteDeviceTopic topic, AdditionalData additionalData);
+  WriteDeviceMessage(shared_ptr<MessageInterface> source,
+                     shared_ptr<MessageInterface> destination,
+                     WriteDeviceTopic topic, AdditionalData additionalData);
 
   /**
    * @brief Returns the additional data, held by the message.
@@ -66,11 +74,19 @@ public:
    */
   virtual string serialize() override;
 
+  /**
+   * @brief Returns the destination of this message.
+   * @return The destination of this object.
+   */
+  shared_ptr<const MessageInterface> getDestination();
+
 private:
   /// The additional data.
   AdditionalData additionalData;
   /// The topic of the message.
   WriteDeviceTopic topic;
+  /// The destination of the message.
+  shared_ptr<const MessageInterface> destination;
 };
 } // namespace Messages
 

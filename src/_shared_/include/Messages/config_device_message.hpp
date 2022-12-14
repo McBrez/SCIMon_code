@@ -16,10 +16,12 @@ class ConfigDeviceMessage : public DeviceMessage {
 public:
   /**
    * @brief Construct a new ConfigDeviceMessage
+   * @param source reference to the source of this message.
    * @param deviceConfiguration pointer to an existing device configuration.
    * Object takes ownership of the pointer.
    */
-  ConfigDeviceMessage(DeviceConfiguration *deviceConfiguration);
+  ConfigDeviceMessage(shared_ptr<MessageInterface> source,
+                      DeviceConfiguration *deviceConfiguration);
 
   /**
    * @brief Destroy the Config Device Message object

@@ -5,9 +5,12 @@
 // Project includes
 #include <device_message.hpp>
 
+using namespace std;
+
 namespace Messages {
 
-DeviceMessage::DeviceMessage() : messageId(this->generateId()) {}
+DeviceMessage::DeviceMessage(shared_ptr<const MessageInterface> source)
+    : messageId(this->generateId()), source(source) {}
 
 DeviceMessage::~DeviceMessage() {}
 
@@ -26,6 +29,10 @@ int DeviceMessage::generateId() {
   } else {
     return currentId++;
   }
+}
+
+shared_ptr<const MessageInterface> DeviceMessage::getSource() {
+  return this->source;
 }
 
 } // namespace Messages

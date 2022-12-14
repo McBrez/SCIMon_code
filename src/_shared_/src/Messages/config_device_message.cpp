@@ -3,8 +3,9 @@
 namespace Messages {
 
 ConfigDeviceMessage::ConfigDeviceMessage(
+    shared_ptr<MessageInterface> source,
     DeviceConfiguration *deviceConfiguration)
-    : deviceConfiguration(deviceConfiguration) {}
+    : DeviceMessage(source), deviceConfiguration(deviceConfiguration) {}
 
 ConfigDeviceMessage::~ConfigDeviceMessage() {}
 

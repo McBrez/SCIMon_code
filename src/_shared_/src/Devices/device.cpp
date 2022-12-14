@@ -22,6 +22,7 @@ bool Device::write(shared_ptr<WriteDeviceMessage> writeMsg) {
 
   if (WriteDeviceTopic::WRITE_TOPIC_QUERY_STATE == writeMsg->getTopic()) {
     this->messageOut.push(shared_ptr<ReadDeviceMessage>(new ReadDeviceMessage(
+        shared_ptr<MessageInterface>(this),
         ReadDeviceTopic::READ_TOPIC_DEVICE_STATUS,
         new StatusPayload(this->getUserId(), this->deviceState), writeMsg)));
   }

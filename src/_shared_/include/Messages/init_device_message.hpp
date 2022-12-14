@@ -18,11 +18,13 @@ class InitDeviceMessage : public DeviceMessage {
 public:
   /**
    * @brief Construct a new Init Device Message object
+   * @param source Reference to the source of this message.
    * @param initPayload Pointer to the initialization data. The message takes
    * ownership of the pointer, hence the pointer has to stay valid.
    * @param targetUserId The id of the target device.
    */
-  InitDeviceMessage(InitPayload *initPayload, UserId targetUserId);
+  InitDeviceMessage(shared_ptr<MessageInterface> source,
+                    InitPayload *initPayload, UserId targetUserId);
 
   /**
    * @brief Returns the initialization data.

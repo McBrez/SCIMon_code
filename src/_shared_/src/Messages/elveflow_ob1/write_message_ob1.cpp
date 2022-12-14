@@ -6,8 +6,10 @@ using namespace std;
 namespace Messages {
 
 WriteMessageOb1SetPressure::WriteMessageOb1SetPressure(
-    map<int, double> setPressures)
-    : WriteDeviceMessage(WriteDeviceTopic::WRITE_TOPIC_DEVICE_SPECIFIC),
+    shared_ptr<MessageInterface> source,
+    shared_ptr<MessageInterface> destination, map<int, double> setPressures)
+    : WriteDeviceMessage(source, destination,
+                         WriteDeviceTopic::WRITE_TOPIC_DEVICE_SPECIFIC),
       setPressures(setPressures), ob1Topic(Ob1Topic::OB1_TOPIC_SET_PRESSURE) {}
 
 string WriteMessageOb1SetPressure::serialize() { return ""; }

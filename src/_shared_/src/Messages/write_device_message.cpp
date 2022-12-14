@@ -2,11 +2,17 @@
 #include <write_device_message.hpp>
 
 namespace Messages {
-WriteDeviceMessage::WriteDeviceMessage(WriteDeviceTopic topic) : topic(topic) {}
+WriteDeviceMessage::WriteDeviceMessage(shared_ptr<MessageInterface> source,
+                                       shared_ptr<MessageInterface> destination,
+                                       WriteDeviceTopic topic)
+    : DeviceMessage(source), destination(destination), topic(topic) {}
 
-WriteDeviceMessage::WriteDeviceMessage(WriteDeviceTopic topic,
+WriteDeviceMessage::WriteDeviceMessage(shared_ptr<MessageInterface> source,
+                                       shared_ptr<MessageInterface> destination,
+                                       WriteDeviceTopic topic,
                                        AdditionalData additionalData)
-    : topic(topic), additionalData(additionalData) {}
+    : DeviceMessage(source), destination(destination), topic(topic),
+      additionalData(additionalData) {}
 
 AdditionalData WriteDeviceMessage::getAdditionalData() {
   return this->additionalData;
@@ -14,4 +20,8 @@ AdditionalData WriteDeviceMessage::getAdditionalData() {
 WriteDeviceTopic WriteDeviceMessage::getTopic() { return this->topic; }
 
 string WriteDeviceMessage::serialize() { return ""; }
+
+shared_ptr<const MessageInterface> WriteDeviceMessage::getDestination() {
+  return this->destination;
+}
 } // namespace Messages
