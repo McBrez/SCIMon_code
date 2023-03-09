@@ -6,7 +6,6 @@ set(TEST_DIR src/test)
 
 add_subdirectory(${PROJECT_DIR}/latency_tester)
 
-
 # enable_testing()
 add_subdirectory(${TEST_DIR}/test_isx3)
 add_subdirectory(${TEST_DIR}/test_ob1)

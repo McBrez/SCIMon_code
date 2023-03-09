@@ -10,6 +10,7 @@ include_directories(
     ${INCLUDE_DIR}
     ${INCLUDE_DIR}/Devices
     ${INCLUDE_DIR}/Devices/isx3
+    ${INCLUDE_DIR}/Utilities
     ${INCLUDE_DIR}/Messages
 
     ${3RDPARTY_DIR}/easyloggingpp/src
@@ -26,9 +27,14 @@ add_executable(test_sciospec_com_interface
     
     ${INCLUDE_DIR}/Messages/device_message.hpp
     ${INCLUDE_DIR}/Devices/isx3/com_interface_codec.hpp
+    ${INCLUDE_DIR}/Devices/isx3/isx3_constants.hpp
+    ${INCLUDE_DIR}/Devices/read_payload.hpp
+    ${INCLUDE_DIR}/Devices/is_payload.hpp
+    ${INCLUDE_DIR}/Utilities/utilities.hpp
 
     ${SOURCE_DIR}/Messages/device_message.cpp
     ${SOURCE_DIR}/Devices/isx3/com_interface_codec.cpp
+    ${SOURCE_DIR}/Devices/is_payload.cpp
 
     ${3RDPARTY_DIR}/catch2/single_include/catch2/catch.hpp
     ${3RDPARTY_DIR}/easyloggingpp/src/easylogging++.cc

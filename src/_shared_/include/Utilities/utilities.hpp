@@ -3,12 +3,19 @@
 
 // Standard includes
 #include <chrono>
+#include <complex>
+#include <list>
 #include <string>
 #include <vector>
 
 using namespace std;
 
 namespace Utilities {
+
+// Shortcut to the definition of an impedance spectrum. The first value of the
+// tuple is the frequency in Hertz. The second value is the complex impedance at
+// this frequency.
+typedef list<std::tuple<double, complex<double>>> ImpedanceSpectrum;
 
 /// Defines a type that depcits a point in time.
 using TimePoint = std::chrono::time_point<std::chrono::system_clock>;

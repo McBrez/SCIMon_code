@@ -9,7 +9,7 @@ INITIALIZE_EASYLOGGINGPP
 
 TEST_CASE("Testing ComInterfaceCodec") {
     Devices::ComInterfaceCodec dut;
-    dut.decodeMessage({0x01, 0x02});
+    dut.decodeMessage({0x01, 0x00, 0x01});
 }
 
 
