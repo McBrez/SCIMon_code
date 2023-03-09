@@ -6,7 +6,7 @@
 
 namespace Devices {
 
-const string Isx3DeviceTypeName = "Sciospec ISX-3";
+// const string Isx3DeviceTypeName = "Sciospec ISX-3";
 
 /**
  * @brief Identifies the various ISX3 command tags.
@@ -33,8 +33,24 @@ enum Isx3CmdTag {
  * @brief Identifies the various ISX3 Acknowledgment types.
  */
 enum Isx3AckType {
+  /// Frame-Not-Acknowledge: Incorrect syntax.
   ISX3_ACK_TYPE_FRAME_NOT_ACKNOWLEDGED = 0x01,
-  ISX3_ACK_TYPE_COMMAND_ACKNOWLEGDE = 0x81
+  /// Timeout: Communication-timeout (less data than expected)
+  ISX3_ACK_TYPE_TIMEOUT = 0x02,
+  /// Wake-up Message: System boot read.
+  ISX3_ACK_TYPE_WAKEUP = 0x04,
+  /// TCP-Socket: Valid TCP client-socket connection
+  ISX3_ACK_TYPE_TCP_SOCKET = 0x11,
+  /// Not-Acknowledge: Command has not been executed
+  ISX3_ACK_TYPE_COMMAND_NOT_ACKNOWLEGDE = 0x81,
+  /// Not-Acknowledge: Command could not be recognized
+  ISX3_ACK_TYPE_COMMAND_NOT_RECOGNIZED = 0x82,
+  /// Command-Acknowledge: Command has been executed successfully
+  ISX3_ACK_TYPE_COMMAND_ACKNOWLEDGE = 0x83,
+  /// System-Ready Message: System is operational and ready to receive data
+  ISX3_ACK_TYPE_SYSTEM_READY = 0x84,
+  /// Data holdup: Measurement data could not be sent via the master interface
+  ISX3_ACK_TYPE_DATA_HOLDUP = 0x92
 };
 
 /**

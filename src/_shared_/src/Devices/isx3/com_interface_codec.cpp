@@ -1,13 +1,11 @@
 // Project includes
 #include <com_interface_codec.hpp>
+#include <is_payload.hpp>
+#include <isx3_ack_payload.hpp>
 
 namespace Devices {
 
 ComInterfaceCodec::ComInterfaceCodec() {}
-
-std::vector<unsigned char> ComInterfaceCodec::buildCmdXYZ() {
-  return std::vector<unsigned char>();
-}
 
 std::vector<unsigned char> ComInterfaceCodec::buildCmdResetSystem() {
   // Payload is empty.
@@ -110,8 +108,16 @@ ComInterfaceCodec::decodeMessage(std::vector<unsigned char> bytes) {
   }
 
   if (ISX3_COMMAND_TAG_ACK == commandTag) {
-    return shared_ptr<ReadPayload>();
-  } else if (ISX3_COMMAND_TAG_START_IMPEDANCE_MEAS == commandTag) {
+    Isx3AckType ackType;
+    bool decodeSuccess = this->decodeAck(payload, ackType);
+    if (decodeSuccess) {
+      return shared_ptr<Isx3AckPayload>(new Isx3AckPayload(ackType));
+    } else {
+      return shared_ptr<ReadPayload>();
+    }
+  }
+
+  else if (ISX3_COMMAND_TAG_START_IMPEDANCE_MEAS == commandTag) {
     short fNumber;
     float timestamp;
     short channelNumber;
@@ -120,9 +126,17 @@ ComInterfaceCodec::decodeMessage(std::vector<unsigned char> bytes) {
                                                    channelNumber, impedance);
     if (!decodeSuccess) {
       return shared_ptr<ReadPayload>();
+    } else {
+      return shared_ptr<ReadPayload>(
+          new IsPayload(channelNumber, timestamp,
+                        std::list<double>({static_cast<double>(fNumber)}),
+                        std::list<complex<double>>({impedance})));
     }
+  }
 
-
+  else {
+    // Command not known.
+    return shared_ptr<ReadPayload>();
   }
 }
 
@@ -237,6 +251,18 @@ bool ComInterfaceCodec::decodeImpedanceData(
   float imagPart = *((float *)&payload[15]);
   impedance = std::complex<float>({realPart, imagPart});
 
+  return true;
+}
+
+bool ComInterfaceCodec::decodeAck(const std::vector<unsigned char> &payload,
+                                  Isx3AckType &ackType) {
+
+  // Payload has to be exactly 1 item long.
+  if (payload.size() != 1) {
+    return false;
+  }
+
+  ackType = static_cast<Isx3AckType>(payload[0]);
   return true;
 }
 

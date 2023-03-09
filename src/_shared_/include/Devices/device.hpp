@@ -17,12 +17,21 @@ using namespace Utilities;
 namespace Devices {
 
 enum DeviceStatus {
+  /// Device status is not known.
   UNKNOWN_DEVICE_STATUS,
+  /// Device is initializing.
   INIT,
+  /// Device is configuring.
   CONFIGURE,
+  /// Device is operating and can accept commands.
   OPERATING,
+  /// Device is initialized, configured, not operating and is waiting for
+  /// commands.
   IDLE,
-  BUSY
+  /// Device is operating and can not accept commands.
+  BUSY,
+  /// Device ran into an error.
+  ERROR
 };
 
 /**

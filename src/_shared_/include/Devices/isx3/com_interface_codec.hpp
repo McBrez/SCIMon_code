@@ -26,12 +26,6 @@ public:
   ComInterfaceCodec();
 
   /**
-   * @brief Builds a XYZ command from the given arguments.
-   * @return std::vector<unsigned char>
-   */
-  std::vector<unsigned char> buildCmdXYZ();
-
-  /**
    * @brief Builds a Reset System command.
    * @return An Reset System command.
    */
@@ -184,6 +178,16 @@ private:
                            short &fNumber, float &timestamp,
                            short &channelNumber,
                            std::complex<float> &impedance);
+
+  /**
+   * @brief Decodes an acknowledgment payload received from the device.
+   *
+   * @param payload The payload that shall be decoded.
+   * @param ackType The acknowledgment type.
+   * @return TRUE if payload has been decoded successfully. FALSE otherwise.
+   */
+  bool decodeAck(const std::vector<unsigned char> &payload,
+                 Isx3AckType &ackType);
 };
 } // namespace Devices
 
