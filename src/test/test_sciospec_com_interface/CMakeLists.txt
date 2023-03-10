@@ -27,6 +27,7 @@ add_executable(test_sciospec_com_interface
     
     ${INCLUDE_DIR}/Messages/device_message.hpp
     ${INCLUDE_DIR}/Devices/isx3/com_interface_codec.hpp
+    ${INCLUDE_DIR}/Devices/isx3/isx3_command_buffer.hpp
     ${INCLUDE_DIR}/Devices/isx3/isx3_constants.hpp
     ${INCLUDE_DIR}/Devices/isx3/isx3_ack_payload.hpp
     ${INCLUDE_DIR}/Devices/read_payload.hpp
@@ -36,6 +37,7 @@ add_executable(test_sciospec_com_interface
     ${SOURCE_DIR}/Messages/device_message.cpp
     ${SOURCE_DIR}/Devices/isx3/com_interface_codec.cpp
     ${SOURCE_DIR}/Devices/isx3/isx3_ack_payload.cpp
+    ${SOURCE_DIR}/Devices/isx3/isx3_command_buffer.cpp
     ${SOURCE_DIR}/Devices/is_payload.cpp
 
     ${3RDPARTY_DIR}/catch2/single_include/catch2/catch.hpp

@@ -183,7 +183,7 @@ bool ComInterfaceCodec::unwrapPayload(const std::vector<unsigned char> &frame,
   // FIXME: A check if commandTag is valid is missing.
 
   // Frame seems good. Start unwraping.
-  payload = std::vector<unsigned char>(frame.begin() + 2, frame.end() - 2);
+  payload = std::vector<unsigned char>(frame.begin() + 2, frame.end() - 1);
   commandTag = static_cast<Isx3CmdTag>(frame.front());
   return true;
 }
@@ -244,7 +244,7 @@ bool ComInterfaceCodec::decodeImpedanceData(
     return false;
   }
 
-  fNumber = *((short *)&payload[1]);
+  fNumber = *((short *)&payload[0]);
   timestamp = *((float *)&payload[5]);
   channelNumber = *((short *)&payload[7]);
   float realPart = *((float *)&payload[11]);
