@@ -1,3 +1,6 @@
+// Standard includes
+#include <chrono>
+
 // 3rd party includes
 #include <easylogging++.h>
 
@@ -5,29 +8,60 @@
 #include <device_isx3.hpp>
 #include <device_status_message.hpp>
 #include <is_configuration.hpp>
+#include <isx3_ack_payload.hpp>
 #include <utilities.hpp>
 
 namespace Devices {
 
-const std::vector<unsigned char> DeviceIsx3::knownCommandTags = {
-    ISX3_COMMAND_TAG_ACK, ISX3_COMMAND_TAG_SET_SETUP};
+DeviceIsx3::DeviceIsx3()
+    : Device(), socketWrapper(),
+      isx3CommThreadState(ISX3_COMM_THREAD_STATE_INVALID),
+      pendingAck(ISX3_COMMAND_TAG_INVALID), doComm(false) {}
 
-DeviceIsx3::DeviceIsx3() : Device() {}
-
-DeviceIsx3::~DeviceIsx3(){};
+DeviceIsx3::~DeviceIsx3() {
+  this->doComm = false;
+  this->socketWrapper->close();
+};
 
 bool DeviceIsx3::write(shared_ptr<InitDeviceMessage> initMsg) {
-  // Try to cast the init message.
-  shared_ptr<InitMessageIsx3> castedMsg =
-      dynamic_pointer_cast<InitMessageIsx3>(initMsg);
-  if (!castedMsg) {
-    // Casting was not successful. Return here with an error code.
+  this->deviceState = DeviceStatus::UNKNOWN_DEVICE_STATUS;
+
+  // Try to downcast the payload.
+  shared_ptr<Isx3InitPayload> initPayload =
+      dynamic_pointer_cast<Isx3InitPayload>(initMsg->returnPayload());
+
+  if (!initPayload) {
     return false;
   }
 
-  // Start the OS specific initialization.
-  int retVal = this->initIsx3(castedMsg);
-  return retVal == 0 ? true : false;
+  this->initPayload = initPayload;
+
+  // NOTE: The following section is blocking. It would be better to not execute
+  // this in the write() function and rather handle it asyncronuously.
+  // Init the connection.
+  this->socketWrapper->close();
+  bool openSuccess = this->socketWrapper->open(
+      this->initPayload->getIpAddress(), this->initPayload->getPort());
+  if (!openSuccess) {
+    LOG(ERROR) << "Connection to ISX3 failed.";
+    return false;
+  }
+  // Initialize thread.
+  this->isx3CommThreadState = ISX3_COMM_THREAD_STATE_INIT;
+  this->doComm = true;
+  this->commThread =
+      unique_ptr<thread>(new thread(&DeviceIsx3::commThreadWorker, this));
+
+  // Wait until communication thread is listening.
+  while (this->isx3CommThreadState != ISX3_COMM_THREAD_STATE_LISTENING) {
+    this_thread::sleep_for(chrono::milliseconds(10));
+  }
+
+  // Send the init command.
+  this->pushToSendBuffer(this->comInterfaceCodec.buildCmdSetSetup());
+  this->deviceState = DeviceStatus::INIT;
+
+  return true;
 }
 
 bool DeviceIsx3::write(shared_ptr<ConfigDeviceMessage> configMsg) {
@@ -35,103 +69,119 @@ bool DeviceIsx3::write(shared_ptr<ConfigDeviceMessage> configMsg) {
   return this->configure(configMsg->getConfiguration());
 }
 
-bool DeviceIsx3::write(shared_ptr<WriteDeviceMessage> writeMsg) {
-  if (WriteDeviceTopic::RUN_TOPIC == writeMsg->getTopic()) {
-    // Start the device.
+string DeviceIsx3::getDeviceTypeName() { return ""; }
 
-  } else {
-    // Unusupported topic.
-    return false;
-  }
+void DeviceIsx3::pushToSendBuffer(const std::vector<unsigned char> &bytes) {
+  this->sendBufferMutex.lock();
+  this->sendBuffer.push_back(bytes);
+  this->sendBufferMutex.unlock();
 }
 
-shared_ptr<ReadDeviceMessage> DeviceIsx3::read() {
-  int bytesRead = this->readFromIsx3();
-  LOG(DEBUG) << "Read " << bytesRead << " bytes from ISX3.";
+void DeviceIsx3::commThreadWorker() {
 
-  std::string bufferContent;
-  for (char ch : this->readBuffer) {
-    bufferContent += ch;
-  }
-
-  LOG(DEBUG) << "Buffer content: " << bufferContent;
-
-  // Try to extract a frame from the read buffer.
-  return this->interpretBuffer(this->readBuffer);
-}
-
-shared_ptr<ReadDeviceMessage>
-DeviceIsx3::interpretBuffer(std::vector<unsigned char> &readBuffer) {
-  // Find new line character, which terminates commands.
-  LOG(DEBUG) << "Interpreting the buffer content: "
-             << string(this->readBuffer.begin(), this->readBuffer.end());
-  auto cmdTermination = std::find(readBuffer.begin(), readBuffer.end(), '\n');
-  if (cmdTermination == readBuffer.end()) {
-    // No command found. Return here.
-    LOG(DEBUG) << "No command terminator found. Returning empty message";
-    return shared_ptr<ReadDeviceMessage>();
-  }
-  // Parse buffer into string.
-  string command(readBuffer.begin(), cmdTermination - 1);
-  // Remove the extracted string from the buffer.
-  // TODO: Erasing from the front of a vector is quite inefficient. Replacing
-  // the vector with a list should be more efficient.
-  this->readBuffer.erase(readBuffer.begin(), ++cmdTermination);
-
-  // Split the extracted string.
-  unsigned char commandSplitToken = ' ';
-
-  vector<string> splittedCmd = Utilities::split(command, commandSplitToken);
-  if (splittedCmd.size() == 0) {
-    // No command found. Return here.
-    LOG(DEBUG) << "No command found. Returning empty message";
-    return shared_ptr<ReadDeviceMessage>();
-  }
-
-  // Check the first field.
-  if ("ack" == splittedCmd[0]) {
-    // This is an acknowledge. Return it.
-    LOG(DEBUG) << "Found acknowledge";
-    return shared_ptr<ReadDeviceMessage>(new ReadDeviceMessage("ack"));
-  }
-
-  else if ("deviceStatus" == splittedCmd[0]) {
-    // This is a response to the getDeviceStatus command. The second field
-    // contains the device status. Check if the decoded string vector is long
-    // enough.
-    if (splittedCmd.size() < 2) {
-      // It is not. Return here.
-      return shared_ptr<ReadDeviceMessage>();
+  while (this->doComm) {
+    if (ISX3_COMM_THREAD_STATE_INVALID == this->isx3CommThreadState) {
+      LOG(ERROR) << "ISX3 Communication thread transitioned into invalid "
+                    "state. Communication thread is shutting down.";
+      this->doComm = false;
     }
 
-    // Check the status.
-    if ("busy" == splittedCmd[1]) {
-      return shared_ptr<ReadDeviceMessage>(
-          new DeviceStatusMessage(DeviceStatus::BUSY));
-    } else if ("idle" == splittedCmd[1]) {
-      return shared_ptr<ReadDeviceMessage>(
-          new DeviceStatusMessage(DeviceStatus::IDLE));
-    } else {
-      return shared_ptr<ReadDeviceMessage>(
-          new DeviceStatusMessage(DeviceStatus::UNKNOWN_DEVICE_STATUS));
+    else if (ISX3_COMM_THREAD_STATE_INIT == this->isx3CommThreadState) {
+      // Clear all buffers and transition into init.
+      this->sendBuffer.clear();
+      this->socketWrapper->clear();
+      this->isx3CommThreadState = ISX3_COMM_THREAD_STATE_LISTENING;
+    }
+
+    else if (ISX3_COMM_THREAD_STATE_LISTENING == this->isx3CommThreadState) {
+      // Read from socket.
+      vector<unsigned char> buffer;
+      int readBytes = this->socketWrapper->read(buffer);
+      this->commandBuffer.pushBytes(buffer);
+      vector<unsigned char> frame = this->commandBuffer.interpretBuffer();
+      shared_ptr<ReadPayload> decodedPayload =
+          this->comInterfaceCodec.decodeMessage(frame);
+
+      // If there something in the write buffer, write it to the socket.
+      // Transition to ISX3_COMM_THREAD_STATE_WAITING_FOR_ACK.
+      if (!this->sendBuffer.empty()) {
+        this->sendBufferMutex.lock();
+
+        vector<unsigned char> frame = this->sendBuffer.front();
+        this->sendBuffer.pop_front();
+        this->pendingAck = static_cast<Isx3CmdTag>(frame.front());
+        this->socketWrapper->write(frame);
+
+        this->sendBufferMutex.unlock();
+
+        this->isx3CommThreadState = ISX3_COMM_THREAD_STATE_WAITING_FOR_ACK;
+      }
+
+    }
+
+    else if (ISX3_COMM_THREAD_STATE_WAITING_FOR_ACK ==
+             this->isx3CommThreadState) {
+      // Only read from socket. If the ack has been received transition back to
+      // ISX3_COMM_THREAD_STATE_LISTENING.
+
+      // Read from socket.
+      vector<unsigned char> buffer;
+      int readBytes = this->socketWrapper->read(buffer);
+      this->commandBuffer.pushBytes(buffer);
+      vector<unsigned char> frame = this->commandBuffer.interpretBuffer();
+      shared_ptr<ReadPayload> decodedPayload =
+          this->comInterfaceCodec.decodeMessage(frame);
+
+      if (!decodedPayload) {
+        // Nothing could be decoded.
+        continue;
+      }
+
+      // Decide what to do with the extracted payload.
+      // Try to cast it to a ack payload.
+      shared_ptr<Isx3AckPayload> ackPayload =
+          dynamic_pointer_cast<Isx3AckPayload>(decodedPayload);
+      if (ackPayload) {
+        if (ackPayload->getCmdTag() == this->pendingAck)
+          LOG(INFO) << "Got ACK for Command " << this->pendingAck;
+        this->isx3CommThreadState = ISX3_COMM_THREAD_STATE_LISTENING;
+        this->pendingAck = ISX3_COMMAND_TAG_INVALID;
+      } else {
+        // Try to cast it to an impedance spectrum.
+        shared_ptr<IsPayload> isPayload =
+            dynamic_pointer_cast<IsPayload>(decodedPayload);
+        if (isPayload) {
+          // Impedance spectrum data from an ISX3 device is received one
+          // frequency point at a time. Aggregate the frequency point until the
+          // whole spectrum is ready to be transmitted.
+        }
+      }
+    }
+
+    else {
+      // Unknown state. Transition back to ISX3_COMM_THREAD_STATE_INVALID.
+      this->isx3CommThreadState = ISX3_COMM_THREAD_STATE_INVALID;
     }
   }
 
-  else if ("error" == splittedCmd[0]) {
-    // Error has been returned. They are not handled yet, so return an empty
-    // message.
-    LOG(DEBUG) << "Device returner an error: \"" << command << "\".";
-    return shared_ptr<ReadDeviceMessage>();
-  }
-
-  else {
-    // Could not extract a valid message. Return the analyzed part of the buffer
-    // as message.
-    LOG(DEBUG) << "Found unsupported message: " << command;
-    return shared_ptr<ReadDeviceMessage>(new ReadDeviceMessage(command));
-  }
+  this->isx3CommThreadState = ISX3_COMM_THREAD_STATE_CLOSED;
 }
 
-string DeviceIsx3::getDeviceTypeName() { return Isx3DeviceTypeName; }
+bool DeviceIsx3::configure(
+    shared_ptr<DeviceConfiguration> deviceConfiguration) {
+  return false;
+}
+
+bool DeviceIsx3::start() { return false; }
+
+bool DeviceIsx3::stop() { return false; }
+
+bool DeviceIsx3::specificWrite(shared_ptr<WriteDeviceMessage> writeMsg) {
+  return false;
+}
+
+list<shared_ptr<DeviceMessage>> DeviceIsx3::specificRead(TimePoint timestamp) {
+  return list<shared_ptr<DeviceMessage>>();
+}
 
 } // namespace Devices

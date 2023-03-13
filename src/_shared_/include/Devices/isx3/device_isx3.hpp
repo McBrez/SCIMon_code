@@ -2,71 +2,134 @@
 #define DEVICE_ISX3_HPP
 
 // Standard includes
+#include <list>
+#include <map>
+#include <memory>
+#include <mutex>
+#include <thread>
 #include <vector>
 
 // Project includes
+#include <com_interface_codec.hpp>
 #include <device.hpp>
-#include <init_message_isx3.hpp>
+#include <is_payload.hpp>
+#include <isx3_command_buffer.hpp>
 #include <isx3_constants.hpp>
+#include <isx3_init_payload.hpp>
+#include <socket_wrapper.hpp>
+
+using namespace Utilities;
 
 namespace Devices {
+
+enum Isx3CommThreadState {
+  ISX3_COMM_THREAD_STATE_INVALID,
+  ISX3_COMM_THREAD_STATE_INIT,
+  ISX3_COMM_THREAD_STATE_LISTENING,
+  ISX3_COMM_THREAD_STATE_WAITING_FOR_ACK,
+  ISX3_COMM_THREAD_STATE_CLOSED,
+};
+
+/**
+ * @brief Depcits an Sciosepc ISX3 device.
+ */
 class DeviceIsx3 : public Device {
 public:
+  /**
+   * @brief Construct a new Device Isx 3 object
+   */
   DeviceIsx3();
-  virtual ~DeviceIsx3() = 0;
+
+  /**
+   * @brief Destroy the Device Isx 3 object
+   */
+  virtual ~DeviceIsx3() override;
 
   /**
    * @brief Return the name of the device type.
-   *
    * @return The device type name.
    */
   virtual string getDeviceTypeName() override;
 
-  bool isConfigured();
   virtual bool write(shared_ptr<InitDeviceMessage> initMsg) override;
-  virtual bool write(shared_ptr<WriteDeviceMessage> writeMsg) override;
+
   virtual bool write(shared_ptr<ConfigDeviceMessage> configMsg) override;
-  virtual shared_ptr<ReadDeviceMessage> read() override;
+
+  virtual bool specificWrite(shared_ptr<WriteDeviceMessage> writeMsg) override;
+
+  virtual list<shared_ptr<DeviceMessage>>
+  specificRead(TimePoint timestamp) override;
+
+  /**
+   * Configures the device according to the given configuration.
+   * @param deviceConfiguration The configuration that shall be applied to the
+   * device.
+   * @return TRUE if configuration was successful. False otherwise.
+   */
+  virtual bool
+  configure(shared_ptr<DeviceConfiguration> deviceConfiguration) override;
+
+  /**
+   * @brief Starts the operation of the device, provided that there is an valid
+   * configuration.
+   * @return TRUE if device has been started. FALSE if an error occured.
+   */
+  virtual bool start() override;
+
+  /**
+   * @brief Stops the operation of the device.
+   * @return TRUE if device has been started. FALSE if an error occured.
+   */
+  virtual bool stop() override;
 
 private:
-  /// Vector of known command tags.
-  static const std::vector<unsigned char> knownCommandTags;
-
-protected:
-  /// Buffer for read operations to the device.
-  std::vector<unsigned char> readBuffer;
+  /**
+   * @brief Worker function for the communication thread.
+   */
+  void commThreadWorker();
 
   /**
-   * @brief Interprets the buffer and generates corresponding messages.
-   *
-   * @return A message that could be extracted from the read buffer. Empty
-   * pointer, if no message could be retrieved.
+   * @brief Pushes the given COM Interface dataframe to the send buffer.
+   * @param bytes The bytes that shall be pushed to the send buffer.
    */
-  shared_ptr<ReadDeviceMessage>
-  interpretBuffer(std::vector<unsigned char> &readBuffer);
+  void pushToSendBuffer(const std::vector<unsigned char> &frame);
 
-  /**
-   * The OS-specific part of the write operation.
-   *
-   * @param command The command that shall be written to the device.
-   * @param force If TRUE, forces the write operation. I.e. checks if the device
-   * is initialized are omitted.
-   * @return int The count of bytes that have been written to the device. -1
-   * if an error ocurred.
-   */
-  virtual int writeToIsx3(const std::vector<unsigned char> &command,
-                          bool force = false) = 0;
+  /// Pointer to the communication thread.
+  unique_ptr<thread> commThread;
 
-  virtual int readFromIsx3() = 0;
+  /// Pointer to a wrapper that provides platform independent socket
+  /// functionality.
+  unique_ptr<SocketWrapper> socketWrapper;
 
-  /**
-   * The OS-specific part of the initialization. Is called, when an
-   * initialization message has been received.
-   *
-   * @param initMsg The init message that triggered this call.
-   * @return 0 If no error occured. Error code otherwise.
-   */
-  virtual int initIsx3(shared_ptr<InitMessageIsx3> initMsg) = 0;
+  /// Allows extraction of data frames from the data received from the socket.
+  Isx3CommandBuffer commandBuffer;
+
+  /// Allows encoding and decoding of Sciospec COM Interface frames.
+  ComInterfaceCodec comInterfaceCodec;
+
+  /// Maps from frequency point index to the actual frequency value.
+  map<int, double> frequencyPointMap;
+
+  /// The init payload with which the device is initialized.
+  shared_ptr<Isx3InitPayload> initPayload;
+
+  /// The send frame buffer for the communication to the device.
+  list<vector<unsigned char>> sendBuffer;
+
+  /// Mutex that guards the sendBuffer.
+  mutex sendBufferMutex;
+
+  /// State of the communication thread.
+  Isx3CommThreadState isx3CommThreadState;
+
+  /// Caches the type of acknowledgment message, that is waited for.
+  Isx3CmdTag pendingAck;
+
+  /// Flag that indicates that the communication thread should do its work.
+  bool doComm;
+
+  /// Holds the received impedance spectrums until they are ready to be send.
+  list<IsPayload> impedanceSpectrumBuffer;
 };
 } // namespace Devices
 

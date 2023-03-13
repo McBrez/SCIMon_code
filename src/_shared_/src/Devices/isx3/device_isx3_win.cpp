@@ -15,29 +15,6 @@
 
 namespace Devices {
 
-const std::string DeviceIsx3Win::telnetExecutableName =
-    "plink -batch -telnet -P {0} {1}";
-
-const std::string DeviceIsx3Win::cmdTemplateReset = "reset\n";
-
-const std::string DeviceIsx3Win::cmdTemplateGetDeviceStatus =
-    "getDeviceStatus\n";
-
-// {0} ... start frequency
-// {1} ... end frequency
-// {2} ... scale; 0 for linear, 1 for logarithmic
-// {3} ... count of measurement points
-// {4} ... count of measurements; 0 for continuous measurement
-// {5} ... channel; BNC, MEA or EXTMUX32
-// {6} ... precision
-// {7} ... aimplitude in mV
-// {8} ... impedance range; 0 for kilo ohm, 1 for mega ohm
-// {9} ... frequency resolution; 1 for <100kHz, 2 for <1Mhz, 3 for <10Mhz
-const std::string DeviceIsx3Win::cmdTemplateSetupParams =
-    "setupParams {0:.1f},{1:.1f},{2},{3},{4},{5},{6:.1f},{7:.1f},{8},{9}\n";
-
-const std::string DeviceIsx3Win::cmdTemplateSendSetup = "sendSetup\n";
-
 const double DeviceIsx3Win::initTimeout = 10;
 
 DeviceIsx3Win::DeviceIsx3Win() {

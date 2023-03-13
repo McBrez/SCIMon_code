@@ -3,10 +3,13 @@
 
 namespace Devices {
 
-Isx3AckPayload::Isx3AckPayload(Isx3AckType ackType) : ackType(ackType) {}
+Isx3AckPayload::Isx3AckPayload(Isx3AckType ackType, Isx3CmdTag cmdTag)
+    : ackType(ackType), cmdTag(cmdTag) {}
 
 string Isx3AckPayload::serialize() { return ""; }
 
 Isx3AckType Isx3AckPayload::getAckType() { return this->ackType; }
+
+Isx3CmdTag Isx3AckPayload::getCmdTag() { return this->cmdTag; }
 
 } // namespace Devices

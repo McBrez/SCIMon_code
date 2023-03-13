@@ -14,24 +14,9 @@
 #define READ_BUFFER_SIZE 4096
 
 namespace Devices {
-/// @brief
+
 class DeviceIsx3Win : public DeviceIsx3 {
 public:
-  /// The name of the executable, that is used to communicate via telnet.
-  static const std::string telnetExecutableName;
-
-  /// The template for the reset command.
-  static const std::string cmdTemplateReset;
-
-  /// The template for the setupParams command.
-  static const std::string cmdTemplateSetupParams;
-
-  /// The template for the getDeviceStatus command.
-  static const std::string cmdTemplateGetDeviceStatus;
-
-  /// The template for the sendSetup command.
-  static const std::string cmdTemplateSendSetup;
-
   /// The count of seconds it is waited on the response of the device during
   /// init.
   static const double initTimeout;

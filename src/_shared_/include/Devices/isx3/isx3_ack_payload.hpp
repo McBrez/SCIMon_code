@@ -16,7 +16,7 @@ public:
    * @brief Construct a new Isx 3 Ack Payload object
    * @param ackType The acknowledgement type this object shall hold.
    */
-  Isx3AckPayload(Isx3AckType ackType);
+  Isx3AckPayload(Isx3AckType ackType, Isx3CmdTag cmdTag);
 
   /**
    * @brief Serializes the payload into a human readable string.
@@ -26,9 +26,14 @@ public:
 
   Isx3AckType getAckType();
 
+  Isx3CmdTag getCmdTag();
+
 private:
   /// The acknowledgement type.
   Isx3AckType ackType;
+
+  /// The original command to which this acknowledgment refers to.
+  Isx3CmdTag cmdTag;
 };
 } // namespace Devices
 

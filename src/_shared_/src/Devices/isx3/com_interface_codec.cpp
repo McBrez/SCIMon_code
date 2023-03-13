@@ -111,7 +111,8 @@ ComInterfaceCodec::decodeMessage(std::vector<unsigned char> bytes) {
     Isx3AckType ackType;
     bool decodeSuccess = this->decodeAck(payload, ackType);
     if (decodeSuccess) {
-      return shared_ptr<Isx3AckPayload>(new Isx3AckPayload(ackType));
+      return shared_ptr<Isx3AckPayload>(
+          new Isx3AckPayload(ackType, commandTag));
     } else {
       return shared_ptr<ReadPayload>();
     }

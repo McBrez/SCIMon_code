@@ -21,7 +21,10 @@ enum DeviceStatus {
  */
 class DeviceStatusMessage : public ReadDeviceMessage {
 public:
-  DeviceStatusMessage(DeviceStatus deviceStatus,
+  DeviceStatusMessage(shared_ptr<MessageInterface> source,
+                      ReadDeviceTopic topic, ReadPayload *readPayload,
+                      shared_ptr<WriteDeviceMessage> originalMessage,
+                      DeviceStatus deviceStatus,
                       string additionalInformation = "");
 
   DeviceStatus getDeviceStatus();

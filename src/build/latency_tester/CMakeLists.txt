@@ -31,16 +31,13 @@ add_executable(latency_tester
     ${INCLUDE_DIR}/Messages/write_device_message.hpp
     ${INCLUDE_DIR}/Messages/config_device_message.hpp
     ${INCLUDE_DIR}/Messages/init_device_message.hpp
-    ${INCLUDE_DIR}/Messages/read_spectrum_message.hpp
     ${INCLUDE_DIR}/Devices/isx3/device_isx3.hpp
-    ${INCLUDE_DIR}/Messages/isx3/init_message_isx3.hpp
     ${INCLUDE_DIR}/Control/main_control.hpp
 
     ${SOURCE_DIR}/Devices/device.cpp
     ${SOURCE_DIR}/Devices/device_configuration.cpp
     ${SOURCE_DIR}/Messages/device_message.cpp
     ${SOURCE_DIR}/Devices/isx3/device_isx3.cpp
-    ${SOURCE_DIR}/Messages/isx3/init_message_isx3.cpp
     ${SOURCE_DIR}/Control/main_control.cpp
 
     ${3RDPARTY_DIR}/easyloggingpp/src/easylogging++.cc

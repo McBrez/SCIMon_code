@@ -12,6 +12,7 @@ add_subdirectory(${TEST_DIR}/test_ob1)
 add_subdirectory(${TEST_DIR}/test_is_measurement)
 add_subdirectory(${TEST_DIR}/test_utility)
 add_subdirectory(${TEST_DIR}/test_sciospec_com_interface)
+add_subdirectory(${TEST_DIR}/test_epix)
 
 #add_test(NAME build_test_utility COMMAND test_utility)
 #add_test(NAME build_test_ob1 COMMAND test_ob1)
