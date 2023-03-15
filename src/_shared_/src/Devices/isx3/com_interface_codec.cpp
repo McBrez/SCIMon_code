@@ -1,5 +1,6 @@
 // Project includes
 #include <com_interface_codec.hpp>
+#include <id_payload.hpp>
 #include <is_payload.hpp>
 #include <isx3_ack_payload.hpp>
 
@@ -19,6 +20,33 @@ std::vector<unsigned char> ComInterfaceCodec::buildCmdGetDeviceId() {
   std::vector<unsigned char> payload;
 
   return this->wrapPayload(payload, Isx3CmdTag::ISX3_COMMAND_GET_DEVICE_ID);
+}
+
+std::vector<unsigned char> ComInterfaceCodec::buildCmdSetFeSettings(
+    MeasurementConfiguration measConf,
+    MeasurmentConfigurationChannel measConfChannel,
+    MeasurmentConfigurationRange measConfRange) {
+
+  std::vector<unsigned char> payload;
+  payload.push_back(static_cast<unsigned char>(measConf));
+  payload.push_back(static_cast<unsigned char>(measConfChannel));
+  payload.push_back(static_cast<unsigned char>(measConfRange));
+
+  return this->wrapPayload(payload,
+                           Isx3CmdTag::ISX3_COMMAND_TAG_SET_FE_SETTINGS);
+}
+
+std::vector<unsigned char> ComInterfaceCodec::buildCmdSetExtensionPortChannel(
+    int counterPort, int referencePort, int workingSensePort, int workPort) {
+
+  std::vector<unsigned char> payload;
+  payload.push_back(static_cast<unsigned char>(counterPort));
+  payload.push_back(static_cast<unsigned char>(referencePort));
+  payload.push_back(static_cast<unsigned char>(workingSensePort));
+  payload.push_back(static_cast<unsigned char>(workPort));
+
+  return this->wrapPayload(
+      payload, Isx3CmdTag::ISX3_COMMAND_TAG_SET_EXTENSIONPORT_CHANNEL);
 }
 
 std::vector<unsigned char>
@@ -132,6 +160,29 @@ ComInterfaceCodec::decodeMessage(std::vector<unsigned char> bytes) {
           new IsPayload(channelNumber, timestamp,
                         std::list<double>({static_cast<double>(fNumber)}),
                         std::list<complex<double>>({impedance})));
+    }
+  }
+
+  else if (ISX3_COMMAND_GET_DEVICE_ID == commandTag) {
+    unsigned char formatVersion;
+    short deviceIdentifier;
+    short serialNumber;
+    int dateOfDeliveryYear;
+    int dateOfDeliveryMonth;
+    bool decodeSuccess = this->decodeDeviceId(
+        payload, formatVersion, deviceIdentifier, serialNumber,
+        dateOfDeliveryYear, dateOfDeliveryMonth);
+    if (!decodeSuccess) {
+      return shared_ptr<ReadPayload>();
+    } else {
+      shared_ptr<IdPayload> idPayload(
+          new IdPayload("Sciospec", DeviceType::IMPEDANCE_SPECTROMETER,
+                        deviceIdentifier, serialNumber));
+      string dateOfDeliveryString =
+          "Date of Delivery: " + to_string(dateOfDeliveryMonth) + "." +
+          to_string(dateOfDeliveryYear);
+      idPayload->setAdditionalData(dateOfDeliveryString);
+      return idPayload;
     }
   }
 
@@ -264,6 +315,25 @@ bool ComInterfaceCodec::decodeAck(const std::vector<unsigned char> &payload,
   }
 
   ackType = static_cast<Isx3AckType>(payload[0]);
+  return true;
+}
+
+bool ComInterfaceCodec::decodeDeviceId(
+    const std::vector<unsigned char> &payload, unsigned char &formatVersion,
+    short &deviceIdentifier, short &serialNumber, int &dateOfDeliveryYear,
+    int &dateOfDeliveryMonth) {
+
+  // Payload of an device id frame has to be at least 7 bytes long.
+  if (payload.size() < 7) {
+    return false;
+  }
+
+  formatVersion = payload[0];
+  deviceIdentifier = (payload[1] << 8) + payload[2];
+  serialNumber = (payload[3] << 8) + payload[4];
+  dateOfDeliveryYear = payload[5] + 2010;
+  dateOfDeliveryMonth = payload[6];
+
   return true;
 }
 

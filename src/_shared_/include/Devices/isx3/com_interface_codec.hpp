@@ -49,6 +49,31 @@ public:
   std::vector<unsigned char>
   buildCmdInitMeasurement(bool readWrite, MeasurementMode measurementMode);
 
+  /**
+   * @brief Builds a "Set FE Settings" command from the given arguments.
+   * @param measConf The measurement configuration mode that shall be set.
+   * @param measConfChannel The front end channel that shall be used.
+   * @param measConfRange The front end measurement range that shall be used.
+   * @return A "Set FE Settings" command that represents the given arguments.
+   */
+  std::vector<unsigned char>
+  buildCmdSetFeSettings(MeasurementConfiguration measConf,
+                        MeasurmentConfigurationChannel measConfChannel,
+                        MeasurmentConfigurationRange measConfRange);
+
+  /**
+   * @brief Builds an "Set ExtensionPort Channel" command from the given
+   * arguments.
+   * @param counterPort The number of the counter port.
+   * @param referencePort The number of the reference port.
+   * @param workingSensePort The number of the working sense port.
+   * @param workPort The number of the work port.
+   * @return A "Set ExtensionPort Channel" command .
+   */
+  std::vector<unsigned char>
+  buildCmdSetExtensionPortChannel(int counterPort, int referencePort,
+                                  int workingSensePort, int workPort);
+
   // ------------------------------------------------- Impedance Measurement --
 
   /**
@@ -188,6 +213,22 @@ private:
    */
   bool decodeAck(const std::vector<unsigned char> &payload,
                  Isx3AckType &ackType);
+
+  /**
+   * @brief Decodes an "GetDeviceId" frame.
+   *
+   * @param payload The payload that shall be decoded.
+   * @param formatVersion The version of the device id format.
+   * @param deviceIdentifier The identifier for the device type.
+   * @param serialNumber The serial number of the device.
+   * @param dateOfDeliveryYear The year the device has been delivered.
+   * @param dateOfDeliveryMonth The month the device has been delivered.
+   * @return TRUE if frame has been decoded succesfully. False otherwise.
+   */
+  bool decodeDeviceId(const std::vector<unsigned char> &payload,
+                      unsigned char &formatVersion, short &deviceIdentifier,
+                      short &serialNumber, int &dateOfDeliveryYear,
+                      int &dateOfDeliveryMonth);
 };
 } // namespace Devices
 

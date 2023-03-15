@@ -18,7 +18,10 @@ WinSocket::WinSocket()
     : connectSocket(INVALID_SOCKET), isConnected(false),
       recvbuf(new char[WIN_SOCKET_DEFAULT_BUFFER_LEN]) {}
 
-WinSocket::~WinSocket() { delete[] recvbuf; }
+WinSocket::~WinSocket() {
+  this->close();
+  delete[] recvbuf;
+}
 
 bool WinSocket::open(string ip, int port) {
   WSADATA wsaData;
@@ -93,6 +96,7 @@ bool WinSocket::close() {
 
   closesocket(this->connectSocket);
   WSACleanup();
+  this->isConnected = false;
   return true;
 }
 

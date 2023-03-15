@@ -38,7 +38,9 @@ add_executable(test_epix
     ${INCLUDE_DIR}/Devices/device.hpp
     ${INCLUDE_DIR}/Devices/device_configuration.hpp
     ${INCLUDE_DIR}/Devices/is_configuration.hpp
+    ${INCLUDE_DIR}/Devices/read_payload.hpp
     ${INCLUDE_DIR}/Devices/is_payload.hpp
+    ${INCLUDE_DIR}/Devices/id_payload.hpp
     ${INCLUDE_DIR}/Devices/init_payload.hpp
     ${INCLUDE_DIR}/Utilities/utilities.hpp
     ${INCLUDE_DIR}/Utilities/socket_wrapper.hpp
@@ -55,7 +57,9 @@ add_executable(test_epix
     ${SOURCE_DIR}/Devices/device.cpp
     ${SOURCE_DIR}/Devices/device_configuration.cpp
     ${SOURCE_DIR}/Devices/is_configuration.cpp
+    ${SOURCE_DIR}/Devices/read_payload.cpp
     ${SOURCE_DIR}/Devices/is_payload.cpp
+    ${SOURCE_DIR}/Devices/id_payload.cpp
     ${SOURCE_DIR}/Devices/isx3/device_isx3.cpp
     ${SOURCE_DIR}/Devices/isx3/isx3_init_payload.cpp
     ${SOURCE_DIR}/Devices/isx3/com_interface_codec.cpp

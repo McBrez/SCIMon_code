@@ -18,6 +18,10 @@ enum Isx3CmdTag {
   ISX3_COMMAND_TAG_ACK = 0x18,
   /// Command tag for the "Reset System" command.
   ISX3_COMMAND_TAG_RESET_SYSTEM = 0xA1,
+  /// Command tag for the "Set FE Settings" command.
+  ISX3_COMMAND_TAG_SET_FE_SETTINGS = 0xB0,
+  /// Command tag for the "Set ExtensionPort Channel" command.
+  ISX3_COMMAND_TAG_SET_EXTENSIONPORT_CHANNEL = 0xB2,
   /// Command tag for the "Get Device Id" command.
   ISX3_COMMAND_GET_DEVICE_ID = 0xD1,
   /// Command tag for an "Init Measurement" command.
@@ -88,6 +92,47 @@ enum FrequencyScale {
   FREQ_SCALE_LINEAR = 0x00,
   /// Logarithmic axis scaling.
   FREQ_SCALE_LOGARITHMIC = 0x01
+};
+
+/**
+ * @brief Identifies the possible measurement configurations.
+ */
+enum MeasurementConfiguration {
+  MEAS_CONFIG_INVALID = 0xFF,
+
+  MEAS_CONFIG_2_POINT = 0x01,
+
+  MEAS_CONFIG_3_POINT = 0x03,
+
+  MEAS_CONFIG_4_POINT = 0x02,
+};
+
+/**
+ * @brief Identifies the possible front end channel configuration.
+ */
+enum MeasurmentConfigurationChannel {
+  MEAS_CONFIG_CHANNEL_INVALID = 0xFF,
+
+  MEAS_CONFIG_CHANNEL_BNC = 0x01,
+
+  MEAS_CONFIG_CHANNEL_EXT_PORT = 0x02,
+
+  MEAS_CONFIG_CHANNEL_EXT_PORT_2 = 0x03
+};
+
+/**
+ * @brief Identifies the possible front end measurement ranges.
+ */
+enum MeasurmentConfigurationRange {
+  MEAS_CONFIG_RANGE_INVALID = 0xFF,
+
+  MEAS_CONFIG_RANGE_10MA = 0x01,
+
+  MEAS_CONFIG_RANGE_100UA = 0x02,
+
+  MEAS_CONFIG_RANGE_1UA = 0x04,
+
+  MEAS_CONFIG_RANGE_10NA = 0x06
 };
 
 } // namespace Devices

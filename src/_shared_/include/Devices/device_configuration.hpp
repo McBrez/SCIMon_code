@@ -9,11 +9,14 @@ enum DeviceType {
   // Invalid device type.
   INVALID = -1,
 
+  /// Unspecified device type.
+  UNSPECIFIED = 0,
+
   // A pump controller
   PUMP_CONTROLLER = 1,
 
   // An impedance spectrometer.
-  IMPEDANCE_SPECTROMETER
+  IMPEDANCE_SPECTROMETER = 2
 };
 
 /**
