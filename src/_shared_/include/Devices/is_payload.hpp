@@ -42,11 +42,11 @@ public:
   IsPayload(unsigned int channelNumber, double timestamp,
             list<double> frequencies, list<complex<double>> impedances);
 
-  unsigned int getChannelNumber();
+  unsigned int getChannelNumber() const;
 
-  double getTimestamp();
+  double getTimestamp() const;
 
-  ImpedanceSpectrum getImpedanceSpectrum();
+  ImpedanceSpectrum getImpedanceSpectrum() const;
 
   /**
    * @brief Serializes the payload into a human readable string.

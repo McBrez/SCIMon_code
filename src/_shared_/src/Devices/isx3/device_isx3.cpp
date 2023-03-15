@@ -153,7 +153,14 @@ void DeviceIsx3::commThreadWorker() {
         if (isPayload) {
           // Impedance spectrum data from an ISX3 device is received one
           // frequency point at a time. Aggregate the frequency point until the
-          // whole spectrum is ready to be transmitted.
+          // whole spectrum is ready to be transmitted. If the timestamp
+          // changes, the spectrum is assumed as completed.
+          if (this->impedanceSpectrumBuffer.back().getTimestamp() !=
+              isPayload->getTimestamp()) {
+
+            this->coalesceImpedanceSpectrums(this->impedanceSpectrumBuffer,
+                                             this->frequencyPointMap);
+          }
         }
       }
     }
@@ -182,6 +189,29 @@ bool DeviceIsx3::specificWrite(shared_ptr<WriteDeviceMessage> writeMsg) {
 
 list<shared_ptr<DeviceMessage>> DeviceIsx3::specificRead(TimePoint timestamp) {
   return list<shared_ptr<DeviceMessage>>();
+}
+
+shared_ptr<ReadPayload> DeviceIsx3::coalesceImpedanceSpectrums(
+    const list<IsPayload> &impedanceSpectrums,
+    const map<int, double> &frequencyPointMap) {
+
+  if (impedanceSpectrums.empty()) {
+    return shared_ptr<IsPayload>();
+  }
+
+  list<double> frequencyValues;
+  list<std::complex<double>> impedances;
+  int channelNumber = impedanceSpectrums.front().getChannelNumber();
+  double timestamp = impedanceSpectrums.front().getTimestamp();
+  for (auto impedanceSpectrum : impedanceSpectrums) {
+    ImpedanceSpectrum impedanceSpectrumObject =
+        impedanceSpectrum.getImpedanceSpectrum();
+    double frequencyPoint = get<0>(impedanceSpectrumObject.front());
+    std::complex<double> impedance = get<1>(impedanceSpectrumObject.front());
+  }
+
+  return shared_ptr<IsPayload>(
+      new IsPayload(channelNumber, timestamp, frequencyValues, impedances));
 }
 
 } // namespace Devices

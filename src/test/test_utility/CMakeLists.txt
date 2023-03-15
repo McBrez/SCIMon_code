@@ -28,4 +28,4 @@ add_executable(test_utility
 )
 
 # Enforce C++20
-set_property(TARGET test_isx3 PROPERTY CXX_STANDARD 20)
+set_property(TARGET test_utility PROPERTY CXX_STANDARD 20)

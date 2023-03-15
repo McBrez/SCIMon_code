@@ -12,13 +12,10 @@ include_directories(
     ${INCLUDE_DIR}/Devices/isx3
     ${INCLUDE_DIR}/Core
     ${INCLUDE_DIR}/Messages
+    ${INCLUDE_DIR}/Utilities
 
     ${3RDPARTY_DIR}/easyloggingpp/src
     ${3RDPARTY_DIR}/catch2/single_include
-)
-
-link_directories(
-    ${3RDPARTY_DIR}/ftd2xx/lib/amd64
 )
 
 add_executable(test_sciospec_com_interface
@@ -33,12 +30,14 @@ add_executable(test_sciospec_com_interface
     ${INCLUDE_DIR}/Devices/read_payload.hpp
     ${INCLUDE_DIR}/Devices/is_payload.hpp
     ${INCLUDE_DIR}/Core/common.hpp
+    ${INCLUDE_DIR}/Utilities/socket_wrapper.hpp
     
     ${SOURCE_DIR}/Messages/device_message.cpp
     ${SOURCE_DIR}/Devices/isx3/com_interface_codec.cpp
     ${SOURCE_DIR}/Devices/isx3/isx3_ack_payload.cpp
     ${SOURCE_DIR}/Devices/isx3/isx3_command_buffer.cpp
     ${SOURCE_DIR}/Devices/is_payload.cpp
+    ${SOURCE_DIR}/Utilities/socket_wrapper.cpp
 
     ${3RDPARTY_DIR}/catch2/single_include/catch2/catch.hpp
     ${3RDPARTY_DIR}/easyloggingpp/src/easylogging++.cc
@@ -48,3 +47,17 @@ add_executable(test_sciospec_com_interface
 
 # Enforce C++20
 set_property(TARGET test_sciospec_com_interface PROPERTY CXX_STANDARD 20)
+
+if (WIN32)
+    target_link_libraries(test_sciospec_com_interface
+        Ws2_32 # Isx3SoftwareMocker requires Winsock2 
+    )
+    target_sources(test_sciospec_com_interface PRIVATE
+        ${INCLUDE_DIR}/Utilities/win_socket.hpp
+
+        ${SOURCE_DIR}/Utilities/win_socket.cpp
+    )
+endif (WIN32)
+if (UNIX)
+    
+endif (UNIX)

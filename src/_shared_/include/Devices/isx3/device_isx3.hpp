@@ -94,6 +94,25 @@ private:
    */
   void pushToSendBuffer(const std::vector<unsigned char> &frame);
 
+  /**
+   * @brief Coalesces the given frequency point measurements into a single
+   * Impedance Spectrum Measurement payload. This method is necesarry, since the
+   * ISX3 device only sends back impedance values one frequency at a time. Also
+   * the actual frequency value is not encoded into COM interface data frame.
+   * Rather an frequency point index is given. This index has to be resovled to
+   * the actual frequency values.
+   * @param impedanceSpectrum List of impedance spectrums that only contain a
+   * single freuquency point. It is expected that those impedance spectrums all
+   * correspond to a single timestamp.
+   * @param frequencyPointMap Mapping from frequency point index to actual
+   * frequency value.
+   * @return Pointer to impedance spectrum payload that contains all the
+   * frequency points of impedanceSpectrums.
+   */
+  shared_ptr<ReadPayload>
+  coalesceImpedanceSpectrums(const list<IsPayload> &impedanceSpectrums,
+                             const map<int, double> &frequencyPointMap);
+
   /// Pointer to the communication thread.
   unique_ptr<thread> commThread;
 

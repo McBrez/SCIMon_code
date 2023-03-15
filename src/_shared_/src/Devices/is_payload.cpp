@@ -23,11 +23,11 @@ IsPayload::IsPayload(unsigned int channelNumber, double timestamp,
   }
 }
 
-unsigned int IsPayload::getChannelNumber() { return this->channelNumber; }
+unsigned int IsPayload::getChannelNumber() const { return this->channelNumber; }
 
-double IsPayload::getTimestamp() { return this->timestamp; }
+double IsPayload::getTimestamp() const { return this->timestamp; }
 
-ImpedanceSpectrum IsPayload::getImpedanceSpectrum() {
+ImpedanceSpectrum IsPayload::getImpedanceSpectrum() const {
   return this->impedanceSpectrum;
 }
 

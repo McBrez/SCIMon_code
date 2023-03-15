@@ -7,8 +7,13 @@
 #include <com_interface_codec.hpp>
 #include <is_payload.hpp>
 #include <isx3_command_buffer.hpp>
+#include <win_socket.hpp>
 
 INITIALIZE_EASYLOGGINGPP
+
+// Uncomment if the test shall be included that test an acutally connected
+// device.
+#define TEST_DEVICE
 
 using namespace std::complex_literals;
 
@@ -167,3 +172,57 @@ TEST_CASE("Testing Isx3CommandBuffer") {
     REQUIRE(resultBytes2 == referenceBytes);
   }
 }
+
+#ifdef TEST_DEVICE
+TEST_CASE("Test with connected device.") {
+  shared_ptr<Utilities::SocketWrapper> socketWrapper(
+      new Utilities::WinSocket());
+  Devices::ComInterfaceCodec codec;
+  Devices::Isx3CommandBuffer buffer;
+
+  SECTION("Connect and disconnect from device.") {
+    bool connectionSuccess = socketWrapper->open("127.0.0.1", 8888);
+    REQUIRE(connectionSuccess);
+    bool disconnectSuccess = socketWrapper->close();
+    REQUIRE(disconnectSuccess);
+  }
+  SECTION("Try to get device id.") {
+    bool connectionSuccess = socketWrapper->open("127.0.0.1", 8888);
+    REQUIRE(connectionSuccess);
+
+    std::vector<unsigned char> getDeviceIdCmd = codec.buildCmdGetDeviceId();
+    socketWrapper->write(getDeviceIdCmd);
+    std::vector<unsigned char> readBuffer;
+    socketWrapper->read(readBuffer);
+
+    buffer.pushBytes(readBuffer);
+    std::vector<unsigned char> frame = buffer.interpretBuffer();
+    std::shared_ptr<Devices::ReadPayload> deviceIdPayload =
+        codec.decodeMessage(frame);
+
+    REQUIRE(!readBuffer.empty());
+
+    bool disconnectSuccess = socketWrapper->close();
+    REQUIRE(disconnectSuccess);
+  }
+  SECTION("Try to set up a measurement device id.") {
+    bool connectionSuccess = socketWrapper->open("127.0.0.1", 8888);
+    REQUIRE(connectionSuccess);
+
+    std::vector<unsigned char> getDeviceIdCmd = codec.buildCmdGetDeviceId();
+    socketWrapper->write(getDeviceIdCmd);
+    std::vector<unsigned char> readBuffer;
+    socketWrapper->read(readBuffer);
+
+    buffer.pushBytes(readBuffer);
+    std::vector<unsigned char> frame = buffer.interpretBuffer();
+    std::shared_ptr<Devices::ReadPayload> deviceIdPayload =
+        codec.decodeMessage(frame);
+
+    REQUIRE(!readBuffer.empty());
+
+    bool disconnectSuccess = socketWrapper->close();
+    REQUIRE(disconnectSuccess);
+  }
+}
+#endif

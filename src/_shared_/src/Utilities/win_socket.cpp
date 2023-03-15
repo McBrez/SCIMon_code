@@ -42,7 +42,8 @@ bool WinSocket::open(string ip, int port) {
 
   // Resolve the server address and port.
   PCSTR ipCstr = ip.c_str();
-  PCSTR portCstr = to_string(port).c_str();
+  string portStr = to_string(port);
+  PCSTR portCstr = portStr.c_str();
   iResult = getaddrinfo(ipCstr, portCstr, &hints, &result);
   if (iResult != 0) {
     LOG(ERROR) << "getaddrinfo failed with error: " << to_string(iResult);

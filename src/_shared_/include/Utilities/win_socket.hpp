@@ -1,6 +1,10 @@
 #ifndef WIN_SOCKET_HPP
 #define WIN_SOCKET_HPP
 
+// Platform includes
+#include <winsock2.h>
+#include <ws2tcpip.h>
+
 // Project includes
 #include <socket_wrapper.hpp>
 
