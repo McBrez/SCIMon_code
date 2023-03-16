@@ -29,13 +29,16 @@ add_executable(test_sciospec_com_interface
     ${INCLUDE_DIR}/Devices/isx3/isx3_ack_payload.hpp
     ${INCLUDE_DIR}/Devices/read_payload.hpp
     ${INCLUDE_DIR}/Devices/is_payload.hpp
+    ${INCLUDE_DIR}/Devices/id_payload.hpp
     ${INCLUDE_DIR}/Core/common.hpp
     
     ${SOURCE_DIR}/Messages/device_message.cpp
     ${SOURCE_DIR}/Devices/isx3/com_interface_codec.cpp
     ${SOURCE_DIR}/Devices/isx3/isx3_ack_payload.cpp
     ${SOURCE_DIR}/Devices/isx3/isx3_command_buffer.cpp
+    ${SOURCE_DIR}/Devices/read_payload.cpp
     ${SOURCE_DIR}/Devices/is_payload.cpp
+    ${SOURCE_DIR}/Devices/id_payload.cpp
 
     ${3RDPARTY_DIR}/catch2/single_include/catch2/catch.hpp
     ${3RDPARTY_DIR}/easyloggingpp/src/easylogging++.cc

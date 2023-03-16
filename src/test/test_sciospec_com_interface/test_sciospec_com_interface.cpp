@@ -69,12 +69,12 @@ TEST_CASE("Testing ComInterfaceCodec::decodeMessage()") {
   SECTION("Decode Impedance Data") {
     // Encodes a impedance measurement result with the following content:
     // [f_number] = 1
-    // [time stamp] = 	1677711600.0 (2. March. 2023 00:00)
+    // [time stamp] = 	1677711616.0 (2. March. 2023 00:16 GMT)
     // [channel number] = 1
     // [real] = 150.0
-    // [imag] = 300.0
-    std::vector<unsigned char> frame({0xB8, 0x10, 0x00, 0x01, 0x4e, 0xc7, 0xff,
-                                      0xce, 0x00, 0x01, 0x43, 0x16, 0x00, 0x00,
+    // [imag] = 200.0
+    std::vector<unsigned char> frame({0xB8, 0x10, 0x00, 0x01, 0x4e, 0xC7, 0xFF,
+                                      0xB2, 0x00, 0x01, 0x43, 0x16, 0x00, 0x00,
                                       0x43, 0x48, 0x00, 0x00, 0xB8});
 
     shared_ptr<Devices::ReadPayload> result = dut.decodeMessage(frame);
@@ -87,7 +87,7 @@ TEST_CASE("Testing ComInterfaceCodec::decodeMessage()") {
     REQUIRE(resultCasted);
     // Result should have the correct data.
     REQUIRE(resultCasted->getChannelNumber() == 1);
-    REQUIRE(resultCasted->getTimestamp() == 1677711600.0);
+    REQUIRE((float)resultCasted->getTimestamp() == 1677711600.0f);
     // There should be exactly one ImpedancePoint entry.
     REQUIRE(resultCasted->getImpedanceSpectrum().size() == 1);
     ImpedancePoint impedancePoint =
@@ -96,7 +96,7 @@ TEST_CASE("Testing ComInterfaceCodec::decodeMessage()") {
     complex<double> impedance = std::get<1>(impedancePoint);
 
     REQUIRE(frequency == 1.0);
-    REQUIRE(impedance == (150.0 + 300.0i));
+    REQUIRE(impedance == (150.0 + 200.0i));
   }
 }
 

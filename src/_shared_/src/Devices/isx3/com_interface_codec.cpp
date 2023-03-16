@@ -296,11 +296,22 @@ bool ComInterfaceCodec::decodeImpedanceData(
     return false;
   }
 
-  fNumber = *((short *)&payload[0]);
-  timestamp = *((float *)&payload[5]);
-  channelNumber = *((short *)&payload[7]);
-  float realPart = *((float *)&payload[11]);
-  float imagPart = *((float *)&payload[15]);
+  fNumber = (payload[0] << 8) + payload[1];
+
+  int timestampIntermediate =
+      (payload[2] << 24) + (payload[3] << 16) + (payload[4] << 8) + payload[5];
+  timestamp = *((float *)&timestampIntermediate);
+
+  channelNumber = (payload[6] << 8) + payload[7];
+
+  int realPartIntermediate = (payload[8] << 24) + (payload[9] << 16) +
+                             (payload[10] << 8) + payload[11];
+  float realPart = *((float *)&realPartIntermediate);
+
+  int imagPartIntermediate = (payload[12] << 24) + (payload[13] << 16) +
+                             (payload[14] << 8) + payload[15];
+  float imagPart = *((float *)&imagPartIntermediate);
+
   impedance = std::complex<float>({realPart, imagPart});
 
   return true;
