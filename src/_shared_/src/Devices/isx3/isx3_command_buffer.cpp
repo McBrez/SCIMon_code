@@ -71,14 +71,14 @@ unsigned int Isx3CommandBuffer::clear() {
   return size;
 }
 
-bool Isx3CommandBuffer::isCmdTag(unsigned char byte) {
-  if (Isx3CmdTag::ISX3_COMMAND_TAG_INVALID == byte ||
-      Isx3CmdTag::ISX3_COMMAND_TAG_ACK == byte ||
-      Isx3CmdTag::ISX3_COMMAND_TAG_RESET_SYSTEM == byte ||
-      Isx3CmdTag::ISX3_COMMAND_GET_DEVICE_ID == byte ||
-      Isx3CmdTag::ISX3_COMMAND_TAG_INIT_MEASUREMENT == byte ||
-      Isx3CmdTag::ISX3_COMMAND_TAG_SET_SETUP == byte ||
-      Isx3CmdTag::ISX3_COMMAND_TAG_START_IMPEDANCE_MEAS == byte) {
+bool Isx3CommandBuffer::isCmdTag(unsigned char byteValue) {
+  if (Isx3CmdTag::ISX3_COMMAND_TAG_INVALID == byteValue ||
+      Isx3CmdTag::ISX3_COMMAND_TAG_ACK == byteValue ||
+      Isx3CmdTag::ISX3_COMMAND_TAG_RESET_SYSTEM == byteValue ||
+      Isx3CmdTag::ISX3_COMMAND_GET_DEVICE_ID == byteValue ||
+      Isx3CmdTag::ISX3_COMMAND_TAG_INIT_MEASUREMENT == byteValue ||
+      Isx3CmdTag::ISX3_COMMAND_TAG_SET_SETUP == byteValue ||
+      Isx3CmdTag::ISX3_COMMAND_TAG_START_IMPEDANCE_MEAS == byteValue) {
     return true;
   } else {
     return false;

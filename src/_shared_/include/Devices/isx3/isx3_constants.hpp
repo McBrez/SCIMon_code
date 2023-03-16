@@ -37,6 +37,8 @@ enum Isx3CmdTag {
  * @brief Identifies the various ISX3 Acknowledgment types.
  */
 enum Isx3AckType {
+  /// Invalid ack type. May be used to indicate a not yet received ack.
+  ISX3_ACK_TYPE_INVALID = 0xFF,
   /// Frame-Not-Acknowledge: Incorrect syntax.
   ISX3_ACK_TYPE_FRAME_NOT_ACKNOWLEDGED = 0x01,
   /// Timeout: Communication-timeout (less data than expected)

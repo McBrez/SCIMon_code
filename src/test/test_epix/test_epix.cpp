@@ -226,7 +226,11 @@ TEST_CASE("Test the backend communication classes") {
       readBuffer = readFromSocket(socketWrapper);
       buffer.pushBytes(readBuffer);
       auto frames = extractFrames(buffer);
-      auto payload = codec.decodeMessage(frames.front());
+      std::list<shared_ptr<ReadPayload>> payloads;
+      for (auto frame : frames) {
+        auto payload = codec.decodeMessage(frames.front());
+        payloads.push_back(payload);
+      }
     }
 
     // Disconnect again.
@@ -239,9 +243,13 @@ TEST_CASE("Testing the implementation of the Sciospec ISX3 device") {
   DeviceIsx3 dut;
 
   // Init the device.
+  shared_ptr<InitDeviceMessage>(
+      new InitDeviceMessage(shared_ptr<MessageInterface>(),
+                            new Isx3InitPayload("127.0.0.1", 8888), UserId()));
   dut.write(shared_ptr<InitDeviceMessage>());
 
   // Configure the device.
+
   dut.write(shared_ptr<ConfigDeviceMessage>());
 
   // Start the measurement.

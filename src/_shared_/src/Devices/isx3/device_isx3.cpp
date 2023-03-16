@@ -14,9 +14,8 @@
 namespace Devices {
 
 DeviceIsx3::DeviceIsx3()
-    : Device(), socketWrapper(),
-      isx3CommThreadState(ISX3_COMM_THREAD_STATE_INVALID),
-      pendingAck(ISX3_COMMAND_TAG_INVALID), doComm(false) {}
+    : Device(), socketWrapper(SocketWrapper::getSocketWrapper()),
+      isx3CommThreadState(ISX3_COMM_THREAD_STATE_INVALID), doComm(false) {}
 
 DeviceIsx3::~DeviceIsx3() {
   this->doComm = false;
@@ -53,15 +52,44 @@ bool DeviceIsx3::write(shared_ptr<InitDeviceMessage> initMsg) {
       unique_ptr<thread>(new thread(&DeviceIsx3::commThreadWorker, this));
 
   // Wait until communication thread is listening.
-  while (this->isx3CommThreadState != ISX3_COMM_THREAD_STATE_LISTENING) {
-    this_thread::sleep_for(chrono::milliseconds(10));
+  int retryCounter = 0;
+  bool threadInitialized = false;
+  while (retryCounter < 100) {
+    this_thread::sleep_for(chrono::milliseconds(100));
+    if (this->isx3CommThreadState == ISX3_COMM_THREAD_STATE_LISTENING) {
+      threadInitialized = true;
+      break;
+    }
+    retryCounter++;
+  }
+  if (!threadInitialized) {
+    // Thread was not able to initialize. Abort here.
+    this->doComm = false;
+    this->socketWrapper->close();
+    return false;
   }
 
   // Send the init command.
-  this->pushToSendBuffer(this->comInterfaceCodec.buildCmdSetSetup());
-  this->deviceState = DeviceStatus::INIT;
-
-  return true;
+  shared_ptr<Isx3CmdAckStruct> ackStruct =
+      this->pushToSendBuffer(this->comInterfaceCodec.buildCmdSetSetup());
+  // Wait for acknowledgement.
+  retryCounter = 0;
+  bool positiveAck;
+  while (retryCounter < 100) {
+    this_thread::sleep_for(chrono::milliseconds(100));
+    if (ackStruct->acked == Isx3AckType::ISX3_ACK_TYPE_COMMAND_ACKNOWLEDGE) {
+      positiveAck = true;
+      break;
+    }
+    retryCounter++;
+  }
+  if (positiveAck) {
+    this->deviceState = DeviceStatus::INIT;
+    return true;
+  } else {
+    this->deviceState = DeviceStatus::ERROR;
+    return false;
+  }
 }
 
 bool DeviceIsx3::write(shared_ptr<ConfigDeviceMessage> configMsg) {
@@ -71,10 +99,39 @@ bool DeviceIsx3::write(shared_ptr<ConfigDeviceMessage> configMsg) {
 
 string DeviceIsx3::getDeviceTypeName() { return ""; }
 
-void DeviceIsx3::pushToSendBuffer(const std::vector<unsigned char> &bytes) {
+shared_ptr<Isx3CmdAckStruct>
+DeviceIsx3::pushToSendBuffer(const std::vector<unsigned char> &bytes) {
+
+  // Frames smaller than three bytes do not make sense.
+  if (bytes.size() < 3) {
+    LOG(WARNING) << "A frame smaller than 3 bytes would have been sent. Frames "
+                    "can not be smaller than 3.";
+    return shared_ptr<Isx3CmdAckStruct>();
+  }
+
+  // Construct the ack structure.
+  shared_ptr<Isx3CmdAckStruct> ackStruct(new Isx3CmdAckStruct);
+  ackStruct->acked = Isx3AckType::ISX3_ACK_TYPE_INVALID;
+  ackStruct->cached = true;
+  ackStruct->timestamp = std::time(0);
+  ackStruct->cmdTag = static_cast<Isx3CmdTag>(bytes.front());
+
+  this->sentFramesCacheMutex.lock();
+  this->sentFramesCache.push_back(ackStruct);
+  if (this->sentFramesCache.size() > ACK_BUFFER_LEN) {
+    // Buffer is overflowing. Indicate that the sruct at the front position is
+    // no longer cached and drop the reference to it.
+    this->sentFramesCache.front()->cached = false;
+    this->sentFramesCache.pop_front();
+  }
+  this->sentFramesCacheMutex.unlock();
+
+  // Send the bytes.
   this->sendBufferMutex.lock();
-  this->sendBuffer.push_back(bytes);
+  this->sendBuffer.push_back(make_tuple(bytes, ackStruct));
   this->sendBufferMutex.unlock();
+
+  return ackStruct;
 }
 
 void DeviceIsx3::commThreadWorker() {
@@ -101,15 +158,16 @@ void DeviceIsx3::commThreadWorker() {
       vector<unsigned char> frame = this->commandBuffer.interpretBuffer();
       shared_ptr<ReadPayload> decodedPayload =
           this->comInterfaceCodec.decodeMessage(frame);
+      // TODO: Decide what to do with the payload.
 
       // If there something in the write buffer, write it to the socket.
       // Transition to ISX3_COMM_THREAD_STATE_WAITING_FOR_ACK.
       if (!this->sendBuffer.empty()) {
         this->sendBufferMutex.lock();
 
-        vector<unsigned char> frame = this->sendBuffer.front();
+        vector<unsigned char> frame = get<0>(this->sendBuffer.front());
+        this->pendingCommand = get<1>(this->sendBuffer.front());
         this->sendBuffer.pop_front();
-        this->pendingAck = static_cast<Isx3CmdTag>(frame.front());
         this->socketWrapper->write(frame);
 
         this->sendBufferMutex.unlock();
@@ -131,9 +189,9 @@ void DeviceIsx3::commThreadWorker() {
       vector<unsigned char> frame = this->commandBuffer.interpretBuffer();
       shared_ptr<ReadPayload> decodedPayload =
           this->comInterfaceCodec.decodeMessage(frame);
-
       if (!decodedPayload) {
-        // Nothing could be decoded.
+        // Nothing could be decoded. Cotinue reading in next iteration of the
+        // loop.
         continue;
       }
 
@@ -142,11 +200,14 @@ void DeviceIsx3::commThreadWorker() {
       shared_ptr<Isx3AckPayload> ackPayload =
           dynamic_pointer_cast<Isx3AckPayload>(decodedPayload);
       if (ackPayload) {
-        if (ackPayload->getCmdTag() == this->pendingAck)
-          LOG(INFO) << "Got ACK for Command " << this->pendingAck;
+        // This is an ack. Update the ack cache and return to listening.
+        LOG(INFO) << "Got ACK for Command " << this->pendingCommand->cmdTag
+                  << ".";
+        this->pendingCommand->acked = ackPayload->getAckType();
         this->isx3CommThreadState = ISX3_COMM_THREAD_STATE_LISTENING;
-        this->pendingAck = ISX3_COMMAND_TAG_INVALID;
-      } else {
+      }
+
+      else {
         // Try to cast it to an impedance spectrum.
         shared_ptr<IsPayload> isPayload =
             dynamic_pointer_cast<IsPayload>(decodedPayload);
@@ -212,6 +273,30 @@ shared_ptr<ReadPayload> DeviceIsx3::coalesceImpedanceSpectrums(
 
   return shared_ptr<IsPayload>(
       new IsPayload(channelNumber, timestamp, frequencyValues, impedances));
+}
+
+bool DeviceIsx3::isAcked(shared_ptr<Isx3CmdAckStruct> ackStruct) {
+  this->sentFramesCacheMutex.lock();
+  auto ackStructIt = std::find(this->sentFramesCache.begin(),
+                               this->sentFramesCache.end(), ackStruct);
+
+  if (ackStructIt == this->sentFramesCache.end()) {
+    this->sentFramesCacheMutex.unlock();
+
+    return false;
+  }
+
+  if (*ackStructIt) {
+    bool gotAck =
+        (*ackStructIt)->acked == Isx3AckType::ISX3_ACK_TYPE_COMMAND_ACKNOWLEDGE;
+    this->sentFramesCacheMutex.unlock();
+
+    return gotAck;
+  } else {
+    this->sentFramesCacheMutex.unlock();
+
+    return false;
+  }
 }
 
 } // namespace Devices

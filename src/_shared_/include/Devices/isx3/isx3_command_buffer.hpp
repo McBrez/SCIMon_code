@@ -39,10 +39,10 @@ public:
 
   /**
    * @brief Returns whether the given byte is a command tag.
-   * @param byte The byte that shall be analysed
+   * @param byteValue The byte that shall be analysed
    * @return TRUE if the given byte is a command tag. FALSE otherwise.
    */
-  bool isCmdTag(unsigned char byte);
+  bool isCmdTag(unsigned char byteValue);
 
 private:
   /// Internal byte buffer.

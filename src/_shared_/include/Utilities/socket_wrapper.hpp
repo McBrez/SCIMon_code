@@ -2,6 +2,7 @@
 #define SOCKET_WRAPPER_HPP
 
 // Standard includes
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -54,6 +55,14 @@ public:
    * @return The count of bytes that have been cleared.
    */
   virtual int clear() = 0;
+
+  /**
+   * @brief Returns a reference to a socket wrapper that matches the current
+   * platform.
+   * @return A reference to a socket wrapper. Caller is expected to take
+   * ownership of the pointer.
+   */
+  static SocketWrapper *getSocketWrapper();
 };
 
 } // namespace Utilities

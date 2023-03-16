@@ -35,6 +35,7 @@ add_executable(test_epix
     ${INCLUDE_DIR}/Devices/isx3/isx3_ack_payload.hpp
     ${INCLUDE_DIR}/Devices/isx3/com_interface_codec.hpp
     ${INCLUDE_DIR}/Devices/isx3/isx3_command_buffer.hpp
+    ${INCLUDE_DIR}/Devices/isx3/isx3_cmd_ack_struct.hpp
     ${INCLUDE_DIR}/Devices/device.hpp
     ${INCLUDE_DIR}/Devices/device_configuration.hpp
     ${INCLUDE_DIR}/Devices/is_configuration.hpp
@@ -79,6 +80,10 @@ add_executable(test_epix
 set_property(TARGET test_epix PROPERTY CXX_STANDARD 20)
 
 if (WIN32)
+    # Disable the "byte" type, introduced by MSVC in newer versions. Otherwise, 
+    # it would clash with the std::byte type. 
+    add_compile_definitions(_HAS_STD_BYTE=0)
+
     target_link_libraries(test_epix
         Ws2_32 
     )
