@@ -1,8 +1,11 @@
 // Project includes
 #include <com_interface_codec.hpp>
+#include <config_device_message.hpp>
 #include <id_payload.hpp>
+#include <init_device_message.hpp>
 #include <is_payload.hpp>
 #include <isx3_ack_payload.hpp>
+#include <isx3_is_conf_payload.hpp>
 
 namespace Devices {
 
@@ -193,8 +196,35 @@ ComInterfaceCodec::decodeMessage(std::vector<unsigned char> bytes) {
 }
 
 std::vector<unsigned char>
-ComInterfaceCodec::encodeMessage(shared_ptr<DeviceMessage> message) {
+ComInterfaceCodec::encodeMessage(shared_ptr<InitPayload> message) {
   return std::vector<unsigned char>();
+}
+
+std::list<std::vector<unsigned char>>
+ComInterfaceCodec::encodeMessage(shared_ptr<ConfigurationPayload> message) {
+  if (!message) {
+    return std::list<std::vector<unsigned char>>();
+  }
+
+  // Try to cast it to an isx3 configuration payload.
+  shared_ptr<Isx3IsConfPayload> confPayload =
+      dynamic_pointer_cast<Isx3IsConfPayload>(message);
+  if (!confPayload) {
+    return std::list<std::vector<unsigned char>>();
+  }
+
+  FrequencyScale isScale = confPayload->scale == LINEAR_SCALE
+                               ? FrequencyScale::FREQ_SCALE_LINEAR
+                               : FrequencyScale::FREQ_SCALE_LOGARITHMIC;
+  std::list<std::vector<unsigned char>> commandList;
+  commandList.push_back(this->buildCmdSetSetup(
+      confPayload->frequencyFrom, confPayload->frequencyTo,
+      confPayload->measurementPoints, isScale, confPayload->precision,
+      confPayload->amplitude));
+  commandList.push_back(this->buildCmdSetFeSettings(
+      confPayload->measurementConfiguration,
+      confPayload->measurementConfChannel, confPayload->measurementConfRange));
+  commandList.push_back(this->buildCmdSetExtensionPortChannel());
 }
 
 std::vector<unsigned char>
@@ -280,8 +310,8 @@ std::vector<unsigned char> ComInterfaceCodec::getRawBytes(T value,
   }
 
   if (bigEndian) {
-    // Reverse the order of the elements, so that the MSB of the float value is
-    // at the lower index.
+    // Reverse the order of the elements, so that the MSB of the float value
+    // is at the lower index.
     std::reverse(buffer.begin(), buffer.end());
   }
 

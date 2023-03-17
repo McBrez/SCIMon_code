@@ -46,7 +46,7 @@ TEST_CASE("Testing the implementation of the ElveFlow OB1 device",
     // Configure the DUT.
     shared_ptr<ConfigDeviceMessage> configMsg(new ConfigDeviceMessage(
         shared_ptr<MessageInterface>(),
-        new DeviceConfiguration(DeviceType::PUMP_CONTROLLER)));
+        new ConfigurationPayload(DeviceType::PUMP_CONTROLLER)));
     REQUIRE(dut->write(configMsg));
 
     // Configuration may take a while. Query the DUT until configuration

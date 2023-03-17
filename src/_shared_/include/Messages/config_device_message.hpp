@@ -2,7 +2,7 @@
 #define CONFIG_DEVICE_MESSAGE_HPP
 
 // Project includes
-#include <device_configuration.hpp>
+#include <configuration_payload.hpp>
 #include <device_message.hpp>
 
 using namespace Devices;
@@ -21,7 +21,7 @@ public:
    * Object takes ownership of the pointer.
    */
   ConfigDeviceMessage(shared_ptr<MessageInterface> source,
-                      DeviceConfiguration *deviceConfiguration);
+                      ConfigurationPayload *deviceConfiguration);
 
   /**
    * @brief Destroy the Config Device Message object
@@ -33,7 +33,7 @@ public:
    *
    * @return The held configuration.
    */
-  shared_ptr<DeviceConfiguration> getConfiguration();
+  shared_ptr<ConfigurationPayload> getConfiguration();
 
   /**
    * @brief Serializes the message into a string.
@@ -43,7 +43,7 @@ public:
   virtual string serialize() override;
 
 protected:
-  shared_ptr<DeviceConfiguration> deviceConfiguration;
+  shared_ptr<ConfigurationPayload> deviceConfiguration;
 };
 } // namespace Messages
 

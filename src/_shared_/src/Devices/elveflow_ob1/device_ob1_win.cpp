@@ -65,7 +65,7 @@ bool DeviceOb1Win::write(shared_ptr<InitDeviceMessage> initMsg) {
 }
 
 bool DeviceOb1Win::configure(
-    shared_ptr<DeviceConfiguration> deviceConfiguration) {
+    shared_ptr<ConfigurationPayload> deviceConfiguration) {
   this->deviceState = DeviceStatus::CONFIGURE;
   this->configurationFinished = false;
   LOG(INFO) << "Starting calibration of OB1.";
@@ -139,7 +139,7 @@ bool DeviceOb1Win::stop() {
 bool DeviceOb1Win::write(shared_ptr<ConfigDeviceMessage> configMsg) {
   // Create a new thread and start it.
   this->configurationThread.reset(new thread(
-      &DeviceOb1Win::configure, this, shared_ptr<DeviceConfiguration>()));
+      &DeviceOb1Win::configure, this, shared_ptr<ConfigurationPayload>()));
   return true;
 }
 

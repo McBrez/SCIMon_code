@@ -4,12 +4,12 @@ namespace Messages {
 
 ConfigDeviceMessage::ConfigDeviceMessage(
     shared_ptr<MessageInterface> source,
-    DeviceConfiguration *deviceConfiguration)
+    ConfigurationPayload *deviceConfiguration)
     : DeviceMessage(source), deviceConfiguration(deviceConfiguration) {}
 
 ConfigDeviceMessage::~ConfigDeviceMessage() {}
 
-shared_ptr<DeviceConfiguration> ConfigDeviceMessage::getConfiguration() {
+shared_ptr<ConfigurationPayload> ConfigDeviceMessage::getConfiguration() {
   return this->deviceConfiguration;
 }
 

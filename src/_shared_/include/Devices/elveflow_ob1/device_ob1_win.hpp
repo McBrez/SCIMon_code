@@ -34,7 +34,7 @@ public:
   bool init();
 
   virtual bool
-  configure(shared_ptr<DeviceConfiguration> deviceConfiguration) override;
+  configure(shared_ptr<ConfigurationPayload> deviceConfiguration) override;
 
   /**
    * @brief Starts the OB1 device and restores the previously set channel

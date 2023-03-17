@@ -1,5 +1,5 @@
-#ifndef DEVICE_CONFIGURATION_HPP
-#define DEVICE_CONFIGURATION_HPP
+#ifndef CONFIGURATION_PAYLOAD_HPP
+#define CONFIGURATION_PAYLOAD_HPP
 
 namespace Devices {
 /**
@@ -22,19 +22,19 @@ enum DeviceType {
 /**
  * @brief Base class that encapsulates any device configuration.
  */
-class DeviceConfiguration {
+class ConfigurationPayload {
 public:
   /**
    * @brief Construct a new Device Configuration object
    *
    * @param deviceType The device type this configuration is targeting.
    */
-  DeviceConfiguration(DeviceType deviceType);
+  ConfigurationPayload(DeviceType deviceType);
 
   /**
    * @brief Destroy the Device Configuration object
    */
-  virtual ~DeviceConfiguration();
+  virtual ~ConfigurationPayload() = 0;
 
   /**
    * @brief Returns the device type, this object is targeting.

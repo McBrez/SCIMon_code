@@ -6,9 +6,12 @@
 #include <vector>
 
 // Project includes
+#include <configuration_payload.hpp>
 #include <device_message.hpp>
+#include <init_payload.hpp>
 #include <isx3_constants.hpp>
 #include <read_payload.hpp>
+
 
 using namespace Messages;
 
@@ -148,12 +151,10 @@ public:
    */
   shared_ptr<ReadPayload> decodeMessage(std::vector<unsigned char> bytes);
 
-  /**
-   * @brief Encodes the given device message to a byte vector.
-   * @param message The message that shall be parsed.
-   * @return The encoded byte vector.
-   */
-  std::vector<unsigned char> encodeMessage(shared_ptr<DeviceMessage> message);
+  std::vector<unsigned char> encodeMessage(shared_ptr<InitPayload> message);
+
+  std::list<std::vector<unsigned char>>
+  encodeMessage(shared_ptr<ConfigPayload> message);
 
 private:
   /**

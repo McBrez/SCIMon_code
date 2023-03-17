@@ -38,7 +38,7 @@ add_executable(test_isx3
     ${INCLUDE_DIR}/Devices/isx3/isx3_constants.hpp
     ${INCLUDE_DIR}/Devices/isx3/device_isx3.hpp
     ${INCLUDE_DIR}/Devices/device.hpp
-    ${INCLUDE_DIR}/Devices/device_configuration.hpp
+    ${INCLUDE_DIR}/Devices/configuration_payload.hpp
     ${INCLUDE_DIR}/Devices/is_configuration.hpp
     ${INCLUDE_DIR}/Utilities/utilities.hpp
 

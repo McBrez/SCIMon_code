@@ -7,7 +7,7 @@
 #include <queue>
 
 // Project includes
-#include <device_configuration.hpp>
+#include <configuration_payload.hpp>
 #include <message_interface.hpp>
 
 using namespace std;
@@ -46,7 +46,7 @@ protected:
   /// Flag, that indicates whether the device has been succesfully initialized.
   bool initFinished;
   /// Reference to the currently active device configuration.
-  shared_ptr<DeviceConfiguration> deviceConfiguration;
+  shared_ptr<ConfigurationPayload> deviceConfiguration;
   /// The state of the device.
   DeviceStatus deviceState;
 
@@ -69,7 +69,7 @@ public:
    * @return TRUE if configuration was successful. False otherwise.
    */
   virtual bool
-  configure(shared_ptr<DeviceConfiguration> deviceConfiguration) = 0;
+  configure(shared_ptr<ConfigurationPayload> deviceConfiguration) = 0;
 
   /**
    * @brief Starts the operation of the device, provided that there is an valid

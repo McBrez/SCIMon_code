@@ -72,10 +72,10 @@ public:
    * @return TRUE if configuration was successful. False otherwise.
    */
   virtual bool
-  configure(shared_ptr<DeviceConfiguration> deviceConfiguration) override;
+  configure(shared_ptr<ConfigurationPayload> deviceConfiguration) override;
 
   /**
-   * @brief Starts the operation of the device, provided that there is an valid
+   * @brief Starts the operation of the device, provided that there is a valid
    * configuration.
    * @return TRUE if device has been started. FALSE if an error occured.
    */

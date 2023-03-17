@@ -97,7 +97,7 @@ bool DeviceIsx3::write(shared_ptr<ConfigDeviceMessage> configMsg) {
   return this->configure(configMsg->getConfiguration());
 }
 
-string DeviceIsx3::getDeviceTypeName() { return ""; }
+string DeviceIsx3::getDeviceTypeName() { return "ISX-3"; }
 
 shared_ptr<Isx3CmdAckStruct>
 DeviceIsx3::pushToSendBuffer(const std::vector<unsigned char> &bytes) {
@@ -236,7 +236,10 @@ void DeviceIsx3::commThreadWorker() {
 }
 
 bool DeviceIsx3::configure(
-    shared_ptr<DeviceConfiguration> deviceConfiguration) {
+    shared_ptr<ConfigurationPayload> deviceConfiguration) {
+  
+  
+  
   return false;
 }
 
@@ -269,6 +272,8 @@ shared_ptr<ReadPayload> DeviceIsx3::coalesceImpedanceSpectrums(
         impedanceSpectrum.getImpedanceSpectrum();
     double frequencyPoint = get<0>(impedanceSpectrumObject.front());
     std::complex<double> impedance = get<1>(impedanceSpectrumObject.front());
+    frequencyValues.push_back(this->frequencyPointMap[frequencyPoint]);
+    impedances.push_back(impedance);
   }
 
   return shared_ptr<IsPayload>(

@@ -36,8 +36,9 @@ add_executable(test_epix
     ${INCLUDE_DIR}/Devices/isx3/com_interface_codec.hpp
     ${INCLUDE_DIR}/Devices/isx3/isx3_command_buffer.hpp
     ${INCLUDE_DIR}/Devices/isx3/isx3_cmd_ack_struct.hpp
+    ${INCLUDE_DIR}/Devices/isx3/isx3_is_conf_payload.hpp
     ${INCLUDE_DIR}/Devices/device.hpp
-    ${INCLUDE_DIR}/Devices/device_configuration.hpp
+    ${INCLUDE_DIR}/Devices/configuration_payload.hpp
     ${INCLUDE_DIR}/Devices/is_configuration.hpp
     ${INCLUDE_DIR}/Devices/read_payload.hpp
     ${INCLUDE_DIR}/Devices/is_payload.hpp
@@ -56,7 +57,7 @@ add_executable(test_epix
     ${SOURCE_DIR}/Messages/message_interface.cpp
     ${SOURCE_DIR}/Messages/user_id.cpp
     ${SOURCE_DIR}/Devices/device.cpp
-    ${SOURCE_DIR}/Devices/device_configuration.cpp
+    ${SOURCE_DIR}/Devices/configuration_payload.cpp
     ${SOURCE_DIR}/Devices/is_configuration.cpp
     ${SOURCE_DIR}/Devices/read_payload.cpp
     ${SOURCE_DIR}/Devices/is_payload.cpp
@@ -66,6 +67,7 @@ add_executable(test_epix
     ${SOURCE_DIR}/Devices/isx3/com_interface_codec.cpp
     ${SOURCE_DIR}/Devices/isx3/isx3_command_buffer.cpp
     ${SOURCE_DIR}/Devices/isx3/isx3_ack_payload.cpp
+    ${SOURCE_DIR}/Devices/isx3/isx3_is_conf_payload.cpp
     ${SOURCE_DIR}/Utilities/utilities.cpp
     ${SOURCE_DIR}/Utilities/socket_wrapper.cpp
     ${SOURCE_DIR}/Utilities/win_socket.cpp

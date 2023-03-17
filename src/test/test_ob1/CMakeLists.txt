@@ -23,7 +23,7 @@ add_executable(test_ob1
     test_ob1.cpp
 
     ${INCLUDE_DIR}/Devices/device.hpp
-    ${INCLUDE_DIR}/Devices/device_configuration.hpp
+    ${INCLUDE_DIR}/Devices/configuration_payload.hpp
     ${INCLUDE_DIR}/Devices/init_payload.hpp
     ${INCLUDE_DIR}/Devices/read_payload.hpp
     ${INCLUDE_DIR}/Devices/status_payload.hpp
@@ -44,7 +44,7 @@ add_executable(test_ob1
 
     ${SOURCE_DIR}/Devices/device.cpp
     ${SOURCE_DIR}/Devices/status_payload.cpp
-    ${SOURCE_DIR}/Devices/device_configuration.cpp
+    ${SOURCE_DIR}/Devices/configuration_payload.cpp
     ${SOURCE_DIR}/Devices/elveflow_ob1/device_ob1.cpp
     ${SOURCE_DIR}/Devices/elveflow_ob1/device_ob1_win.cpp
     ${SOURCE_DIR}/Devices/elveflow_ob1/init_payload_ob1.cpp

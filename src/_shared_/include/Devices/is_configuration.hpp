@@ -5,7 +5,7 @@
 #include <string>
 
 // Project includes
-#include <device_configuration.hpp>
+#include <configuration_payload.hpp>
 
 using namespace std;
 
@@ -16,23 +16,22 @@ enum IsScale { LINEAR_SCALE, LOGARITHMIC_SCALE };
 /**
  * Encapsulates the configuration on an impedance spectrum measurement.
  */
-class IsConfiguration : public DeviceConfiguration {
+class IsConfiguration : public ConfigurationPayload {
 public:
   IsConfiguration(double frequencyFrom, double frequencyTo,
-                  int measurementPoints, int repetitions, string channel,
-                  IsScale scale, double precision, double amplitude,
-                  int impdedanceRange, int frequencyRange);
+                  int measurementPoints, int repetitions);
 
+  virtual ~IsConfiguration();
+
+  /// The starting frequency of the spectrum.
   const double frequencyFrom;
+  /// The stopping frequency of the spectrum.
   const double frequencyTo;
+  /// The count of points betwenn starting and stopping frequency.
   const int measurementPoints;
+  /// Count of impedance spectrums, that shall be gathered. Value of <=
+  /// indicates unlimited measurement.
   const int repetitions;
-  const string channel;
-  const IsScale scale;
-  const double precision;
-  const double amplitude;
-  const int impedanceRange;
-  const int frequencyRange;
 };
 } // namespace Devices
 

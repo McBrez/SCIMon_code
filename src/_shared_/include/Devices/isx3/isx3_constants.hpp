@@ -137,6 +137,15 @@ enum MeasurmentConfigurationRange {
   MEAS_CONFIG_RANGE_10NA = 0x06
 };
 
+/**
+ * @brief Identifies the possible channel functions of a pin.
+ */
+enum ChannelFunction {
+  CHAN_FUNC_WS = 0x00,
+  CHAN_FUNC_WS = 0x01,
+  CHAN_FUNC_C = 0x03,
+  CHAN_FUNC_Cs = 0x04,
+};
 } // namespace Devices
 
 #endif

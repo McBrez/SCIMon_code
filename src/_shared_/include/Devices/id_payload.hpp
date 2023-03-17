@@ -2,7 +2,7 @@
 #define ID_PAYLOAD_HPP
 
 // Project includes.
-#include <device_configuration.hpp>
+#include <configuration_payload.hpp>
 #include <read_payload.hpp>
 
 namespace Devices {
