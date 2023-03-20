@@ -144,6 +144,8 @@ void DeviceIsx3::commThreadWorker() {
     }
 
     else if (ISX3_COMM_THREAD_STATE_INIT == this->isx3CommThreadState) {
+      LOG(INFO) << "Worker thread is initializing.";
+
       // Clear all buffers and transition into init.
       this->sendBuffer.clear();
       this->socketWrapper->clear();
@@ -158,7 +160,9 @@ void DeviceIsx3::commThreadWorker() {
       vector<unsigned char> frame = this->commandBuffer.interpretBuffer();
       shared_ptr<ReadPayload> decodedPayload =
           this->comInterfaceCodec.decodeMessage(frame);
-      // TODO: Decide what to do with the payload.
+      if (decodedPayload) {
+        this->handleReadPayload(decodedPayload);
+      }
 
       // If there something in the write buffer, write it to the socket.
       // Transition to ISX3_COMM_THREAD_STATE_WAITING_FOR_ACK.
@@ -190,7 +194,7 @@ void DeviceIsx3::commThreadWorker() {
       shared_ptr<ReadPayload> decodedPayload =
           this->comInterfaceCodec.decodeMessage(frame);
       if (!decodedPayload) {
-        // Nothing could be decoded. Cotinue reading in next iteration of the
+        // Nothing could be decoded. Continue reading in next iteration of the
         // loop.
         continue;
       }
@@ -208,44 +212,150 @@ void DeviceIsx3::commThreadWorker() {
       }
 
       else {
-        // Try to cast it to an impedance spectrum.
-        shared_ptr<IsPayload> isPayload =
-            dynamic_pointer_cast<IsPayload>(decodedPayload);
-        if (isPayload) {
-          // Impedance spectrum data from an ISX3 device is received one
-          // frequency point at a time. Aggregate the frequency point until the
-          // whole spectrum is ready to be transmitted. If the timestamp
-          // changes, the spectrum is assumed as completed.
-          if (this->impedanceSpectrumBuffer.back().getTimestamp() !=
-              isPayload->getTimestamp()) {
-
-            this->coalesceImpedanceSpectrums(this->impedanceSpectrumBuffer,
-                                             this->frequencyPointMap);
-          }
+        // This is not an ack. It could still be measurement data. Handle that
+        // in handleReadPayload().
+        bool handleSuccess = this->handleReadPayload(decodedPayload);
+        if (!handleSuccess) {
+          // Payload could not be handled. Transition to invalid state.
+          LOG(ERROR) << "Could not handle the received payload. Worker thread "
+                        "is shutting down.";
+          this->isx3CommThreadState = ISX3_COMM_THREAD_STATE_INVALID;
         }
       }
     }
 
     else {
       // Unknown state. Transition back to ISX3_COMM_THREAD_STATE_INVALID.
+      LOG(ERROR)
+          << "Unknown worker thread state. Worker thred is shutting down.";
       this->isx3CommThreadState = ISX3_COMM_THREAD_STATE_INVALID;
     }
   }
 
+  LOG(INFO) << "Worker thread is shutting down.";
   this->isx3CommThreadState = ISX3_COMM_THREAD_STATE_CLOSED;
 }
 
 bool DeviceIsx3::configure(
     shared_ptr<ConfigurationPayload> deviceConfiguration) {
-  
-  
-  
+
+  // Check if device is in correct state.
+  if (this->deviceState != DeviceStatus::INIT) {
+    LOG(WARNING) << "Could not configure ISX3 Device, as it is in state \""
+                 << Device::deviceStatusToString(this->deviceState) << "\".";
+    return false;
+  }
+
+  // Check if this is the correct type of configuration payload.
+  shared_ptr<IsConfiguration> isConfiguration =
+      dynamic_pointer_cast<IsConfiguration>(deviceConfiguration);
+  if (!isConfiguration) {
+    LOG(WARNING) << "Device ISX3 got a malformed configuration payload.";
+    return false;
+  }
+
+  // Try to parse the payload into a list of data frames.
+  std::list<std::vector<unsigned char>> cmdList =
+      this->comInterfaceCodec.encodeMessage(isConfiguration);
+  if (cmdList.empty()) {
+    LOG(ERROR) << "Could not parse the configuration payload into a data "
+                  "frame.";
+    return false;
+  }
+
+  // Send the data frames to the device and wait for the ACKs.
+  bool failed = false;
+  for (auto cmdFrame : cmdList) {
+    shared_ptr<Isx3CmdAckStruct> ackStruct = this->pushToSendBuffer(cmdFrame);
+    this->isAcked(ackStruct);
+    bool gotAck = this->waitForAck(ackStruct);
+    if (!gotAck) {
+      LOG(ERROR)
+          << "Did not receive acknowledgment for configuration messages.";
+      this->deviceState = DeviceStatus::ERROR;
+      return false;
+    }
+  }
+
+  // Set up the frequency point map.
+  // Note: It is checked in encodeMessage() if measurementPoints is different
+  // from 0.
+  this->frequencyPointMap.clear();
+  double frequencyIncrement =
+      (isConfiguration->frequencyTo - isConfiguration->frequencyFrom) /
+      isConfiguration->measurementPoints;
+  for (int i = 0; i < isConfiguration->measurementPoints; i++) {
+    this->frequencyPointMap[i] =
+        isConfiguration->frequencyFrom + frequencyIncrement * i;
+  }
+
+  this->configurationFinished = true;
+  this->deviceState = DeviceStatus::CONFIGURE;
+  return true;
+}
+
+bool DeviceIsx3::waitForAck(shared_ptr<Isx3CmdAckStruct> ackStruct, int cycles,
+                            int waitTime) {
+  int cycleCounter = 0;
+  do {
+    if (this->isAcked(ackStruct)) {
+      return true;
+    }
+    this_thread::sleep_for(chrono::milliseconds(waitTime));
+    cycleCounter++;
+  } while (cycleCounter < cycles);
+
   return false;
 }
 
-bool DeviceIsx3::start() { return false; }
+bool DeviceIsx3::start() {
+  if (this->deviceState == DeviceStatus::IDLE ||
+      this->deviceState == DeviceStatus::CONFIGURE) {
+    LOG(INFO) << "ISX3 trys to start measurement.";
 
-bool DeviceIsx3::stop() { return false; }
+    shared_ptr<Isx3CmdAckStruct> ackStruct = this->pushToSendBuffer(
+        this->comInterfaceCodec.buildCmdStartImpedanceMeasurement(true));
+    if (this->waitForAck(ackStruct)) {
+      LOG(INFO) << "ISX3 started measurement successfully.";
+      this->deviceState = DeviceStatus::OPERATING;
+
+      return true;
+    } else {
+      LOG(ERROR) << "ISX3 could not start measurement.";
+      this->deviceState = DeviceStatus::ERROR;
+
+      return false;
+    }
+  } else {
+    LOG(WARNING) << "Can not start ISX-3, as it is in state \""
+                 << Device::deviceStatusToString(this->deviceState) << "\"";
+    return false;
+  }
+}
+
+bool DeviceIsx3::stop() {
+  if (this->deviceState == DeviceStatus::OPERATING) {
+    LOG(INFO) << "ISX3 trys to stop measurement.";
+
+    shared_ptr<Isx3CmdAckStruct> ackStruct = this->pushToSendBuffer(
+        this->comInterfaceCodec.buildCmdStartImpedanceMeasurement(false));
+    if (this->waitForAck(ackStruct)) {
+      LOG(INFO) << "ISX3 stopped measurement successfully.";
+      this->deviceState = DeviceStatus::IDLE;
+
+      return true;
+    } else {
+      LOG(ERROR) << "ISX3 could not stop measurement.";
+      this->deviceState = DeviceStatus::ERROR;
+
+      return false;
+    }
+  } else {
+    LOG(WARNING) << "Can not stop ISX-3, as it is in state \""
+                 << Device::deviceStatusToString(this->deviceState) << "\"";
+    return false;
+  }
+}
 
 bool DeviceIsx3::specificWrite(shared_ptr<WriteDeviceMessage> writeMsg) {
   return false;
@@ -255,12 +365,12 @@ list<shared_ptr<DeviceMessage>> DeviceIsx3::specificRead(TimePoint timestamp) {
   return list<shared_ptr<DeviceMessage>>();
 }
 
-shared_ptr<ReadPayload> DeviceIsx3::coalesceImpedanceSpectrums(
+ReadPayload *DeviceIsx3::coalesceImpedanceSpectrums(
     const list<IsPayload> &impedanceSpectrums,
     const map<int, double> &frequencyPointMap) {
 
   if (impedanceSpectrums.empty()) {
-    return shared_ptr<IsPayload>();
+    return nullptr;
   }
 
   list<double> frequencyValues;
@@ -276,8 +386,7 @@ shared_ptr<ReadPayload> DeviceIsx3::coalesceImpedanceSpectrums(
     impedances.push_back(impedance);
   }
 
-  return shared_ptr<IsPayload>(
-      new IsPayload(channelNumber, timestamp, frequencyValues, impedances));
+  return new IsPayload(channelNumber, timestamp, frequencyValues, impedances);
 }
 
 bool DeviceIsx3::isAcked(shared_ptr<Isx3CmdAckStruct> ackStruct) {
@@ -300,6 +409,45 @@ bool DeviceIsx3::isAcked(shared_ptr<Isx3CmdAckStruct> ackStruct) {
   } else {
     this->sentFramesCacheMutex.unlock();
 
+    return false;
+  }
+}
+
+bool DeviceIsx3::handleReadPayload(shared_ptr<ReadPayload> readPayload) {
+  // Try to cast it to an impedance spectrum.
+  shared_ptr<IsPayload> isPayload =
+      dynamic_pointer_cast<IsPayload>(readPayload);
+  if (isPayload) {
+    // Impedance spectrum data from an ISX3 device is received one
+    // frequency point at a time. Aggregate the frequency point until the
+    // whole spectrum is ready to be transmitted. If the timestamp
+    // changes, the spectrum is assumed as completed.
+    if (this->impedanceSpectrumBuffer.empty() ||
+        this->impedanceSpectrumBuffer.back().getTimestamp() !=
+            isPayload->getTimestamp()) {
+      // The timestamp changed. Coalesce the spectrum and generate a message.
+      ReadPayload *coalescedIsPayload = this->coalesceImpedanceSpectrums(
+          this->impedanceSpectrumBuffer, this->frequencyPointMap);
+      this->impedanceSpectrumBuffer.clear();
+      if (coalescedIsPayload != nullptr) {
+        this->messageOut.push(shared_ptr<DeviceMessage>(new ReadDeviceMessage(
+            shared_ptr<MessageInterface>(this),
+            ReadDeviceTopic::READ_TOPIC_DEVICE_SPECIFIC_MSG, coalescedIsPayload,
+            this->startMessageCache)));
+      } else {
+        LOG(WARNING) << "Was not able to coalesce impedance spectrums.";
+      }
+
+    } else {
+      // Timestamp did not change. Push impedance spectrum to buffer.
+      this->impedanceSpectrumBuffer.push_back(*isPayload);
+    }
+
+    return true;
+  }
+
+  else {
+    // Uknown payload. Return false.
     return false;
   }
 }

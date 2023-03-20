@@ -130,6 +130,18 @@ public:
    * return an empty list, if there was nothing to read.
    */
   virtual list<shared_ptr<DeviceMessage>> read(TimePoint timestamp) override;
+
+  /**
+   * @brief Returns the string representation of the given device status.
+   * @param deviceStatus The numeric device status value that shall be converted
+   * to string.
+   * @return The string representation of the device status value.
+   */
+  static string deviceStatusToString(DeviceStatus deviceStatus);
+
+protected:
+  /// Caches the message that triggered the most recent start command.
+  shared_ptr<WriteDeviceMessage> startMessageCache;
 };
 } // namespace Devices
 

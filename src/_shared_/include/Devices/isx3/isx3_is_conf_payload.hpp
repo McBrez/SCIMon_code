@@ -28,7 +28,7 @@ public:
   ~Isx3IsConfPayload();
 
   /// maps from channel function to channel number
-  const map<ChannelFunction, int> channel;
+  map<ChannelFunction, int> channel;
   const IsScale scale;
   MeasurmentConfigurationRange measurementConfRange;
   MeasurmentConfigurationChannel measurementConfChannel;

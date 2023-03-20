@@ -31,6 +31,15 @@ bool Device::write(shared_ptr<WriteDeviceMessage> writeMsg) {
     return this->specificWrite(writeMsg);
   }
 
+  else if (WriteDeviceTopic::WRITE_TOPIC_RUN == writeMsg->getTopic()) {
+    this->startMessageCache = writeMsg;
+    return this->start();
+  }
+
+  else if (WriteDeviceTopic::WRITE_TOPIC_STOP == writeMsg->getTopic()) {
+    return this->stop();
+  }
+
   else {
     // Could not identify the topic of the message. Return false.
     LOG(ERROR) << "Could not identify the topic of the message.";
@@ -62,6 +71,26 @@ list<shared_ptr<DeviceMessage>> Device::read(TimePoint timestamp) {
     }
     return retVal;
   }
+}
+
+string Device::deviceStatusToString(DeviceStatus deviceStatus) {
+
+  if (UNKNOWN_DEVICE_STATUS == deviceStatus)
+    return "UNKNOWN DEVICE STATUS";
+  else if (INIT == deviceStatus)
+    return "INIT";
+  else if (CONFIGURE == deviceStatus)
+    return "CONFIGURE";
+  else if (OPERATING == deviceStatus)
+    return "OPERATING";
+  else if (IDLE == deviceStatus)
+    return "IDLE";
+  else if (BUSY == deviceStatus)
+    return "BUSY";
+  else if (ERROR == deviceStatus)
+    return "ERROR";
+  else
+    return "";
 }
 
 } // namespace Devices

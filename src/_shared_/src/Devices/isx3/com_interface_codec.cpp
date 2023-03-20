@@ -196,20 +196,27 @@ ComInterfaceCodec::decodeMessage(std::vector<unsigned char> bytes) {
 }
 
 std::vector<unsigned char>
-ComInterfaceCodec::encodeMessage(shared_ptr<InitPayload> message) {
+ComInterfaceCodec::encodeMessage(shared_ptr<InitPayload> payload) {
   return std::vector<unsigned char>();
 }
 
 std::list<std::vector<unsigned char>>
-ComInterfaceCodec::encodeMessage(shared_ptr<ConfigurationPayload> message) {
-  if (!message) {
+ComInterfaceCodec::encodeMessage(shared_ptr<ConfigurationPayload> payload) {
+  if (!payload) {
     return std::list<std::vector<unsigned char>>();
   }
 
   // Try to cast it to an isx3 configuration payload.
   shared_ptr<Isx3IsConfPayload> confPayload =
-      dynamic_pointer_cast<Isx3IsConfPayload>(message);
+      dynamic_pointer_cast<Isx3IsConfPayload>(payload);
   if (!confPayload) {
+    // TODO: Try to cast it to a more generic IS configuration and assemble a
+    // default setup.
+    return std::list<std::vector<unsigned char>>();
+  }
+
+  // Do some sanity checks.
+  if (confPayload->measurementPoints <= 0) {
     return std::list<std::vector<unsigned char>>();
   }
 
@@ -218,13 +225,21 @@ ComInterfaceCodec::encodeMessage(shared_ptr<ConfigurationPayload> message) {
                                : FrequencyScale::FREQ_SCALE_LOGARITHMIC;
   std::list<std::vector<unsigned char>> commandList;
   commandList.push_back(this->buildCmdSetSetup(
-      confPayload->frequencyFrom, confPayload->frequencyTo,
-      confPayload->measurementPoints, isScale, confPayload->precision,
-      confPayload->amplitude));
+      static_cast<float>(confPayload->frequencyFrom),
+      static_cast<float>(confPayload->frequencyTo),
+      static_cast<float>(confPayload->measurementPoints), isScale,
+      static_cast<float>(confPayload->precision),
+      static_cast<float>(confPayload->amplitude)));
   commandList.push_back(this->buildCmdSetFeSettings(
       confPayload->measurementConfiguration,
       confPayload->measurementConfChannel, confPayload->measurementConfRange));
-  commandList.push_back(this->buildCmdSetExtensionPortChannel());
+  commandList.push_back(this->buildCmdSetExtensionPortChannel(
+      confPayload->channel[ChannelFunction::CHAN_FUNC_CP],
+      confPayload->channel[ChannelFunction::CHAN_FUNC_RP],
+      confPayload->channel[ChannelFunction::CHAN_FUNC_WS],
+      confPayload->channel[ChannelFunction::CHAN_FUNC_WP]));
+
+  return commandList;
 }
 
 std::vector<unsigned char>

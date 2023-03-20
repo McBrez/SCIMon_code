@@ -7,6 +7,7 @@
 #include <device_isx3.hpp>
 #include <id_payload.hpp>
 #include <isx3_ack_payload.hpp>
+#include <isx3_is_conf_payload.hpp>
 #include <win_socket.hpp>
 
 using namespace Devices;
@@ -240,21 +241,50 @@ TEST_CASE("Test the backend communication classes") {
 }
 
 TEST_CASE("Testing the implementation of the Sciospec ISX3 device") {
-  DeviceIsx3 dut;
+  shared_ptr<Device> dut(new DeviceIsx3());
 
   // Init the device.
-  shared_ptr<InitDeviceMessage>(
+  shared_ptr<InitDeviceMessage> initMsg(
       new InitDeviceMessage(shared_ptr<MessageInterface>(),
                             new Isx3InitPayload("127.0.0.1", 8888), UserId()));
-  dut.write(shared_ptr<InitDeviceMessage>());
+  bool initSuccess = dut->write(initMsg);
+  REQUIRE(initSuccess);
 
   // Configure the device.
-
-  dut.write(shared_ptr<ConfigDeviceMessage>());
+  shared_ptr<ConfigDeviceMessage> configMsg(new ConfigDeviceMessage(
+      shared_ptr<MessageInterface>(),
+      new Isx3IsConfPayload(
+          10.0, 100.0, 10, 0,
+          map<ChannelFunction, int>({{ChannelFunction::CHAN_FUNC_CP, 10},
+                                     {ChannelFunction::CHAN_FUNC_RP, 10},
+                                     {ChannelFunction::CHAN_FUNC_WS, 11},
+                                     {ChannelFunction::CHAN_FUNC_WP, 11}}),
+          IsScale::LINEAR_SCALE,
+          MeasurmentConfigurationRange::MEAS_CONFIG_RANGE_10MA,
+          MeasurmentConfigurationChannel::MEAS_CONFIG_CHANNEL_EXT_PORT,
+          MeasurementConfiguration::MEAS_CONFIG_2_POINT, 1.0, 1.0)));
+  bool configSuccess = dut->write(configMsg);
+  REQUIRE(configSuccess);
 
   // Start the measurement.
-  // dut.write(shared_ptr<DeviceMessage>());
+
+  shared_ptr<WriteDeviceMessage> startMsg(new WriteDeviceMessage(
+      shared_ptr<MessageInterface>(), dut, WriteDeviceTopic::WRITE_TOPIC_RUN));
+  bool startSuccess = dut->write(startMsg);
+  REQUIRE(startSuccess);
 
   // Read measurement data.
-  dut.read(TimePoint());
+  int readCounter = 1000;
+  list<shared_ptr<DeviceMessage>> readList;
+  for (int i = 0; i < readCounter; i++) {
+    readList.merge(dut->read(TimePoint()));
+    this_thread::sleep_for(chrono::microseconds(10));
+  }
+  REQUIRE(!readList.empty());
+
+  // Stop the measurement.
+  shared_ptr<WriteDeviceMessage> stopMsg(new WriteDeviceMessage(
+      shared_ptr<MessageInterface>(), dut, WriteDeviceTopic::WRITE_TOPIC_STOP));
+  bool stopSuccess = dut->write(stopMsg);
+  REQUIRE(stopSuccess);
 }

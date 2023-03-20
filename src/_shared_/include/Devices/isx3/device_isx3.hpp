@@ -22,6 +22,10 @@
 
 /// The length of the acknoledgment buffer.
 #define ACK_BUFFER_LEN 1024
+/// The default count of wait cycles that acknowledgments are waited for.
+#define DEFAULT_ACK_WAIT_CYCLES 10
+/// The default time an acknowledgment wait cycles lasts. In milliseconds.
+#define DEFAULT_ACK_WAIT_DURATION 100
 
 using namespace Utilities;
 
@@ -112,6 +116,19 @@ private:
   bool isAcked(shared_ptr<Isx3CmdAckStruct> ackStruct);
 
   /**
+   * @brief Waits for an acknowledgment of the given command.
+   * @param ackStruct The structure that identifies the command that has
+   * previously been sent.
+   * @param cycles Count of cycles that shall be waited for.
+   * @param waitTime Specifies the length of one waiting cycle. In milliseconds.
+   * @return TRUE if the acknowledgment has been received during the waiting
+   * time. FALSE otherwise.
+   */
+  bool waitForAck(shared_ptr<Isx3CmdAckStruct> ackStruct,
+                  int cycles = DEFAULT_ACK_WAIT_CYCLES,
+                  int waitTime = DEFAULT_ACK_WAIT_DURATION);
+
+  /**
    * @brief Coalesces the given frequency point measurements into a single
    * Impedance Spectrum Measurement payload. This method is necesarry, since the
    * ISX3 device only sends back impedance values one frequency at a time. Also
@@ -126,9 +143,18 @@ private:
    * @return Pointer to impedance spectrum payload that contains all the
    * frequency points of impedanceSpectrums.
    */
-  shared_ptr<ReadPayload>
+  ReadPayload *
   coalesceImpedanceSpectrums(const list<IsPayload> &impedanceSpectrums,
                              const map<int, double> &frequencyPointMap);
+
+  /**
+   * @brief Helper function of the worker thread, that handles a read payload,
+   * that has been decoded from received data from the device. This method does
+   * not handle ACKs.
+   * @param readPayload The payload that shall be handled.
+   * @return TRUE if the payload could be handled. FALSE otherwise.
+   */
+  bool handleReadPayload(shared_ptr<ReadPayload> readPayload);
 
   /// Pointer to the communication thread.
   unique_ptr<thread> commThread;

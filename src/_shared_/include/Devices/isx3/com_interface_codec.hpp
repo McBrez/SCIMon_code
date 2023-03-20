@@ -3,6 +3,7 @@
 
 // Standard includes
 #include <complex>
+#include <list>
 #include <vector>
 
 // Project includes
@@ -11,7 +12,6 @@
 #include <init_payload.hpp>
 #include <isx3_constants.hpp>
 #include <read_payload.hpp>
-
 
 using namespace Messages;
 
@@ -151,10 +151,20 @@ public:
    */
   shared_ptr<ReadPayload> decodeMessage(std::vector<unsigned char> bytes);
 
-  std::vector<unsigned char> encodeMessage(shared_ptr<InitPayload> message);
+  /**
+   * @brief Encodes an init payload into a COM interface data frame.
+   * @param payload The payload that shall be encoded.
+   * @return The encoded COM interface data frame.
+   */
+  std::vector<unsigned char> encodeMessage(shared_ptr<InitPayload> payload);
 
+  /**
+   * @brief Encodes a config payload into a list of COM interface data frames.
+   * @param payload The payload that shall be encoded.
+   * @return A list of COM interface data frames.
+   */
   std::list<std::vector<unsigned char>>
-  encodeMessage(shared_ptr<ConfigPayload> message);
+  encodeMessage(shared_ptr<ConfigurationPayload> payload);
 
 private:
   /**

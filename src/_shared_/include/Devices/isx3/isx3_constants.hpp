@@ -141,10 +141,14 @@ enum MeasurmentConfigurationRange {
  * @brief Identifies the possible channel functions of a pin.
  */
 enum ChannelFunction {
-  CHAN_FUNC_WS = 0x00,
-  CHAN_FUNC_WS = 0x01,
-  CHAN_FUNC_C = 0x03,
-  CHAN_FUNC_Cs = 0x04,
+  /// Identifies the counter port.
+  CHAN_FUNC_CP = 0x00,
+  /// Identifies the reference port.
+  CHAN_FUNC_RP = 0x01,
+  /// Identifies the working sense port.
+  CHAN_FUNC_WS = 0x03,
+  /// Identifies the working port.
+  CHAN_FUNC_WP = 0x04,
 };
 } // namespace Devices
 
