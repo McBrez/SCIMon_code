@@ -22,81 +22,6 @@ DeviceIsx3::~DeviceIsx3() {
   this->socketWrapper->close();
 };
 
-bool DeviceIsx3::write(shared_ptr<InitDeviceMessage> initMsg) {
-  this->deviceState = DeviceStatus::UNKNOWN_DEVICE_STATUS;
-
-  // Try to downcast the payload.
-  shared_ptr<Isx3InitPayload> initPayload =
-      dynamic_pointer_cast<Isx3InitPayload>(initMsg->returnPayload());
-
-  if (!initPayload) {
-    return false;
-  }
-
-  this->initPayload = initPayload;
-
-  // NOTE: The following section is blocking. It would be better to not execute
-  // this in the write() function and rather handle it asyncronuously.
-  // Init the connection.
-  this->socketWrapper->close();
-  bool openSuccess = this->socketWrapper->open(
-      this->initPayload->getIpAddress(), this->initPayload->getPort());
-  if (!openSuccess) {
-    LOG(ERROR) << "Connection to ISX3 failed.";
-    return false;
-  }
-  // Initialize thread.
-  this->isx3CommThreadState = ISX3_COMM_THREAD_STATE_INIT;
-  this->doComm = true;
-  this->commThread =
-      unique_ptr<thread>(new thread(&DeviceIsx3::commThreadWorker, this));
-
-  // Wait until communication thread is listening.
-  int retryCounter = 0;
-  bool threadInitialized = false;
-  while (retryCounter < 100) {
-    this_thread::sleep_for(chrono::milliseconds(100));
-    if (this->isx3CommThreadState == ISX3_COMM_THREAD_STATE_LISTENING) {
-      threadInitialized = true;
-      break;
-    }
-    retryCounter++;
-  }
-  if (!threadInitialized) {
-    // Thread was not able to initialize. Abort here.
-    this->doComm = false;
-    this->socketWrapper->close();
-    return false;
-  }
-
-  // Send the init command.
-  shared_ptr<Isx3CmdAckStruct> ackStruct =
-      this->pushToSendBuffer(this->comInterfaceCodec.buildCmdSetSetup());
-  // Wait for acknowledgement.
-  retryCounter = 0;
-  bool positiveAck;
-  while (retryCounter < 100) {
-    this_thread::sleep_for(chrono::milliseconds(100));
-    if (ackStruct->acked == Isx3AckType::ISX3_ACK_TYPE_COMMAND_ACKNOWLEDGE) {
-      positiveAck = true;
-      break;
-    }
-    retryCounter++;
-  }
-  if (positiveAck) {
-    this->deviceState = DeviceStatus::INIT;
-    return true;
-  } else {
-    this->deviceState = DeviceStatus::ERROR;
-    return false;
-  }
-}
-
-bool DeviceIsx3::write(shared_ptr<ConfigDeviceMessage> configMsg) {
-  // Configure ISX3 according to the given data.
-  return this->configure(configMsg->getConfiguration());
-}
-
 string DeviceIsx3::getDeviceTypeName() { return "ISX-3"; }
 
 shared_ptr<Isx3CmdAckStruct>
@@ -448,6 +373,76 @@ bool DeviceIsx3::handleReadPayload(shared_ptr<ReadPayload> readPayload) {
 
   else {
     // Uknown payload. Return false.
+    return false;
+  }
+}
+
+bool DeviceIsx3::initialize(shared_ptr<InitPayload> initPayload) {
+  this->deviceState = DeviceStatus::UNKNOWN_DEVICE_STATUS;
+
+  // Try to downcast the payload.
+  shared_ptr<Isx3InitPayload> isx3InitPayload =
+      dynamic_pointer_cast<Isx3InitPayload>(initPayload);
+
+  if (!isx3InitPayload) {
+    return false;
+  }
+
+  this->initPayload = isx3InitPayload;
+
+  // NOTE: The following section is blocking. It would be better to not execute
+  // this in the write() function and rather handle it asyncronuously.
+  // Init the connection.
+  this->socketWrapper->close();
+  bool openSuccess = this->socketWrapper->open(
+      this->initPayload->getIpAddress(), this->initPayload->getPort());
+  if (!openSuccess) {
+    LOG(ERROR) << "Connection to ISX3 failed.";
+    return false;
+  }
+  // Initialize thread.
+  this->isx3CommThreadState = ISX3_COMM_THREAD_STATE_INIT;
+  this->doComm = true;
+  this->commThread =
+      unique_ptr<thread>(new thread(&DeviceIsx3::commThreadWorker, this));
+
+  // Wait until communication thread is listening.
+  int retryCounter = 0;
+  bool threadInitialized = false;
+  while (retryCounter < 100) {
+    this_thread::sleep_for(chrono::milliseconds(100));
+    if (this->isx3CommThreadState == ISX3_COMM_THREAD_STATE_LISTENING) {
+      threadInitialized = true;
+      break;
+    }
+    retryCounter++;
+  }
+  if (!threadInitialized) {
+    // Thread was not able to initialize. Abort here.
+    this->doComm = false;
+    this->socketWrapper->close();
+    return false;
+  }
+
+  // Send the init command.
+  shared_ptr<Isx3CmdAckStruct> ackStruct =
+      this->pushToSendBuffer(this->comInterfaceCodec.buildCmdSetSetup());
+  // Wait for acknowledgement.
+  retryCounter = 0;
+  bool positiveAck;
+  while (retryCounter < 100) {
+    this_thread::sleep_for(chrono::milliseconds(100));
+    if (ackStruct->acked == Isx3AckType::ISX3_ACK_TYPE_COMMAND_ACKNOWLEDGE) {
+      positiveAck = true;
+      break;
+    }
+    retryCounter++;
+  }
+  if (positiveAck) {
+    this->deviceState = DeviceStatus::INIT;
+    return true;
+  } else {
+    this->deviceState = DeviceStatus::ERROR;
     return false;
   }
 }

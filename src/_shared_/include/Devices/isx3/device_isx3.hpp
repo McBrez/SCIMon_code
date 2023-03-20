@@ -60,10 +60,11 @@ public:
    */
   virtual string getDeviceTypeName() override;
 
-  virtual bool write(shared_ptr<InitDeviceMessage> initMsg) override;
-
-  virtual bool write(shared_ptr<ConfigDeviceMessage> configMsg) override;
-
+  /**
+   * @brief Handles a device specific write operation.
+   * @param writeMsg The specific message.
+   * @return True if the write operation was successfull. False otherwise.
+   */
   virtual bool specificWrite(shared_ptr<WriteDeviceMessage> writeMsg) override;
 
   virtual list<shared_ptr<DeviceMessage>>
@@ -77,6 +78,14 @@ public:
    */
   virtual bool
   configure(shared_ptr<ConfigurationPayload> deviceConfiguration) override;
+
+  /**
+   * Initializes the device according to the given configuration.
+   * @param deviceConfiguration The configuration that shall be applied to the
+   * device.
+   * @return TRUE if configuration was successful. False otherwise.
+   */
+  virtual bool initialize(shared_ptr<InitPayload> initPayload) override;
 
   /**
    * @brief Starts the operation of the device, provided that there is a valid

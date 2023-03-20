@@ -62,16 +62,6 @@ public:
   virtual ~Device() = 0;
 
   /**
-   * Configures the device according to the given configuration.
-   *
-   * @param deviceConfiguration The configuration that shall be applied to the
-   * device.
-   * @return TRUE if configuration was successful. False otherwise.
-   */
-  virtual bool
-  configure(shared_ptr<ConfigurationPayload> deviceConfiguration) = 0;
-
-  /**
    * @brief Starts the operation of the device, provided that there is an valid
    * configuration.
    * @return TRUE if device has been started. FALSE if an error occured.
@@ -83,6 +73,23 @@ public:
    * @return TRUE if device has been started. FALSE if an error occured.
    */
   virtual bool stop() = 0;
+
+  /**
+   * Initializes the device according to the given configuration.
+   * @param deviceConfiguration The configuration that shall be applied to the
+   * device.
+   * @return TRUE if configuration was successful. False otherwise.
+   */
+  virtual bool initialize(shared_ptr<InitPayload> initPayload) = 0;
+
+  /**
+   * Configures the device according to the given configuration.
+   * @param deviceConfiguration The configuration that shall be applied to the
+   * device.
+   * @return TRUE if configuration was successful. False otherwise.
+   */
+  virtual bool
+  configure(shared_ptr<ConfigurationPayload> deviceConfiguration) = 0;
 
   /**
    * @brief Retruns whether the device has been succesfully configured.
@@ -122,6 +129,21 @@ public:
    * @return True if successful. False otherwise.
    */
   virtual bool write(shared_ptr<WriteDeviceMessage> writeMsg) override;
+
+  /**
+   * @brief Writes a message to the device that triggers an initialization of
+   * the device.
+   * @param initMsg The init message.
+   * @return True if the initialization was succesfull. False otherwise.
+   */
+  virtual bool write(shared_ptr<InitDeviceMessage> initMsg) override;
+
+  /**
+   * @brief Writes a message to the device that triggers a configuration.
+   * @param configMsg The configuration message.
+   * @return True if configuration was succesfull. False otherwise.
+   */
+  virtual bool write(shared_ptr<ConfigDeviceMessage> configMsg) override;
 
   /**
    * @brief Reads all messages from the message queue.

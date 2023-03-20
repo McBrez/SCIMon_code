@@ -93,4 +93,23 @@ string Device::deviceStatusToString(DeviceStatus deviceStatus) {
     return "";
 }
 
+bool Device::write(shared_ptr<InitDeviceMessage> initMsg) {
+  if (initMsg->getTargetUserId() != this->getUserId()) {
+    LOG(WARNING) << "Got a message that is not meant for this device.";
+    return false;
+  }
+
+  return this->initialize(initMsg->returnPayload());
+}
+
+/**
+ * @brief Writes a message to the device that triggers a configuration.
+ * @param configMsg The configuration message.
+ * @return True if configuration was succesfull. False otherwise.
+ */
+bool Device::write(shared_ptr<ConfigDeviceMessage> configMsg) {
+
+  return this->configure(configMsg->getConfiguration());
+}
+
 } // namespace Devices
