@@ -24,30 +24,24 @@ DeviceOb1Win::~DeviceOb1Win() {
   }
 }
 
-bool DeviceOb1Win::write(shared_ptr<InitDeviceMessage> initMsg) {
-  // Is the payload meant for this device?
-  if (this->getUserId() != initMsg->getTargetUserId()) {
-    LOG(WARNING)
-        << "Received an init message that is not meant for this device.";
-    return false;
-  }
+bool DeviceOb1Win::initialize(shared_ptr<InitPayload> initPayload) {
 
   // Get the payload of the message and check if it is the correct type.
-  shared_ptr<InitPayloadOb1> initPayload =
-      dynamic_pointer_cast<InitPayloadOb1>(initMsg->returnPayload());
+  shared_ptr<InitPayloadOb1> initPayloadOb1 =
+      dynamic_pointer_cast<InitPayloadOb1>(initPayload);
   if (!initPayload) {
     LOG(ERROR) << "Received an ill-formed init message.";
     return false;
   }
 
-  char *deviceName = new char[initPayload->getDeviceName().length() + 1];
-  strcpy(deviceName, initPayload->getDeviceName().c_str());
+  char *deviceName = new char[initPayloadOb1->getDeviceName().length() + 1];
+  strcpy(deviceName, initPayloadOb1->getDeviceName().c_str());
 
-  int error =
-      OB1_Initialization(deviceName, get<0>(initPayload->getChannelConfig()),
-                         get<1>(initPayload->getChannelConfig()),
-                         get<2>(initPayload->getChannelConfig()),
-                         get<3>(initPayload->getChannelConfig()), &this->ob1Id);
+  int error = OB1_Initialization(
+      deviceName, get<0>(initPayloadOb1->getChannelConfig()),
+      get<1>(initPayloadOb1->getChannelConfig()),
+      get<2>(initPayloadOb1->getChannelConfig()),
+      get<3>(initPayloadOb1->getChannelConfig()), &this->ob1Id);
   delete[] deviceName;
 
   // Was init successful?
@@ -64,7 +58,7 @@ bool DeviceOb1Win::write(shared_ptr<InitDeviceMessage> initMsg) {
   }
 }
 
-bool DeviceOb1Win::configure(
+void DeviceOb1Win::configureWorker(
     shared_ptr<ConfigurationPayload> deviceConfiguration) {
   this->deviceState = DeviceStatus::CONFIGURE;
   this->configurationFinished = false;
@@ -75,15 +69,15 @@ bool DeviceOb1Win::configure(
     LOG(INFO) << "Finished calibration of OB1 successfully.";
     this->configurationFinished = true;
     this->deviceState = DeviceStatus::IDLE;
-    return true;
+    return;
   } else {
     LOG(INFO) << "Finished calibration of OB1 with an error.";
     this->configurationFinished = false;
     this->deviceState = DeviceStatus::UNKNOWN_DEVICE_STATUS;
-    return false;
+    return;
   }
 
-  return retVal == 0;
+  return;
 }
 
 bool DeviceOb1Win::start() {
@@ -136,10 +130,10 @@ bool DeviceOb1Win::stop() {
   }
 }
 
-bool DeviceOb1Win::write(shared_ptr<ConfigDeviceMessage> configMsg) {
+bool DeviceOb1Win::configure(shared_ptr<ConfigurationPayload> configPayload) {
   // Create a new thread and start it.
-  this->configurationThread.reset(new thread(
-      &DeviceOb1Win::configure, this, shared_ptr<ConfigurationPayload>()));
+  this->configurationThread.reset(
+      new thread(&DeviceOb1Win::configureWorker, this, configPayload));
   return true;
 }
 

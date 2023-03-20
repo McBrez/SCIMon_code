@@ -32,6 +32,7 @@ add_executable(test_ob1
     ${INCLUDE_DIR}/Devices/elveflow_ob1/device_ob1_win.hpp
     ${INCLUDE_DIR}/Devices/elveflow_ob1/ob1_constants.hpp
     ${INCLUDE_DIR}/Devices/elveflow_ob1/init_payload_ob1.hpp
+    ${INCLUDE_DIR}/Devices/elveflow_ob1/ob1_conf_payload.hpp
     ${INCLUDE_DIR}/Messages/message_interface.hpp
     ${INCLUDE_DIR}/Messages/user_id.hpp
     ${INCLUDE_DIR}/Messages/device_message.hpp
@@ -44,11 +45,13 @@ add_executable(test_ob1
 
     ${SOURCE_DIR}/Devices/device.cpp
     ${SOURCE_DIR}/Devices/status_payload.cpp
+    ${SOURCE_DIR}/Devices/read_payload.cpp
     ${SOURCE_DIR}/Devices/configuration_payload.cpp
     ${SOURCE_DIR}/Devices/elveflow_ob1/device_ob1.cpp
     ${SOURCE_DIR}/Devices/elveflow_ob1/device_ob1_win.cpp
     ${SOURCE_DIR}/Devices/elveflow_ob1/init_payload_ob1.cpp
     ${SOURCE_DIR}/Devices/elveflow_ob1/read_payload_ob1.cpp
+    ${SOURCE_DIR}/Devices/elveflow_ob1/ob1_conf_payload.cpp
     ${SOURCE_DIR}/Messages/message_interface.cpp
     ${SOURCE_DIR}/Messages/device_message.cpp
     ${SOURCE_DIR}/Messages/user_id.cpp
@@ -101,4 +104,3 @@ endif (WIN32)
 if (UNIX)
     target_sources(test_ob1 PRIVATE)
 endif (UNIX)
-

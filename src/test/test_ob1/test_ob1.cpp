@@ -7,9 +7,11 @@
 // Project includes
 #include <device_ob1_win.hpp>
 #include <init_payload_ob1.hpp>
+#include <ob1_conf_payload.hpp>
 #include <read_payload_ob1.hpp>
 #include <status_payload.hpp>
 #include <write_message_ob1.hpp>
+
 
 using namespace Devices;
 using namespace Messages;
@@ -45,8 +47,7 @@ TEST_CASE("Testing the implementation of the ElveFlow OB1 device",
 
     // Configure the DUT.
     shared_ptr<ConfigDeviceMessage> configMsg(new ConfigDeviceMessage(
-        shared_ptr<MessageInterface>(),
-        new ConfigurationPayload(DeviceType::PUMP_CONTROLLER)));
+        shared_ptr<MessageInterface>(), new Ob1ConfPayload()));
     REQUIRE(dut->write(configMsg));
 
     // Configuration may take a while. Query the DUT until configuration

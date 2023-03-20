@@ -28,11 +28,19 @@ public:
   virtual ~DeviceOb1Win() override;
 
   /**
-   * @brief Initializes the device with the given init structure.
-   * @return TRUE if initialization was succesfull. False otherwise.
+   * Initializes the device according to the given configuration.
+   * @param deviceConfiguration The configuration that shall be applied to the
+   * device.
+   * @return TRUE if configuration was successful. False otherwise.
    */
-  bool init();
+  virtual bool initialize(shared_ptr<InitPayload> initPayload) override;
 
+  /**
+   * Configures the device according to the given configuration.
+   * @param deviceConfiguration The configuration that shall be applied to the
+   * device.
+   * @return TRUE if configuration was successful. False otherwise.
+   */
   virtual bool
   configure(shared_ptr<ConfigurationPayload> deviceConfiguration) override;
 
@@ -50,26 +58,6 @@ public:
    * @return TRUE if device was started. False otherwise.
    */
   virtual bool stop() override;
-
-  // Pull all write methods into scope.
-  using Device::write;
-  /**
-   * @brief Writes an initialization message to the device.
-   * @param initMsg The initialization message. that shall be written to the
-   * device.
-   * @return True if the initialization message has been received successfully.
-   * False otherwise.
-   */
-  virtual bool write(shared_ptr<InitDeviceMessage> initMsg) override;
-
-  /**
-   * @brief Writes a configuration message to the device.
-   * @param configMsg The configuration message. that shall be written to the
-   * device.
-   * @return True if the configuration message has been received successfully.
-   * False otherwise.
-   */
-  virtual bool write(shared_ptr<ConfigDeviceMessage> configMsg) override;
 
   /**
    * @brief Handles a device specific message. Called by
@@ -89,6 +77,12 @@ public:
   specificRead(TimePoint timestamp) override;
 
 private:
+  /**
+   * @brief Thread worker for the configuration process.
+   * @param deviceConfiguration Holds the configuration data.
+   */
+  void configureWorker(shared_ptr<ConfigurationPayload> deviceConfiguration);
+
   /// Id of the OB1 device. Used by the OB1 driver.
   int ob1Id;
 
