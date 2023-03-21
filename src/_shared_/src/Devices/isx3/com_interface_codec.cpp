@@ -39,6 +39,14 @@ std::vector<unsigned char> ComInterfaceCodec::buildCmdSetFeSettings(
                            Isx3CmdTag::ISX3_COMMAND_TAG_SET_FE_SETTINGS);
 }
 
+std::vector<unsigned char> ComInterfaceCodec::buildCmdClearFeSettings() {
+
+  std::vector<unsigned char> payload({0xFF, 0xFF, 0xFF});
+
+  return this->wrapPayload(payload,
+                           Isx3CmdTag::ISX3_COMMAND_TAG_SET_FE_SETTINGS);
+}
+
 std::vector<unsigned char> ComInterfaceCodec::buildCmdSetExtensionPortChannel(
     int counterPort, int referencePort, int workingSensePort, int workPort) {
 
@@ -336,30 +344,53 @@ bool ComInterfaceCodec::decodeImpedanceData(
     const std::vector<unsigned char> &payload, short &fNumber, float &timestamp,
     short &channelNumber, std::complex<float> &impedance) {
 
-  // payload has to be 16 bytes long.
-  if (payload.size() != 16) {
-    return false;
+  // Check if payload has expected length.
+  // NOTE: Other formats are available. Those are not yet implemented.
+  if (payload.size() == 16) {
+
+    fNumber = (payload[0] << 8) + payload[1];
+
+    int timestampIntermediate = (payload[2] << 24) + (payload[3] << 16) +
+                                (payload[4] << 8) + payload[5];
+    timestamp = *((float *)&timestampIntermediate);
+
+    channelNumber = (payload[6] << 8) + payload[7];
+
+    int realPartIntermediate = (payload[8] << 24) + (payload[9] << 16) +
+                               (payload[10] << 8) + payload[11];
+    float realPart = *((float *)&realPartIntermediate);
+
+    int imagPartIntermediate = (payload[12] << 24) + (payload[13] << 16) +
+                               (payload[14] << 8) + payload[15];
+    float imagPart = *((float *)&imagPartIntermediate);
+
+    impedance = std::complex<float>({realPart, imagPart});
+
+    return true;
   }
 
-  fNumber = (payload[0] << 8) + payload[1];
+  else if (payload.size() == 10) {
+    fNumber = (payload[0] << 8) + payload[1];
 
-  int timestampIntermediate =
-      (payload[2] << 24) + (payload[3] << 16) + (payload[4] << 8) + payload[5];
-  timestamp = *((float *)&timestampIntermediate);
+    int realPartIntermediate = (payload[2] << 24) + (payload[3] << 16) +
+                               (payload[4] << 8) + payload[5];
+    float realPart = *((float *)&realPartIntermediate);
 
-  channelNumber = (payload[6] << 8) + payload[7];
+    int imagPartIntermediate = (payload[6] << 24) + (payload[7] << 16) +
+                               (payload[8] << 8) + payload[9];
+    float imagPart = *((float *)&imagPartIntermediate);
 
-  int realPartIntermediate = (payload[8] << 24) + (payload[9] << 16) +
-                             (payload[10] << 8) + payload[11];
-  float realPart = *((float *)&realPartIntermediate);
+    impedance = std::complex<float>({realPart, imagPart});
 
-  int imagPartIntermediate = (payload[12] << 24) + (payload[13] << 16) +
-                             (payload[14] << 8) + payload[15];
-  float imagPart = *((float *)&imagPartIntermediate);
+    timestamp = -1.0;
+    channelNumber = -1;
 
-  impedance = std::complex<float>({realPart, imagPart});
+    return true;
+  }
 
-  return true;
+  else {
+    return false;
+  }
 }
 
 bool ComInterfaceCodec::decodeAck(const std::vector<unsigned char> &payload,
@@ -391,6 +422,19 @@ bool ComInterfaceCodec::decodeDeviceId(
   dateOfDeliveryMonth = payload[6];
 
   return true;
+}
+
+std::vector<unsigned char>
+ComInterfaceCodec::buildCmdSetOptions(OptionType optionType, bool enable) {
+  std::vector<unsigned char> payload;
+  if (OptionType::OPTION_TYPE_ACTIVATE_INVALID == optionType) {
+    return std::vector<unsigned char>();
+  } else {
+    payload.push_back(static_cast<unsigned char>(optionType));
+  }
+  payload.push_back(enable ? 0x01 : 0x02);
+
+  return this->wrapPayload(payload, Isx3CmdTag::ISX3_COMMAND_TAG_SET_OPTIONS);
 }
 
 } // namespace Devices

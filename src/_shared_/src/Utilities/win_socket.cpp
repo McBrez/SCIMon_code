@@ -26,7 +26,6 @@ WinSocket::~WinSocket() {
 bool WinSocket::open(string ip, int port) {
   WSADATA wsaData;
   struct addrinfo *result = NULL, *ptr = NULL, hints;
-  const char *sendbuf = "this is a test";
 
   int iResult;
   int recvbuflen = WIN_SOCKET_DEFAULT_BUFFER_LEN;
@@ -78,7 +77,9 @@ bool WinSocket::open(string ip, int port) {
   }
 
   freeaddrinfo(result);
-
+  DWORD recvTimeout = WIN_SOCKET_DEFAULT_RECV_TIMEOUT;
+  setsockopt(this->connectSocket, SOL_SOCKET, SO_RCVTIMEO, (char *)&recvTimeout,
+             sizeof(DWORD));
   if (this->connectSocket == INVALID_SOCKET) {
     LOG(ERROR) << "Unable to connect to server!";
     WSACleanup();
@@ -138,10 +139,10 @@ int WinSocket::read(vector<unsigned char> &bytes) {
     LOG(INFO) << "Connection closed";
     return 0;
   } else {
-    LOG(ERROR) << "Receive failed.";
     return -1;
   }
 }
+
 int WinSocket::clear() {
   int bufferLen = this->getBufferLength();
   ZeroMemory(this->recvbuf, this->getBufferLength());

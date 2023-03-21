@@ -20,11 +20,11 @@ INITIALIZE_EASYLOGGINGPP
  * @return The bytes that have been read.
  */
 std::vector<unsigned char>
-readFromSocket(shared_ptr<SocketWrapper> socketWrapper) {
+readFromSocket(shared_ptr<SocketWrapper> socketWrapper, int retries = 10) {
   // Read until device no longer sends data.
   std::vector<unsigned char> readBuffer;
   int bytesRead = -1;
-  while (bytesRead > 0) {
+  for (int i = 0; i < retries; i++) {
     std::vector<unsigned char> tempBuffer;
     bytesRead = socketWrapper->read(tempBuffer);
     for (auto byteValue : tempBuffer) {
@@ -121,6 +121,27 @@ TEST_CASE("Test the backend communication classes") {
     REQUIRE(connectionSuccess);
     std::vector<unsigned char> readBuffer;
 
+    // Set to impedance spectrum measurement.
+    auto setupCmd = codec.buildCmdInitMeasurement(
+        false,
+        MeasurementMode::MEASUREMENT_MODE_FULL_RANGE_IMPEDANCE_SPECTROSCOPY);
+    socketWrapper->write(setupCmd);
+    // Check if acknowledgment has been received.
+    readBuffer = readFromSocket(socketWrapper);
+    buffer.pushBytes(readBuffer);
+    auto setupFrames = extractFrames(buffer);
+    // There should be exactly one frame.
+    REQUIRE(setupFrames.size() == 1);
+    // Decode the frame and check if it is an positive acknowledgment.
+    auto setupAckPayload = codec.decodeMessage(setupFrames.front());
+    REQUIRE(setupAckPayload);
+    auto setupAckPayloadCasted =
+        dynamic_pointer_cast<Devices::Isx3AckPayload>(setupAckPayload);
+    REQUIRE(setupAckPayloadCasted);
+    REQUIRE(setupAckPayloadCasted->getAckType() ==
+            Isx3AckType::ISX3_ACK_TYPE_COMMAND_ACKNOWLEDGE);
+    readBuffer.clear();
+
     // Remove any previously configured setup.
     auto initSetupCmd = codec.buildCmdSetSetup();
     socketWrapper->write(initSetupCmd);
@@ -161,9 +182,28 @@ TEST_CASE("Test the backend communication classes") {
             Isx3AckType::ISX3_ACK_TYPE_COMMAND_ACKNOWLEDGE);
     readBuffer.clear();
 
+    // Clear the frontend stack.
+    auto clearFeCmd = codec.buildCmdClearFeSettings();
+    socketWrapper->write(clearFeCmd);
+    // Check if acknowledgment has been received.
+    readBuffer = readFromSocket(socketWrapper);
+    buffer.pushBytes(readBuffer);
+    auto clearFeFrames = extractFrames(buffer);
+    // There should be exactly one frame.
+    REQUIRE(clearFeFrames.size() == 1);
+    // Decode the frame and check if it is an positive acknowledgment.
+    auto clearFeAckPayload = codec.decodeMessage(clearFeFrames.front());
+    REQUIRE(clearFeAckPayload);
+    auto clearFePayloadCasted =
+        dynamic_pointer_cast<Devices::Isx3AckPayload>(clearFeAckPayload);
+    REQUIRE(clearFePayloadCasted);
+    REQUIRE(clearFePayloadCasted->getAckType() ==
+            Isx3AckType::ISX3_ACK_TYPE_COMMAND_ACKNOWLEDGE);
+    readBuffer.clear();
+
     // Configure the frontend.
     auto setFeCmd = codec.buildCmdSetFeSettings(
-        Devices::MeasurementConfiguration::MEAS_CONFIG_2_POINT,
+        Devices::MeasurementConfiguration::MEAS_CONFIG_4_POINT,
         Devices::MeasurmentConfigurationChannel::MEAS_CONFIG_CHANNEL_EXT_PORT_2,
         Devices::MeasurmentConfigurationRange::MEAS_CONFIG_RANGE_10MA);
     socketWrapper->write(setFeCmd);
@@ -216,28 +256,91 @@ TEST_CASE("Test the backend communication classes") {
     bool connectionSuccess = socketWrapper->open("127.0.0.1", 8888);
     REQUIRE(connectionSuccess);
 
+    // Set a few options Channels.
+    /*auto setOptionCannelCmd = codec.buildCmdSetOptions(
+        OptionType::OPTION_TYPE_ACTIVATE_CHANNEL_NUMBER, true);
+    socketWrapper->write(setOptionCannelCmd);
+    auto setOptionFrequencyCmd = codec.buildCmdSetOptions(
+        OptionType::OPTION_TYPE_ACTIVATE_FREQUENCY_NUMBER, true);
+    socketWrapper->write(setOptionFrequencyCmd);
+    auto setOptionTimestampCmd = codec.buildCmdSetOptions(
+        OptionType::OPTION_TYPE_ACTIVATE_TIMESTAMP, true);
+    socketWrapper->write(setOptionTimestampCmd);*/
+    // TODO: Check the ACKs here.
+    // Clear the ACKS from buffer.
+    std::vector<unsigned char> readBuffer = readFromSocket(socketWrapper);
+    readBuffer.clear();
+
     // Start measurement
-    std::vector<unsigned char> readBuffer;
     auto startMeasurementCommand =
         codec.buildCmdStartImpedanceMeasurement(true);
     socketWrapper->write(startMeasurementCommand);
+    // Check if acknowledgment has been received.
+    readBuffer = readFromSocket(socketWrapper, 20);
+    buffer.pushBytes(readBuffer);
+    auto startMeasurementFrames = extractFrames(buffer);
+    // There should be at least one data frame. It is possible that the socket
+    // already caught measurement data. However, at this stage only the first
+    // response frame is evaluated, as it contains the ACK.
+    REQUIRE(startMeasurementFrames.size() >= 1);
+    // Decode the frame and check if it is an positive acknowledgment.
+    auto startMeasurementAckPayload =
+        codec.decodeMessage(startMeasurementFrames.front());
+    REQUIRE(startMeasurementAckPayload);
+    auto StartMeasurementPayloadCasted =
+        dynamic_pointer_cast<Devices::Isx3AckPayload>(
+            startMeasurementAckPayload);
+    REQUIRE(StartMeasurementPayloadCasted);
+    REQUIRE(StartMeasurementPayloadCasted->getAckType() ==
+            Isx3AckType::ISX3_ACK_TYPE_COMMAND_ACKNOWLEDGE);
+    readBuffer.clear();
 
+    // Read from the socket for a few cycles and sollect the payload.
+    std::list<shared_ptr<ReadPayload>> payloads;
     for (int i = 0; i < 10; i++) {
       // Check if acknowledgment has been received.
       readBuffer = readFromSocket(socketWrapper);
       buffer.pushBytes(readBuffer);
       auto frames = extractFrames(buffer);
-      std::list<shared_ptr<ReadPayload>> payloads;
       for (auto frame : frames) {
         auto payload = codec.decodeMessage(frames.front());
-        payloads.push_back(payload);
+        if (payload) {
+          payloads.push_back(payload);
+        }
       }
     }
+    // There should be a few payloads now.
+    REQUIRE(payloads.size() >= 1);
+    // Each collected payload has to be an impedance spectrum.
+    for (auto payload : payloads) {
+      auto isPayload = dynamic_pointer_cast<IsPayload>(payload);
+      REQUIRE(isPayload);
+      LOG(INFO) << "Channel Number: " << isPayload->getChannelNumber() << " "
+                << "Timestamp: " << isPayload->getTimestamp() << " "
+                << "Frequency point: "
+                << get<0>(isPayload->getImpedanceSpectrum().front()) << " "
+                << "Impedance: "
+                << get<1>(isPayload->getImpedanceSpectrum().front());
+    }
+
+    // Stop measurement.
+    auto stopMeasurementCommand =
+        codec.buildCmdStartImpedanceMeasurement(false);
+    socketWrapper->write(stopMeasurementCommand);
 
     // Disconnect again.
     bool disconnectSuccess = socketWrapper->close();
     REQUIRE(disconnectSuccess);
   }
+
+  /*
+    // Try to send a stop measurement command in order to set the device into a
+    // known state.
+    socketWrapper->open("127.0.0.1", 8888);
+    socketWrapper->write(codec.buildCmdStartImpedanceMeasurement(false));
+    readFromSocket(socketWrapper); // Flush buffer.
+    socketWrapper->close();
+    */
 }
 
 TEST_CASE("Testing the implementation of the Sciospec ISX3 device") {

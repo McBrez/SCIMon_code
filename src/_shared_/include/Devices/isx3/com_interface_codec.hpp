@@ -65,6 +65,12 @@ public:
                         MeasurmentConfigurationRange measConfRange);
 
   /**
+   * @brief Builds a "Clear FE Settings" command.
+   * @return A "Clear FE Settings" command.
+   */
+  std::vector<unsigned char> buildCmdClearFeSettings();
+
+  /**
    * @brief Builds an "Set ExtensionPort Channel" command from the given
    * arguments.
    * @param counterPort The number of the counter port.
@@ -76,6 +82,9 @@ public:
   std::vector<unsigned char>
   buildCmdSetExtensionPortChannel(int counterPort, int referencePort,
                                   int workingSensePort, int workPort);
+
+  std::vector<unsigned char> buildCmdSetOptions(OptionType optionType,
+                                                bool enable);
 
   // ------------------------------------------------- Impedance Measurement --
 

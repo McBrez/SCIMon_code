@@ -30,7 +30,9 @@ enum Isx3CmdTag {
   ISX3_COMMAND_TAG_SET_SETUP = 0xB6,
   /// Command tag for an "Start Impedance Measurement" command. Also used for
   /// measurement results sent back by the device.
-  ISX3_COMMAND_TAG_START_IMPEDANCE_MEAS = 0xB8
+  ISX3_COMMAND_TAG_START_IMPEDANCE_MEAS = 0xB8,
+  /// Command tag for an "Set Options" command.
+  ISX3_COMMAND_TAG_SET_OPTIONS = 0x97
 };
 
 /**
@@ -149,6 +151,14 @@ enum ChannelFunction {
   CHAN_FUNC_WS = 0x03,
   /// Identifies the working port.
   CHAN_FUNC_WP = 0x04,
+};
+
+enum OptionType {
+  OPTION_TYPE_ACTIVATE_INVALID = 0x00,
+  OPTION_TYPE_ACTIVATE_TIMESTAMP = 0x01,
+  OPTION_TYPE_ACTIVATE_CHANNEL_NUMBER = 0x02,
+  OPTION_TYPE_ACTIVATE_FILL_FRAMES = 0x03,
+  OPTION_TYPE_ACTIVATE_FREQUENCY_NUMBER = 0x04
 };
 } // namespace Devices
 
