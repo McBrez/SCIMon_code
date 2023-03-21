@@ -46,9 +46,12 @@ void MessageDistributor::takeMessage(list<shared_ptr<DeviceMessage>> messages) {
 
 int MessageDistributor::deliverMessages() {
 
+  // Deliver the messages with concrete targets.
   for (auto message : this->messageCache) {
     // Does the message have a destination?
   }
+
+  // Deliver the messages without targets.
   return false;
 }
 

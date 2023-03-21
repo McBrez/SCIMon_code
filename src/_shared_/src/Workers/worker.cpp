@@ -1,4 +1,9 @@
 // Project includes
 #include <worker.hpp>
 
-namespace Workers {}
+namespace Workers {
+
+Worker::Worker() {}
+
+Worker::~Worker() {}
+} // namespace Workers

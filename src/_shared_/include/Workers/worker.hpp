@@ -20,6 +20,16 @@ using WorkerId = int;
 class Worker : public MessageInterface {
 public:
   /**
+   * @brief Constructs a new Worker object
+   */
+  Worker();
+
+  /**
+   * @brief Destroys the Worker object
+   */
+  virtual ~Worker() = 0;
+
+  /**
    * @brief A worker function, which is called repeatedly.
    * @param timestamp The time at which the method has been called.
    */
