@@ -347,9 +347,9 @@ TEST_CASE("Testing the implementation of the Sciospec ISX3 device") {
   shared_ptr<Device> dut(new DeviceIsx3());
 
   // Init the device.
-  shared_ptr<InitDeviceMessage> initMsg(
-      new InitDeviceMessage(shared_ptr<MessageInterface>(),
-                            new Isx3InitPayload("127.0.0.1", 8888), UserId()));
+  shared_ptr<InitDeviceMessage> initMsg(new InitDeviceMessage(
+      shared_ptr<MessageInterface>(), new Isx3InitPayload("127.0.0.1", 8888),
+      dut->getUserId()));
   bool initSuccess = dut->write(initMsg);
   REQUIRE(initSuccess);
 
@@ -370,7 +370,6 @@ TEST_CASE("Testing the implementation of the Sciospec ISX3 device") {
   REQUIRE(configSuccess);
 
   // Start the measurement.
-
   shared_ptr<WriteDeviceMessage> startMsg(new WriteDeviceMessage(
       shared_ptr<MessageInterface>(), dut, WriteDeviceTopic::WRITE_TOPIC_RUN));
   bool startSuccess = dut->write(startMsg);

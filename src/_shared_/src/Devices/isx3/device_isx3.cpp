@@ -192,7 +192,6 @@ bool DeviceIsx3::configure(
   bool failed = false;
   for (auto cmdFrame : cmdList) {
     shared_ptr<Isx3CmdAckStruct> ackStruct = this->pushToSendBuffer(cmdFrame);
-    this->isAcked(ackStruct);
     bool gotAck = this->waitForAck(ackStruct);
     if (!gotAck) {
       LOG(ERROR)
@@ -428,16 +427,7 @@ bool DeviceIsx3::initialize(shared_ptr<InitPayload> initPayload) {
   shared_ptr<Isx3CmdAckStruct> ackStruct =
       this->pushToSendBuffer(this->comInterfaceCodec.buildCmdSetSetup());
   // Wait for acknowledgement.
-  retryCounter = 0;
-  bool positiveAck;
-  while (retryCounter < 100) {
-    this_thread::sleep_for(chrono::milliseconds(100));
-    if (ackStruct->acked == Isx3AckType::ISX3_ACK_TYPE_COMMAND_ACKNOWLEDGE) {
-      positiveAck = true;
-      break;
-    }
-    retryCounter++;
-  }
+  bool positiveAck = this->waitForAck(ackStruct);
   if (positiveAck) {
     this->deviceState = DeviceStatus::INIT;
     return true;

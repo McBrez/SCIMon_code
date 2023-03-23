@@ -232,15 +232,24 @@ ComInterfaceCodec::encodeMessage(shared_ptr<ConfigurationPayload> payload) {
                                ? FrequencyScale::FREQ_SCALE_LINEAR
                                : FrequencyScale::FREQ_SCALE_LOGARITHMIC;
   std::list<std::vector<unsigned char>> commandList;
+  // Set measurement type to full range impedance spectroscopy.
+  commandList.push_back(this->buildCmdInitMeasurement(
+      false,
+      MeasurementMode::MEASUREMENT_MODE_FULL_RANGE_IMPEDANCE_SPECTROSCOPY));
+  // Configure the given frequency list.
   commandList.push_back(this->buildCmdSetSetup(
       static_cast<float>(confPayload->frequencyFrom),
       static_cast<float>(confPayload->frequencyTo),
       static_cast<float>(confPayload->measurementPoints), isScale,
       static_cast<float>(confPayload->precision),
       static_cast<float>(confPayload->amplitude)));
+  // Clear the front end settings stack.
+  commandList.push_back(this->buildCmdClearFeSettings());
+  // Set the front end settings.
   commandList.push_back(this->buildCmdSetFeSettings(
       confPayload->measurementConfiguration,
       confPayload->measurementConfChannel, confPayload->measurementConfRange));
+  // Set the measurement ports.
   commandList.push_back(this->buildCmdSetExtensionPortChannel(
       confPayload->channel[ChannelFunction::CHAN_FUNC_CP],
       confPayload->channel[ChannelFunction::CHAN_FUNC_RP],
