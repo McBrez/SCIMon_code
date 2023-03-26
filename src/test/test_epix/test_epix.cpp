@@ -365,7 +365,7 @@ TEST_CASE("Testing the implementation of the Sciospec ISX3 device") {
           IsScale::LINEAR_SCALE,
           MeasurmentConfigurationRange::MEAS_CONFIG_RANGE_10MA,
           MeasurmentConfigurationChannel::MEAS_CONFIG_CHANNEL_EXT_PORT,
-          MeasurementConfiguration::MEAS_CONFIG_2_POINT, 1.0, 1.0)));
+          MeasurementConfiguration::MEAS_CONFIG_4_POINT, 1.0, 1.0)));
   bool configSuccess = dut->write(configMsg);
   REQUIRE(configSuccess);
 
