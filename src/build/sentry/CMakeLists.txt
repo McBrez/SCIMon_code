@@ -13,6 +13,7 @@ include_directories(
     ${INCLUDE_DIR}/Devices/isx3
     ${INCLUDE_DIR}/Devices/elveflow_ob1
     ${INCLUDE_DIR}/Messages
+    ${INCLUDE_DIR}/Messages/elveflow_ob1
     ${INCLUDE_DIR}/Utilities
     ${INCLUDE_DIR}/Workers
 
@@ -33,6 +34,7 @@ add_executable(sentry
     ${INCLUDE_DIR}/Messages/device_status_message.hpp
     ${INCLUDE_DIR}/Messages/message_interface.hpp
     ${INCLUDE_DIR}/Messages/message_distributor.hpp
+    ${INCLUDE_DIR}/Messages/elveflow_ob1/write_message_ob1.hpp
     ${INCLUDE_DIR}/Messages/user_id.hpp
     ${INCLUDE_DIR}/Devices/isx3/isx3_constants.hpp
     ${INCLUDE_DIR}/Devices/isx3/device_isx3.hpp
@@ -69,6 +71,7 @@ add_executable(sentry
     ${SOURCE_DIR}/Messages/message_interface.cpp
     ${SOURCE_DIR}/Messages/message_distributor.cpp
     ${SOURCE_DIR}/Messages/user_id.cpp
+    ${SOURCE_DIR}/Messages/elveflow_ob1/write_message_ob1.cpp
     ${SOURCE_DIR}/Devices/device.cpp
     ${SOURCE_DIR}/Devices/configuration_payload.cpp
     ${SOURCE_DIR}/Devices/is_configuration.cpp
