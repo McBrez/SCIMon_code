@@ -170,7 +170,8 @@ ComInterfaceCodec::decodeMessage(std::vector<unsigned char> bytes) {
       return shared_ptr<ReadPayload>(
           new IsPayload(channelNumber, timestamp,
                         std::list<double>({static_cast<double>(fNumber)}),
-                        std::list<complex<double>>({impedance})));
+                        std::list<complex<double>>(
+                            {static_cast<complex<double>>(impedance)})));
     }
   }
 

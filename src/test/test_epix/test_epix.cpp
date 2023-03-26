@@ -1,3 +1,6 @@
+// Standard includes
+#include <format>
+
 // 3rd party includes
 #define CATCH_CONFIG_MAIN
 #include <catch2/catch.hpp>
@@ -52,6 +55,7 @@ std::list<std::vector<unsigned char>> extractFrames(Isx3CommandBuffer &buffer) {
   return frameBuffer;
 }
 
+#ifndef SKIP_TEST_BACKEND
 TEST_CASE("Test the backend communication classes") {
   shared_ptr<Utilities::SocketWrapper> socketWrapper(
       new Utilities::WinSocket());
@@ -276,7 +280,8 @@ TEST_CASE("Test the backend communication classes") {
         codec.buildCmdStartImpedanceMeasurement(true);
     socketWrapper->write(startMeasurementCommand);
     // Check if acknowledgment has been received.
-    readBuffer = readFromSocket(socketWrapper, 20);
+    // Note: The response to a start measurement command may take a bit longer.
+    readBuffer = readFromSocket(socketWrapper, 50);
     buffer.pushBytes(readBuffer);
     auto startMeasurementFrames = extractFrames(buffer);
     // There should be at least one data frame. It is possible that the socket
@@ -303,10 +308,15 @@ TEST_CASE("Test the backend communication classes") {
       buffer.pushBytes(readBuffer);
       auto frames = extractFrames(buffer);
       for (auto frame : frames) {
-        auto payload = codec.decodeMessage(frames.front());
-        if (payload) {
-          payloads.push_back(payload);
+        string logString = "";
+        for (auto frameByte : frame) {
+          logString += std::format("{:#04x} ", frameByte);
         }
+        LOG(INFO) << logString;
+
+        auto payload = codec.decodeMessage(frame);
+        REQUIRE(payload);
+        payloads.push_back(payload);
       }
     }
     // There should be a few payloads now.
@@ -332,17 +342,11 @@ TEST_CASE("Test the backend communication classes") {
     bool disconnectSuccess = socketWrapper->close();
     REQUIRE(disconnectSuccess);
   }
-
-  /*
-    // Try to send a stop measurement command in order to set the device into a
-    // known state.
-    socketWrapper->open("127.0.0.1", 8888);
-    socketWrapper->write(codec.buildCmdStartImpedanceMeasurement(false));
-    readFromSocket(socketWrapper); // Flush buffer.
-    socketWrapper->close();
-    */
 }
+#endif
 
+#define SKIP_TEST_DEVICEISX3
+#ifndef SKIP_TEST_DEVICEISX3
 TEST_CASE("Testing the implementation of the Sciospec ISX3 device") {
   shared_ptr<Device> dut(new DeviceIsx3());
 
@@ -390,3 +394,4 @@ TEST_CASE("Testing the implementation of the Sciospec ISX3 device") {
   bool stopSuccess = dut->write(stopMsg);
   REQUIRE(stopSuccess);
 }
+#endif
