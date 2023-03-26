@@ -35,11 +35,19 @@ public:
    */
   virtual void work(TimePoint timestamp) = 0;
 
+  virtual list<shared_ptr<DeviceMessage>> read(TimePoint timestamp) override;
+
+  bool write(shared_ptr<WriteDeviceMessage> writeMsg) override;
+
+  bool write(shared_ptr<InitDeviceMessage> initMsg) override;
+
+  bool write(shared_ptr<ConfigDeviceMessage> configMsg) override;
+
   /**
    * @brief Tells the worker to start its operation.
    * @return TRUE if worker could be started. False otherwise.
    */
-  virtual bool start() = 0;
+  bool start();
 
   /**
    * @brief Tells the worker to stop its operation. After a call to this method,
@@ -47,7 +55,7 @@ public:
    * is possible.
    * @return TRUE if worker could be stopped. False otherwise.
    */
-  virtual bool stop() = 0;
+  bool stop();
 
 private:
   WorkerId workerId;

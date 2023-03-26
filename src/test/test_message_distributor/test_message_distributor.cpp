@@ -4,6 +4,8 @@
 #include <easylogging++.h>
 
 // Project includes
+#include <device_isx3.hpp>
+#include <device_ob1.hpp>
 #include <message_distributor.hpp>
 
 INITIALIZE_EASYLOGGINGPP
@@ -12,5 +14,7 @@ using namespace Messages;
 
 TEST_CASE("") {
   MessageDistributor dut;
-  dut.subscribe();
+
+  dut.addParticipant(shared_ptr<MessageInterface>(new Devices::));
+  dut.addParticipant();
 }

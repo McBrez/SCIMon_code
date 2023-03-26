@@ -9,44 +9,44 @@
 #include <message_interface.hpp>
 
 namespace Messages {
-/// Maps from a single message interface (subscriber) to a list of message
-/// interfaces (targets).
-using SubscriberMapping =
-    map<shared_ptr<MessageInterface>, list<shared_ptr<MessageInterface>>>;
 
 class MessageDistributor {
 public:
   /**
-   * @brief Subscribes the subscriber to the given target.
-   * @param subscriber The subscriber
-   * @param target The target.
-   * @return True if the target could be subscribed to. False otherwise.
+   * @brief Takes the given message. It will be delivered on the next call of
+   * deliverMessages().
+   * @param message The message that shall be taken.
    */
-  bool subscribe(shared_ptr<MessageInterface> subscriber,
-                 shared_ptr<MessageInterface> target);
-
-  /**
-   * @brief Unsubscribes the subscriber from the given target.
-   * @param subscriber The subscriber.
-   * @param target The target.
-   * @return True if the target could be unsubscribed from. False otherwise.
-   */
-  bool unsubscribe(shared_ptr<MessageInterface> subscriber,
-                   shared_ptr<MessageInterface> target);
-
   void takeMessage(shared_ptr<DeviceMessage> message);
   void takeMessage(list<shared_ptr<DeviceMessage>> messages);
 
+  /**
+   * @brief Delivers the message that have been added prior with calls to
+   * takeMessage()
+   * @return The count of messages that have been delivered.
+   */
   int deliverMessages();
 
-  list<shared_ptr<MessageInterface>> getSubscribers();
+  /**
+   * @brief Adds the given object to the participants of the message
+   * distributor.
+   * @param participant The participant that shall be added.
+   * @return TRUE if the participant has been added successfully. FALSE
+   * otherwise.
+   */
+  bool addParticipant(shared_ptr<MessageInterface> participant);
+
+  /**
+   * @brief Return all the participants of the message interface.
+   * @return A list of all participants of the message interface.
+   */
+  list<shared_ptr<MessageInterface>> getParticipants();
 
 private:
-  /// Holds a mapping from subscribers to their targets.
-  SubscriberMapping subscribers;
-
   /// Chaches messages until the next call to deliverMessages().
   list<shared_ptr<DeviceMessage>> messageCache;
+
+  list<shared_ptr<MessageInterface>> participants;
 };
 }; // namespace Messages
 

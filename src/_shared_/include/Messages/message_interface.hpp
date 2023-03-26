@@ -20,12 +20,16 @@ using namespace Utilities;
 
 namespace Messages {
 
+class MessageDistributor;
+
 /**
  * @brief Declares an interface that allows reading, writing and
  * subscription to messages.
  */
 class MessageInterface {
 public:
+  friend class MessageDistributor;
+
   /**
    * @brief Construct the object with a automatically generated user id.
    */
@@ -86,6 +90,15 @@ public:
    */
   UserId getUserId() const;
 
+  /**
+   * @brief Comparison operator. Two message interface are equal, if their user
+   * id is equal.
+   * @param other The other message interface.
+   * @return TRUE if the two message interface object are equal. FALSE
+   * otherwise.
+   */
+  bool operator==(MessageInterface &other);
+
 protected:
   /// Queue for outgoing messages.
   queue<shared_ptr<DeviceMessage>> messageOut;
@@ -93,6 +106,10 @@ protected:
 private:
   /// The unique id of the object that implements this interface.
   UserId id;
+
+  /// Reference to the message distributor this object belongs to. Is set when
+  /// the message interface object is added to the distributor as participant.
+  MessageDistributor *messageDistributor;
 };
 } // namespace Messages
 

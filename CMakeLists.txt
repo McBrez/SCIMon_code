@@ -21,4 +21,5 @@ add_test(NAME build_test_ob1 COMMAND test_ob1)
 add_test(NAME build_test_sciospec_com_interface COMMAND test_sciospec_com_interface)
 add_test(NAME build_test_test_epix COMMAND test_epix)
 
+add_subdirectory(${PROJECT_DIR}/sentry)
 

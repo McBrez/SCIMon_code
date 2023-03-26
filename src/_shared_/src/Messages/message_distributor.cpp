@@ -3,37 +3,6 @@
 
 namespace Messages {
 
-bool MessageDistributor::subscribe(shared_ptr<MessageInterface> subscriber,
-                                   shared_ptr<MessageInterface> target) {
-  // Is the subscriber already subscribed to the target?
-  list<shared_ptr<MessageInterface>> targetList = this->subscribers[subscriber];
-  auto it = std::find(targetList.begin(), targetList.end(), target);
-  if (it != targetList.end()) {
-    // Already subscribed to the target. Return false.
-    return false;
-  }
-
-  // Subscribe to the target.
-  this->subscribers[subscriber].push_back(target);
-  return true;
-}
-
-bool MessageDistributor::unsubscribe(shared_ptr<MessageInterface> subscriber,
-                                     shared_ptr<MessageInterface> target) {
-
-  // Is the subscriber already subscribed to the target?
-  list<shared_ptr<MessageInterface>> targetList = this->subscribers[subscriber];
-  auto it = std::find(targetList.begin(), targetList.end(), target);
-  if (it == targetList.end()) {
-    // Target is not subscribed by the subscriber. Return false.
-    return false;
-  }
-
-  // Unsubscribe the target.
-  this->subscribers[subscriber].remove(target);
-  return true;
-}
-
 void MessageDistributor::takeMessage(shared_ptr<DeviceMessage> message) {
   this->messageCache.push_back(message);
 }
@@ -55,12 +24,23 @@ int MessageDistributor::deliverMessages() {
   return false;
 }
 
-list<shared_ptr<MessageInterface>> MessageDistributor::getSubscribers() {
-  list<shared_ptr<MessageInterface>> retVal;
-  for (auto it : this->subscribers) {
-    retVal.push_back(it.first);
+bool MessageDistributor::addParticipant(
+    shared_ptr<MessageInterface> participant) {
+  // Check if the given participant is already known.
+  auto it = std::find(this->participants.begin(), this->participants.end(),
+                      participant);
+  if (it != this->participants.end()) {
+    // The participant is already known. Abort here.
+    return false;
   }
-  return retVal;
+
+  this->participants.push_back(participant);
+  participant->messageDistributor = this;
+  return true;
+}
+
+list<shared_ptr<MessageInterface>> MessageDistributor::getParticipants() {
+  return this->participants;
 }
 
 } // namespace Messages
