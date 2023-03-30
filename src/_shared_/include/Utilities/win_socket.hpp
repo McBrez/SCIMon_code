@@ -8,7 +8,10 @@
 // Project includes
 #include <socket_wrapper.hpp>
 
+/// The default buffer length.
 #define WIN_SOCKET_DEFAULT_BUFFER_LEN 2048
+/// The default receive timeout duration. In milliseconds.
+#define WIN_SOCKET_DEFAULT_RECV_TIMEOUT 100
 
 namespace Utilities {
 /**
@@ -24,7 +27,7 @@ public:
   /**
    * @brief If open, the socket is closed and destroyed.
    */
-  virtual ~WinSocket();
+  virtual ~WinSocket() override;
 
   /**
    * @brief Trys to connect to the given ip and port.

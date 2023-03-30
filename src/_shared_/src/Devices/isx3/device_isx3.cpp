@@ -195,7 +195,6 @@ bool DeviceIsx3::configure(
   bool failed = false;
   for (auto cmdFrame : cmdList) {
     shared_ptr<Isx3CmdAckStruct> ackStruct = this->pushToSendBuffer(cmdFrame);
-    this->isAcked(ackStruct);
     bool gotAck = this->waitForAck(ackStruct);
     if (!gotAck) {
       LOG(ERROR)
@@ -348,15 +347,19 @@ bool DeviceIsx3::handleReadPayload(shared_ptr<ReadPayload> readPayload) {
   if (isPayload) {
     // Impedance spectrum data from an ISX3 device is received one
     // frequency point at a time. Aggregate the frequency point until the
-    // whole spectrum is ready to be transmitted. If the timestamp
-    // changes, the spectrum is assumed as completed.
+    // whole spectrum is ready to be transmitted. If a spectrum with the
+    // frequency point 0 is received, it is expected that a impedance spectrum
+    // has been completed, and a new one has started. Coalesce the current
+    // buffer into a single spectrum, then clear it and add the current
+    // impedance spectrum to it.
     if (this->impedanceSpectrumBuffer.empty() ||
-        this->impedanceSpectrumBuffer.back().getTimestamp() !=
-            isPayload->getTimestamp()) {
-      // The timestamp changed. Coalesce the spectrum and generate a message.
+        get<0>(isPayload->getImpedanceSpectrum().front()) == 0.0) {
+      // Coalesce the spectrum and generate a message.
       ReadPayload *coalescedIsPayload = this->coalesceImpedanceSpectrums(
           this->impedanceSpectrumBuffer, this->frequencyPointMap);
       this->impedanceSpectrumBuffer.clear();
+      IsPayload copyIsPayload = *isPayload;
+      this->impedanceSpectrumBuffer.push_back(copyIsPayload);
       if (coalescedIsPayload != nullptr) {
         this->messageOut.push(shared_ptr<DeviceMessage>(new ReadDeviceMessage(
             shared_ptr<MessageInterface>(this),
@@ -435,16 +438,7 @@ bool DeviceIsx3::initialize(shared_ptr<InitPayload> initPayload) {
   shared_ptr<Isx3CmdAckStruct> ackStruct =
       this->pushToSendBuffer(this->comInterfaceCodec.buildCmdSetSetup());
   // Wait for acknowledgement.
-  retryCounter = 0;
-  bool positiveAck;
-  while (retryCounter < 100) {
-    this_thread::sleep_for(chrono::milliseconds(100));
-    if (ackStruct->acked == Isx3AckType::ISX3_ACK_TYPE_COMMAND_ACKNOWLEDGE) {
-      positiveAck = true;
-      break;
-    }
-    retryCounter++;
-  }
+  bool positiveAck = this->waitForAck(ackStruct);
   if (positiveAck) {
     this->deviceState = DeviceStatus::INITIALIZED;
     return true;
