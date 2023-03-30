@@ -34,7 +34,7 @@ add_executable(test_is_measurement
     ${INCLUDE_DIR}/Devices/elveflow_ob1/device_ob1.hpp
     ${INCLUDE_DIR}/Devices/elveflow_ob1/device_ob1_win.hpp
     ${INCLUDE_DIR}/Devices/elveflow_ob1/ob1_constants.hpp
-    ${INCLUDE_DIR}/Devices/elveflow_ob1/init_payload_ob1.hpp
+    ${INCLUDE_DIR}/Devices/elveflow_ob1/ob1_init_payload.hpp
     ${INCLUDE_DIR}/Messages/device_message.hpp
     ${INCLUDE_DIR}/Messages/message_interface.hpp
     ${INCLUDE_DIR}/Messages/user_id.hpp
@@ -53,7 +53,7 @@ add_executable(test_is_measurement
     ${SOURCE_DIR}/Devices/configuration_payload.cpp
     ${SOURCE_DIR}/Devices/elveflow_ob1/device_ob1.cpp
     ${SOURCE_DIR}/Devices/elveflow_ob1/device_ob1_win.cpp
-    ${SOURCE_DIR}/Devices/elveflow_ob1/init_payload_ob1.cpp
+    ${SOURCE_DIR}/Devices/elveflow_ob1/ob1_init_payload.cpp
     ${SOURCE_DIR}/Devices/elveflow_ob1/read_payload_ob1.cpp
     ${SOURCE_DIR}/Messages/device_message.cpp
     ${SOURCE_DIR}/Messages/message_interface.cpp

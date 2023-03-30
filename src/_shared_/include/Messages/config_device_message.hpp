@@ -17,10 +17,12 @@ public:
   /**
    * @brief Construct a new ConfigDeviceMessage
    * @param source reference to the source of this message.
+   * @param destination reference to the destination of this message.
    * @param deviceConfiguration pointer to an existing device configuration.
    * Object takes ownership of the pointer.
    */
-  ConfigDeviceMessage(shared_ptr<MessageInterface> source,
+  ConfigDeviceMessage(shared_ptr<const MessageInterface> source,
+                      shared_ptr<const MessageInterface> destination,
                       ConfigurationPayload *deviceConfiguration);
 
   /**

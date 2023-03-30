@@ -4,11 +4,12 @@
 namespace Messages {
 
 ReadDeviceMessage::ReadDeviceMessage(
-    shared_ptr<MessageInterface> source, ReadDeviceTopic topic,
+    shared_ptr<const MessageInterface> source,
+    shared_ptr<const MessageInterface> destination, ReadDeviceTopic topic,
     ReadPayload *readPayloadData,
     shared_ptr<WriteDeviceMessage> originalMessage)
-    : DeviceMessage(source), topic(topic), readPayload(readPayloadData),
-      originalMessage(originalMessage) {}
+    : DeviceMessage(source, destination), topic(topic),
+      readPayload(readPayloadData), originalMessage(originalMessage) {}
 
 string ReadDeviceMessage::serialize() { return ""; }
 

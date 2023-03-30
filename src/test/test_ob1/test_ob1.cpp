@@ -6,12 +6,11 @@
 
 // Project includes
 #include <device_ob1_win.hpp>
-#include <init_payload_ob1.hpp>
 #include <ob1_conf_payload.hpp>
+#include <ob1_init_payload.hpp>
 #include <read_payload_ob1.hpp>
 #include <status_payload.hpp>
 #include <write_message_ob1.hpp>
-
 
 using namespace Devices;
 using namespace Messages;
@@ -33,7 +32,7 @@ TEST_CASE("Testing the implementation of the ElveFlow OB1 device",
 
   SECTION("Initializing") {
     // Create init payload and init message and send it to the DUT.
-    InitPayloadOb1 *initPayload = new InitPayloadOb1(
+    Ob1InitPayload *initPayload = new Ob1InitPayload(
         "01F8E63F",
         make_tuple(Z_regulator_type__0_2000_mbar, Z_regulator_type__0_2000_mbar,
                    Z_regulator_type_none, Z_regulator_type_none));

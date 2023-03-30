@@ -21,10 +21,10 @@ public:
    * @param source Reference to the source of this message.
    * @param initPayload Pointer to the initialization data. The message takes
    * ownership of the pointer, hence the pointer has to stay valid.
-   * @param targetUserId The id of the target device.
    */
-  InitDeviceMessage(shared_ptr<MessageInterface> source,
-                    InitPayload *initPayload, UserId targetUserId);
+  InitDeviceMessage(shared_ptr<const MessageInterface> source,
+                    shared_ptr<const MessageInterface> destination,
+                    InitPayload *initPayload);
 
   /**
    * @brief Returns the initialization data.
@@ -38,18 +38,9 @@ public:
    */
   string serialize() override;
 
-  /**
-   * @brief Returns the device id of the targeted device.
-   * @return The device id.
-   */
-  UserId getTargetUserId();
-
 private:
   /// Reference to the initialization data.
   shared_ptr<InitPayload> initPayload;
-
-  /// The id of the target device.
-  UserId targetUserId;
 };
 
 } // namespace Messages

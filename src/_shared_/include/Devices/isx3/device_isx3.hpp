@@ -67,8 +67,22 @@ public:
    */
   virtual bool specificWrite(shared_ptr<WriteDeviceMessage> writeMsg) override;
 
+  /**
+   * @brief Handles a device specific read operation.
+   * @param timestamp The timestamp with which this operation is called.
+   * @return The response to the specific read operation.
+   */
   virtual list<shared_ptr<DeviceMessage>>
   specificRead(TimePoint timestamp) override;
+
+  /**
+   * @brief Handles the response to a write message that has been sent by this
+   * object.
+   * @param response The response to a write message that has been sent earlier.
+   * @return TRUE if the response has been handled successfully. False
+   * otherwise.
+   */
+  virtual bool handleResponse(shared_ptr<ReadDeviceMessage> response) override;
 
   /**
    * Configures the device according to the given configuration.

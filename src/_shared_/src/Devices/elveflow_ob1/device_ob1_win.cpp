@@ -4,8 +4,8 @@
 // Project includes
 #include <device_ob1_win.hpp>
 #include <easylogging++.h>
-#include <init_payload_ob1.hpp>
 #include <ob1_constants.hpp>
+#include <ob1_init_payload.hpp>
 #include <read_payload_ob1.hpp>
 #include <write_message_ob1.hpp>
 
@@ -27,28 +27,30 @@ DeviceOb1Win::~DeviceOb1Win() {
 bool DeviceOb1Win::initialize(shared_ptr<InitPayload> initPayload) {
 
   // Get the payload of the message and check if it is the correct type.
-  shared_ptr<InitPayloadOb1> initPayloadOb1 =
-      dynamic_pointer_cast<InitPayloadOb1>(initPayload);
+  shared_ptr<Ob1InitPayload> ob1InitPayload =
+      dynamic_pointer_cast<Ob1InitPayload>(initPayload);
   if (!initPayload) {
     LOG(ERROR) << "Received an ill-formed init message.";
     return false;
   }
 
-  char *deviceName = new char[initPayloadOb1->getDeviceName().length() + 1];
-  strcpy(deviceName, initPayloadOb1->getDeviceName().c_str());
+  this->deviceState = DeviceStatus::INITIALIZING;
+
+  char *deviceName = new char[ob1InitPayload->getDeviceName().length() + 1];
+  strcpy(deviceName, ob1InitPayload->getDeviceName().c_str());
 
   int error = OB1_Initialization(
-      deviceName, get<0>(initPayloadOb1->getChannelConfig()),
-      get<1>(initPayloadOb1->getChannelConfig()),
-      get<2>(initPayloadOb1->getChannelConfig()),
-      get<3>(initPayloadOb1->getChannelConfig()), &this->ob1Id);
+      deviceName, get<0>(ob1InitPayload->getChannelConfig()),
+      get<1>(ob1InitPayload->getChannelConfig()),
+      get<2>(ob1InitPayload->getChannelConfig()),
+      get<3>(ob1InitPayload->getChannelConfig()), &this->ob1Id);
   delete[] deviceName;
 
   // Was init successful?
   if (this->ob1Id != -1) {
     // It was.
     this->initFinished = true;
-    this->deviceState = DeviceStatus::INIT;
+    this->deviceState = DeviceStatus::INITIALIZED;
     return true;
   } else {
     // It was not.
@@ -60,7 +62,7 @@ bool DeviceOb1Win::initialize(shared_ptr<InitPayload> initPayload) {
 
 void DeviceOb1Win::configureWorker(
     shared_ptr<ConfigurationPayload> deviceConfiguration) {
-  this->deviceState = DeviceStatus::CONFIGURE;
+  this->deviceState = DeviceStatus::CONFIGURING;
   this->configurationFinished = false;
   LOG(INFO) << "Starting calibration of OB1.";
   int retVal = Elveflow_Calibration_Default(this->calibration,
@@ -109,13 +111,11 @@ bool DeviceOb1Win::start() {
 bool DeviceOb1Win::stop() {
   if (this->initFinished == true && this->configurationFinished == true) {
     if (this->deviceState == DeviceStatus::OPERATING) {
-      LOG(DEBUG) << "Starting OB1...";
+      LOG(DEBUG) << "Stopping OB1...";
       // Set pressures to zero.
-      for (auto it : this->cachedPressures) {
-        double pressures[] = {0.0, 0.0, 0.0, 0.0};
-        OB1_Set_All_Press(this->ob1Id, pressures, this->calibration, 4,
-                          Constants::Ob1CalibrationArrayLen);
-      }
+      double pressures[] = {0.0, 0.0, 0.0, 0.0};
+      OB1_Set_All_Press(this->ob1Id, pressures, this->calibration, 4,
+                        Constants::Ob1CalibrationArrayLen);
       this->deviceState = DeviceStatus::IDLE;
       return true;
     } else {
@@ -162,10 +162,10 @@ DeviceOb1Win::specificRead(TimePoint timestamp) {
 
   LOG(DEBUG) << readPayload->serialize();
   list<shared_ptr<DeviceMessage>> retVal;
-  retVal.emplace_back(
-      new ReadDeviceMessage(shared_ptr<MessageInterface>(this),
-                            ReadDeviceTopic::READ_TOPIC_DEVICE_SPECIFIC_MSG,
-                            readPayload, shared_ptr<WriteDeviceMessage>()));
+  retVal.emplace_back(new ReadDeviceMessage(
+      shared_ptr<MessageInterface>(this), this->startMessageCache->getSource(),
+      ReadDeviceTopic::READ_TOPIC_DEVICE_SPECIFIC_MSG, readPayload,
+      this->startMessageCache));
   return retVal;
 }
 

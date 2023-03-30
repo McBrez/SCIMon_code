@@ -6,6 +6,7 @@
 
 // Project includes
 #include <message_interface.hpp>
+#include <status_payload.hpp>
 
 using namespace Messages;
 using namespace Utilities;
@@ -47,7 +48,7 @@ public:
    * @brief Tells the worker to start its operation.
    * @return TRUE if worker could be started. False otherwise.
    */
-  bool start();
+  virtual bool start() = 0;
 
   /**
    * @brief Tells the worker to stop its operation. After a call to this method,
@@ -55,10 +56,27 @@ public:
    * is possible.
    * @return TRUE if worker could be stopped. False otherwise.
    */
-  bool stop();
+  virtual bool stop() = 0;
 
-private:
+  virtual bool initialize(shared_ptr<InitPayload>) = 0;
+
+  virtual bool configure(shared_ptr<ConfigurationPayload>) = 0;
+
+  /**
+   * @brief Returns the state of the worker.
+   * @return The state of the worker.
+   */
+  DeviceStatus getState() const;
+
+protected:
+  /// The id of the worker.
   WorkerId workerId;
+
+  /// Used internally for id generation.
+  static WorkerId workerIdCounter;
+
+  /// The state of the worker.
+  DeviceStatus workerState;
 };
 } // namespace Workers
 

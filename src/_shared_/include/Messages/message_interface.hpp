@@ -85,6 +85,22 @@ public:
   virtual list<shared_ptr<DeviceMessage>> specificRead(TimePoint timestamp) = 0;
 
   /**
+   * @brief Handles the response to a write message that has been sent by this
+   * object.
+   * @param response The response to a write message that has been sent earlier.
+   * @return TRUE if the response has been handled successfully. False
+   * otherwise.
+   */
+  virtual bool handleResponse(shared_ptr<ReadDeviceMessage> response) = 0;
+
+  /**
+   * @brief Takes the given message and handles it.
+   * @param message The message that shall be handled.
+   * @return TRUE if the message was handled successfully. FALSE otherwise.
+   */
+  bool takeMessage(shared_ptr<DeviceMessage> message);
+
+  /**
    * @brief Returns the unique id of the object, that implements this interface.
    * @return The unique id of the object, that implements this interface.
    */
@@ -103,13 +119,13 @@ protected:
   /// Queue for outgoing messages.
   queue<shared_ptr<DeviceMessage>> messageOut;
 
-private:
-  /// The unique id of the object that implements this interface.
-  UserId id;
-
   /// Reference to the message distributor this object belongs to. Is set when
   /// the message interface object is added to the distributor as participant.
   MessageDistributor *messageDistributor;
+
+private:
+  /// The unique id of the object that implements this interface.
+  UserId id;
 };
 } // namespace Messages
 

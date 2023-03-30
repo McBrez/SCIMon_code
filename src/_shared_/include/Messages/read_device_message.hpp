@@ -20,6 +20,9 @@ enum ReadDeviceTopic {
   /// The message contains the status of the device.
   READ_TOPIC_DEVICE_STATUS,
 
+  /// The target device could not be reached.
+  READ_TOPIC_FAILED_RESPONSE,
+
   /// A device specific message.
   READ_TOPIC_DEVICE_SPECIFIC_MSG
 };
@@ -34,13 +37,15 @@ public:
    * @brief Constructs the read device message with the given topic and
    * payload.
    * @param source Reference to the source of this message.
+   * @param destination Reference to the destination of this message.
    * @param topic The topic of the message.
    * @param readPayload The payload of the message.
    * @param originalMessage Reference to the message, this message is the
    * response to.
    */
-  ReadDeviceMessage(shared_ptr<MessageInterface> source, ReadDeviceTopic topic,
-                    ReadPayload *readPayload,
+  ReadDeviceMessage(shared_ptr<const MessageInterface> source,
+                    shared_ptr<const MessageInterface> destination,
+                    ReadDeviceTopic topic, ReadPayload *readPayload,
                     shared_ptr<WriteDeviceMessage> originalMessage);
 
   /**

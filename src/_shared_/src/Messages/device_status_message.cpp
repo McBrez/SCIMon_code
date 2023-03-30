@@ -3,10 +3,12 @@
 namespace Messages {
 
 DeviceStatusMessage::DeviceStatusMessage(
-    shared_ptr<MessageInterface> source, ReadDeviceTopic topic,
+    shared_ptr<const MessageInterface> source,
+    shared_ptr<const MessageInterface> destination, ReadDeviceTopic topic,
     ReadPayload *readPayload, shared_ptr<WriteDeviceMessage> originalMessage,
     DeviceStatus deviceStatus, string additionalInformation)
-    : ReadDeviceMessage(source, topic, readPayload, originalMessage),
+    : ReadDeviceMessage(source, destination, topic, readPayload,
+                        originalMessage),
       deviceStatus(deviceStatus) {}
 
 DeviceStatus DeviceStatusMessage::getDeviceStatus() {

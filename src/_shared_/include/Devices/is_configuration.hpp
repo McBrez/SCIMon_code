@@ -29,7 +29,7 @@ public:
   const double frequencyTo;
   /// The count of points betwenn starting and stopping frequency.
   const int measurementPoints;
-  /// Count of impedance spectrums, that shall be gathered. Value of <=
+  /// Count of impedance spectrums, that shall be gathered. Value of <= 0
   /// indicates unlimited measurement.
   const int repetitions;
 };

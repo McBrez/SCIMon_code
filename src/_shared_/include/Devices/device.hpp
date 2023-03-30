@@ -9,6 +9,7 @@
 // Project includes
 #include <configuration_payload.hpp>
 #include <message_interface.hpp>
+#include <status_payload.hpp>
 
 using namespace std;
 using namespace Messages;
@@ -16,45 +17,19 @@ using namespace Utilities;
 
 namespace Devices {
 
-enum DeviceStatus {
-  /// Device status is not known.
-  UNKNOWN_DEVICE_STATUS,
-  /// Device is initializing.
-  INIT,
-  /// Device is configuring.
-  CONFIGURE,
-  /// Device is operating and can accept commands.
-  OPERATING,
-  /// Device is initialized, configured, not operating and is waiting for
-  /// commands.
-  IDLE,
-  /// Device is operating and can not accept commands.
-  BUSY,
-  /// Device ran into an error.
-  ERROR
-};
-
 /**
  * @brief Depicts a physical device, like a measurement aparatus or a
  * pump controller. A device can be configured, can be read to and written
  * from.
  */
 class Device : public MessageInterface {
-protected:
-  /// Flag, that indicates whether the device has been successfully configured.
-  bool configurationFinished;
-  /// Flag, that indicates whether the device has been succesfully initialized.
-  bool initFinished;
-  /// Reference to the currently active device configuration.
-  shared_ptr<ConfigurationPayload> deviceConfiguration;
-  /// The state of the device.
-  DeviceStatus deviceState;
 
 public:
   /**
    * @brief Construct a new Device object
+   * @param deviceType The device type of the constructed object.
    */
-  Device();
+  Device(DeviceType deviceType);
 
   /**
    * Destroys the device object.
@@ -111,6 +86,8 @@ public:
    */
   virtual string getDeviceTypeName() = 0;
 
+  DeviceType getDeviceType();
+
   /**
    * @brief Returns the status of the device.
    * @return The status of the device.
@@ -164,6 +141,16 @@ public:
 protected:
   /// Caches the message that triggered the most recent start command.
   shared_ptr<WriteDeviceMessage> startMessageCache;
+  /// Flag, that indicates whether the device has been successfully configured.
+  bool configurationFinished;
+  /// Flag, that indicates whether the device has been succesfully initialized.
+  bool initFinished;
+  /// Reference to the currently active device configuration.
+  shared_ptr<ConfigurationPayload> deviceConfiguration;
+  /// The state of the device.
+  DeviceStatus deviceState;
+  /// The type of the device.
+  DeviceType deviceType;
 };
 } // namespace Devices
 

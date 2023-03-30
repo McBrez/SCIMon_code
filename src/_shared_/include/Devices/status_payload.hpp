@@ -2,11 +2,34 @@
 #define STATUS_PAYLOAD_HPP
 
 // Project include
-#include <device.hpp>
 #include <read_payload.hpp>
 #include <user_id.hpp>
 
+using namespace Messages;
+
 namespace Devices {
+
+/// Identifies the possible stati of a device.
+enum DeviceStatus {
+  /// Device status is not known.
+  UNKNOWN_DEVICE_STATUS,
+  /// Device is initializing.
+  INITIALIZING,
+  /// Device has been successfully initialized.
+  INITIALIZED,
+  /// Device is configuring.
+  CONFIGURING,
+  /// Device is operating and can accept commands.
+  OPERATING,
+  /// Device is initialized, configured, not operating and is waiting for
+  /// commands.
+  IDLE,
+  /// Device is operating and can not accept commands.
+  BUSY,
+  /// Device ran into an error.
+  ERROR
+};
+
 /**
  * @brief A data package, that encapsulates the state of a device.
  */

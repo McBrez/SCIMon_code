@@ -14,7 +14,8 @@
 namespace Devices {
 
 DeviceIsx3::DeviceIsx3()
-    : Device(), socketWrapper(SocketWrapper::getSocketWrapper()),
+    : Device(DeviceType::IMPEDANCE_SPECTROMETER),
+      socketWrapper(SocketWrapper::getSocketWrapper()),
       isx3CommThreadState(ISX3_COMM_THREAD_STATE_INVALID), doComm(false) {}
 
 DeviceIsx3::~DeviceIsx3() {
@@ -165,7 +166,7 @@ bool DeviceIsx3::configure(
     shared_ptr<ConfigurationPayload> deviceConfiguration) {
 
   // Check if device is in correct state.
-  if (this->deviceState != DeviceStatus::INIT) {
+  if (this->deviceState != DeviceStatus::INITIALIZED) {
     LOG(WARNING) << "Could not configure ISX3 Device, as it is in state \""
                  << Device::deviceStatusToString(this->deviceState) << "\".";
     return false;
@@ -178,6 +179,8 @@ bool DeviceIsx3::configure(
     LOG(WARNING) << "Device ISX3 got a malformed configuration payload.";
     return false;
   }
+
+  this->deviceState = DeviceStatus::CONFIGURING;
 
   // Try to parse the payload into a list of data frames.
   std::list<std::vector<unsigned char>> cmdList =
@@ -215,7 +218,7 @@ bool DeviceIsx3::configure(
   }
 
   this->configurationFinished = true;
-  this->deviceState = DeviceStatus::CONFIGURE;
+  this->deviceState = DeviceStatus::IDLE;
   return true;
 }
 
@@ -234,8 +237,7 @@ bool DeviceIsx3::waitForAck(shared_ptr<Isx3CmdAckStruct> ackStruct, int cycles,
 }
 
 bool DeviceIsx3::start() {
-  if (this->deviceState == DeviceStatus::IDLE ||
-      this->deviceState == DeviceStatus::CONFIGURE) {
+  if (this->deviceState == DeviceStatus::IDLE) {
     LOG(INFO) << "ISX3 trys to start measurement.";
 
     shared_ptr<Isx3CmdAckStruct> ackStruct = this->pushToSendBuffer(
@@ -307,7 +309,8 @@ ReadPayload *DeviceIsx3::coalesceImpedanceSpectrums(
         impedanceSpectrum.getImpedanceSpectrum();
     double frequencyPoint = get<0>(impedanceSpectrumObject.front());
     std::complex<double> impedance = get<1>(impedanceSpectrumObject.front());
-    frequencyValues.push_back(this->frequencyPointMap[frequencyPoint]);
+    frequencyValues.push_back(
+        this->frequencyPointMap[static_cast<int>(frequencyPoint)]);
     impedances.push_back(impedance);
   }
 
@@ -357,6 +360,7 @@ bool DeviceIsx3::handleReadPayload(shared_ptr<ReadPayload> readPayload) {
       if (coalescedIsPayload != nullptr) {
         this->messageOut.push(shared_ptr<DeviceMessage>(new ReadDeviceMessage(
             shared_ptr<MessageInterface>(this),
+            this->startMessageCache->getSource(),
             ReadDeviceTopic::READ_TOPIC_DEVICE_SPECIFIC_MSG, coalescedIsPayload,
             this->startMessageCache)));
       } else {
@@ -389,6 +393,7 @@ bool DeviceIsx3::initialize(shared_ptr<InitPayload> initPayload) {
   }
 
   this->initPayload = isx3InitPayload;
+  this->deviceState = DeviceStatus::INITIALIZING;
 
   // NOTE: The following section is blocking. It would be better to not execute
   // this in the write() function and rather handle it asyncronuously.
@@ -421,6 +426,8 @@ bool DeviceIsx3::initialize(shared_ptr<InitPayload> initPayload) {
     // Thread was not able to initialize. Abort here.
     this->doComm = false;
     this->socketWrapper->close();
+    this->deviceState = DeviceStatus::ERROR;
+
     return false;
   }
 
@@ -439,12 +446,17 @@ bool DeviceIsx3::initialize(shared_ptr<InitPayload> initPayload) {
     retryCounter++;
   }
   if (positiveAck) {
-    this->deviceState = DeviceStatus::INIT;
+    this->deviceState = DeviceStatus::INITIALIZED;
     return true;
   } else {
     this->deviceState = DeviceStatus::ERROR;
     return false;
   }
+}
+
+bool DeviceIsx3::handleResponse(shared_ptr<ReadDeviceMessage> response) {
+  // Device does not expect responses. Just return true here.
+  return true;
 }
 
 } // namespace Devices

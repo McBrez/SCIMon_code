@@ -31,6 +31,17 @@ ImpedanceSpectrum IsPayload::getImpedanceSpectrum() const {
   return this->impedanceSpectrum;
 }
 
-string IsPayload::serialize() { return ""; }
+string IsPayload::serialize() {
+  string retVal;
+  retVal += "timestamp: " + to_string(this->timestamp) + " ";
+  retVal += "channel: " + to_string(this->channelNumber) + "\n";
+  for (auto impedancePoint : this->impedanceSpectrum) {
+    retVal += to_string(get<0>(impedancePoint)) + " Hz, " +
+              to_string(get<1>(impedancePoint).real()) + "Ohm + i * " +
+              to_string(get<1>(impedancePoint).imag()) + " Ohm";
+  }
+
+  return retVal;
+}
 
 } // namespace Devices

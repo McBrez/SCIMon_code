@@ -1,5 +1,5 @@
-#ifndef INIT_PAYLOAD_OB1_HPP
-#define INIT_PAYLOAD_OB1_HPP
+#ifndef ob1_init_payload_HPP
+#define ob1_init_payload_HPP
 
 // Standard includes
 #include <string>
@@ -19,14 +19,14 @@ using ChannelConfiguration = tuple<int, int, int, int>;
 /**
  * @brief Encapsulated initialization data for an Elveflow OB1 device.
  */
-class InitPayloadOb1 : public InitPayload {
+class Ob1InitPayload : public InitPayload {
 public:
   /**
    * @brief Construct the object.
    * @param deviceName The device name as reported by the NI MAX application.
    * @param channelConfig The channel configuration;
    */
-  InitPayloadOb1(string deviceName, ChannelConfiguration channelConfig);
+  Ob1InitPayload(string deviceName, ChannelConfiguration channelConfig);
   /**
    * @brief Constructs the object.
    *
@@ -36,7 +36,7 @@ public:
    * @param channel3Config The configuration of channel 3.
    * @param channel4Config The configuration of channel 4.
    */
-  InitPayloadOb1(string deviceName, int channel1Config, int channel2Config,
+  Ob1InitPayload(string deviceName, int channel1Config, int channel2Config,
                  int channel3Config, int channel4Config);
 
   /**

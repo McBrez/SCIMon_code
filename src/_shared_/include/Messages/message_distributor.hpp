@@ -13,6 +13,12 @@ namespace Messages {
 class MessageDistributor {
 public:
   /**
+   * @brief Construct a new MessageDistributor object
+   * @param loopInterval The interval of the run loop.
+   */
+  MessageDistributor(int loopInterval);
+
+  /**
    * @brief Takes the given message. It will be delivered on the next call of
    * deliverMessages().
    * @param message The message that shall be taken.
@@ -42,11 +48,28 @@ public:
    */
   list<shared_ptr<MessageInterface>> getParticipants();
 
+  /**
+   * @brief Starts the execution loop. Note that this method blocks, until it is
+   * aborted.
+   */
+  void run();
+
 private:
   /// Chaches messages until the next call to deliverMessages().
   list<shared_ptr<DeviceMessage>> messageCache;
 
+  /// Chaches messages that indicate a failed response until they can be added
+  /// to the message cache.
+  list<shared_ptr<DeviceMessage>> failedResponseCache;
+
+  /// List of participants.
   list<shared_ptr<MessageInterface>> participants;
+
+  /// Flag that tells the message distributor to run.
+  bool doRun;
+
+  /// The loop interval. In milli seconds.
+  Duration loopInterval;
 };
 }; // namespace Messages
 

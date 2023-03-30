@@ -3,12 +3,15 @@
 
 // Project includes
 #include <device.hpp>
+#include <device_status_message.hpp>
 #include <status_payload.hpp>
 
 namespace Devices {
-Device::Device()
+
+Device::Device(DeviceType deviceType)
     : configurationFinished(false), initFinished(false),
-      deviceState(DeviceStatus::UNKNOWN_DEVICE_STATUS) {}
+      deviceState(DeviceStatus::UNKNOWN_DEVICE_STATUS), deviceType(deviceType) {
+}
 
 Device::~Device() {}
 
@@ -38,6 +41,16 @@ bool Device::write(shared_ptr<WriteDeviceMessage> writeMsg) {
 
   else if (WriteDeviceTopic::WRITE_TOPIC_STOP == writeMsg->getTopic()) {
     return this->stop();
+  }
+
+  else if (WriteDeviceTopic::WRITE_TOPIC_QUERY_STATE == writeMsg->getTopic()) {
+    // Put the device state into the message queue.
+    this->messageOut.push(shared_ptr<DeviceMessage>(new DeviceStatusMessage(
+        shared_ptr<MessageInterface>(this), writeMsg->getSource(),
+        READ_TOPIC_DEVICE_STATUS,
+        new StatusPayload(this->getUserId(), this->getDeviceStatus()), writeMsg,
+        this->getDeviceStatus())));
+    return true;
   }
 
   else {
@@ -77,10 +90,12 @@ string Device::deviceStatusToString(DeviceStatus deviceStatus) {
 
   if (UNKNOWN_DEVICE_STATUS == deviceStatus)
     return "UNKNOWN DEVICE STATUS";
-  else if (INIT == deviceStatus)
-    return "INIT";
-  else if (CONFIGURE == deviceStatus)
-    return "CONFIGURE";
+  else if (INITIALIZING == deviceStatus)
+    return "INITIALIZING";
+  else if (INITIALIZED == deviceStatus)
+    return "INITIALIZED";
+  else if (CONFIGURING == deviceStatus)
+    return "CONFIGURING";
   else if (OPERATING == deviceStatus)
     return "OPERATING";
   else if (IDLE == deviceStatus)
@@ -94,7 +109,7 @@ string Device::deviceStatusToString(DeviceStatus deviceStatus) {
 }
 
 bool Device::write(shared_ptr<InitDeviceMessage> initMsg) {
-  if (initMsg->getTargetUserId() != this->getUserId()) {
+  if (initMsg->getDestination().get() != this) {
     LOG(WARNING) << "Got a message that is not meant for this device.";
     return false;
   }
@@ -111,5 +126,7 @@ bool Device::write(shared_ptr<ConfigDeviceMessage> configMsg) {
 
   return this->configure(configMsg->getConfiguration());
 }
+
+DeviceType Device::getDeviceType() { return this->deviceType; }
 
 } // namespace Devices

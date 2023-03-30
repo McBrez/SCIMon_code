@@ -25,6 +25,15 @@ public:
    * @return The device type name.
    */
   virtual string getDeviceTypeName() override;
+
+  /**
+   * @brief Handles the response to a write message that has been sent by this
+   * object.
+   * @param response The response to a write message that has been sent earlier.
+   * @return TRUE if the response has been handled successfully. False
+   * otherwise.
+   */
+  bool handleResponse(shared_ptr<ReadDeviceMessage> response) override;
 };
 } // namespace Devices
 

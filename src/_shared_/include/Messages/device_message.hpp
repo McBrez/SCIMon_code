@@ -22,7 +22,8 @@ public:
    * @brief Constructs the object.
    * @param source The message interface this message originates from.
    */
-  DeviceMessage(shared_ptr<const MessageInterface> source);
+  DeviceMessage(shared_ptr<const MessageInterface> source,
+                shared_ptr<const MessageInterface> destination);
 
   /**
    * @brief Destroy the Device Message object
@@ -58,12 +59,23 @@ public:
    */
   shared_ptr<const MessageInterface> getSource();
 
+  /**
+   * @brief Returns a reference to the message interface that shall receive this
+   * message.
+   * @return A reference to the message interface that shall receive this
+   * message.
+   */
+  shared_ptr<const MessageInterface> getDestination();
+
 private:
   // The unique id of the mssage.
   int messageId;
 
   /// The message interface this message originates from.
   shared_ptr<const MessageInterface> source;
+
+  /// The message interface this message shall be sent to.
+  shared_ptr<const MessageInterface> destination;
 
   /**
    * @brief Generates an unique id.

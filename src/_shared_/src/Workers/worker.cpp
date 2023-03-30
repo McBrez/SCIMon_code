@@ -2,11 +2,16 @@
 #include <easylogging++.h>
 
 // Project includes
+#include <device_status_message.hpp>
 #include <worker.hpp>
 
 namespace Workers {
 
-Worker::Worker() {}
+WorkerId Worker::workerIdCounter = 0;
+
+Worker::Worker()
+    : workerId(++Worker::workerIdCounter),
+      workerState(DeviceStatus::UNKNOWN_DEVICE_STATUS) {}
 
 Worker::~Worker() {}
 
@@ -29,6 +34,16 @@ bool Worker::write(shared_ptr<WriteDeviceMessage> writeMsg) {
 
   else if (WriteDeviceTopic::WRITE_TOPIC_STOP == writeMsg->getTopic()) {
     return this->stop();
+  }
+
+  else if (WriteDeviceTopic::WRITE_TOPIC_QUERY_STATE == writeMsg->getTopic()) {
+    // Put the worker state into the message queue.
+    this->messageOut.push(shared_ptr<DeviceMessage>(new DeviceStatusMessage(
+        shared_ptr<MessageInterface>(this), writeMsg->getSource(),
+        READ_TOPIC_DEVICE_STATUS,
+        new StatusPayload(this->getUserId(), this->getState()), writeMsg,
+        this->getState())));
+    return true;
   }
 
   else {
@@ -65,18 +80,23 @@ list<shared_ptr<DeviceMessage>> Worker::read(TimePoint timestamp) {
 }
 
 bool Worker::write(shared_ptr<InitDeviceMessage> initMsg) {
-  if (initMsg->getTargetUserId() != this->getUserId()) {
+  if (initMsg->getDestination().get() != this) {
     LOG(WARNING) << "Got a message that is not meant for this device.";
     return false;
   }
 
-  return false;
+  return this->initialize(initMsg->returnPayload());
 }
 
-bool Worker::write(shared_ptr<ConfigDeviceMessage> configMsg) { return false; }
+bool Worker::write(shared_ptr<ConfigDeviceMessage> configMsg) {
+  if (configMsg->getDestination().get() != this) {
+    LOG(WARNING) << "Got a message that is not meant for this device.";
+    return false;
+  }
 
-bool Worker::start() { return false; }
+  return this->configure(configMsg->getConfiguration());
+}
 
-bool Worker::stop() { return false; }
+DeviceStatus Worker::getState() const { return this->workerState; }
 
 } // namespace Workers

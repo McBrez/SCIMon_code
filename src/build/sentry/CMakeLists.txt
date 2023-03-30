@@ -16,6 +16,7 @@ include_directories(
     ${INCLUDE_DIR}/Messages/elveflow_ob1
     ${INCLUDE_DIR}/Utilities
     ${INCLUDE_DIR}/Workers
+    ${INCLUDE_DIR}/Workers/sentry_worker
 
     ${3RDPARTY_DIR}/easyloggingpp/src
     ${3RDPARTY_DIR}/catch2/single_include
@@ -47,7 +48,7 @@ add_executable(sentry
     ${INCLUDE_DIR}/Devices/elveflow_ob1/read_payload_ob1.hpp
     ${INCLUDE_DIR}/Devices/elveflow_ob1/device_ob1.hpp
     ${INCLUDE_DIR}/Devices/elveflow_ob1/ob1_constants.hpp
-    ${INCLUDE_DIR}/Devices/elveflow_ob1/init_payload_ob1.hpp
+    ${INCLUDE_DIR}/Devices/elveflow_ob1/ob1_init_payload.hpp
     ${INCLUDE_DIR}/Devices/elveflow_ob1/ob1_conf_payload.hpp
     ${INCLUDE_DIR}/Devices/device.hpp
     ${INCLUDE_DIR}/Devices/configuration_payload.hpp
@@ -56,11 +57,13 @@ add_executable(sentry
     ${INCLUDE_DIR}/Devices/is_payload.hpp
     ${INCLUDE_DIR}/Devices/id_payload.hpp
     ${INCLUDE_DIR}/Devices/init_payload.hpp
+    ${INCLUDE_DIR}/Devices/status_payload.hpp
     ${INCLUDE_DIR}/Utilities/utilities.hpp
     ${INCLUDE_DIR}/Utilities/socket_wrapper.hpp
     ${INCLUDE_DIR}/Utilities/win_socket.hpp
     ${INCLUDE_DIR}/Workers/worker.hpp
-    ${INCLUDE_DIR}/Workers/sentry_worker.hpp
+    ${INCLUDE_DIR}/Workers/sentry_worker/sentry_worker.hpp
+    ${INCLUDE_DIR}/Workers/sentry_worker/sentry_init_payload.hpp
 
     ${SOURCE_DIR}/Messages/device_message.cpp
     ${SOURCE_DIR}/Messages/config_device_message.cpp
@@ -78,6 +81,7 @@ add_executable(sentry
     ${SOURCE_DIR}/Devices/read_payload.cpp
     ${SOURCE_DIR}/Devices/is_payload.cpp
     ${SOURCE_DIR}/Devices/id_payload.cpp
+    ${SOURCE_DIR}/Devices/status_payload.cpp
     ${SOURCE_DIR}/Devices/isx3/device_isx3.cpp
     ${SOURCE_DIR}/Devices/isx3/isx3_init_payload.cpp
     ${SOURCE_DIR}/Devices/isx3/com_interface_codec.cpp
@@ -85,14 +89,15 @@ add_executable(sentry
     ${SOURCE_DIR}/Devices/isx3/isx3_ack_payload.cpp
     ${SOURCE_DIR}/Devices/isx3/isx3_is_conf_payload.cpp
     ${SOURCE_DIR}/Devices/elveflow_ob1/device_ob1.cpp
-    ${SOURCE_DIR}/Devices/elveflow_ob1/init_payload_ob1.cpp
+    ${SOURCE_DIR}/Devices/elveflow_ob1/ob1_init_payload.cpp
     ${SOURCE_DIR}/Devices/elveflow_ob1/read_payload_ob1.cpp
     ${SOURCE_DIR}/Devices/elveflow_ob1/ob1_conf_payload.cpp
     ${SOURCE_DIR}/Utilities/utilities.cpp
     ${SOURCE_DIR}/Utilities/socket_wrapper.cpp
     ${SOURCE_DIR}/Utilities/win_socket.cpp
     ${SOURCE_DIR}/Workers/worker.cpp
-    ${SOURCE_DIR}/Workers/sentry_worker.cpp
+    ${SOURCE_DIR}/Workers/sentry_worker/sentry_worker.cpp
+    ${SOURCE_DIR}/Workers/sentry_worker/sentry_init_payload.cpp
 
     ${3RDPARTY_DIR}/catch2/single_include/catch2/catch.hpp
     ${3RDPARTY_DIR}/easyloggingpp/src/easylogging++.cc
@@ -122,6 +127,15 @@ if (WIN32)
         ${SOURCE_DIR}/Utilities/win_socket.cpp
         ${SOURCE_DIR}/Devices/elveflow_ob1/device_ob1_win.cpp
     )
+
+    # Copy the DLLs to the output directory
+    find_library(DLL_ELVEFLOW Elveflow64.dll ${3RDPARTY_DIR}/elveflow/x64)
+    add_custom_command(
+        TARGET sentry
+         POST_BUILD
+          COMMAND ${CMAKE_COMMAND} -E copy_if_different
+           "${DLL_ELVEFLOW}"
+           $<TARGET_FILE_DIR:sentry>/Elveflow64.dll)
 endif (WIN32)
 if (UNIX)
     
