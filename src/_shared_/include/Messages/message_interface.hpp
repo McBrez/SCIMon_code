@@ -123,6 +123,10 @@ protected:
   /// the message interface object is added to the distributor as participant.
   MessageDistributor *messageDistributor;
 
+  /// A sharable reference to the object itself. Is set when
+  /// the message interface object is added to the distributor as participant.
+  shared_ptr<MessageInterface> self;
+
 private:
   /// The unique id of the object that implements this interface.
   UserId id;

@@ -2,10 +2,17 @@
 #include <init_device_message.hpp>
 
 namespace Messages {
-InitDeviceMessage::InitDeviceMessage(
-    shared_ptr<const MessageInterface> source,
-    shared_ptr<const MessageInterface> destination, InitPayload *initPayload)
+InitDeviceMessage::InitDeviceMessage(shared_ptr<MessageInterface> source,
+                                     shared_ptr<MessageInterface> destination,
+                                     InitPayload *initPayload)
     : DeviceMessage(source, destination), initPayload(initPayload) {}
+
+InitDeviceMessage::InitDeviceMessage(shared_ptr<MessageInterface> source,
+                                     shared_ptr<MessageInterface> destination,
+                                     shared_ptr<InitPayload> initPayload)
+    : DeviceMessage(source, destination), initPayload(initPayload) {}
+
+InitDeviceMessage::~InitDeviceMessage() {}
 
 shared_ptr<InitPayload> InitDeviceMessage::returnPayload() {
   return this->initPayload;

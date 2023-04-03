@@ -42,6 +42,7 @@ bool MessageDistributor::addParticipant(
 
   this->participants.push_back(participant);
   participant->messageDistributor = this;
+  participant->self = participant;
   return true;
 }
 

@@ -18,12 +18,22 @@ public:
    * @brief Construct a new ConfigDeviceMessage
    * @param source reference to the source of this message.
    * @param destination reference to the destination of this message.
-   * @param deviceConfiguration pointer to an existing device configuration.
+   * @param deviceConfiguration pointer to a new device configuration.
    * Object takes ownership of the pointer.
    */
-  ConfigDeviceMessage(shared_ptr<const MessageInterface> source,
-                      shared_ptr<const MessageInterface> destination,
+  ConfigDeviceMessage(shared_ptr<MessageInterface> source,
+                      shared_ptr<MessageInterface> destination,
                       ConfigurationPayload *deviceConfiguration);
+
+  /**
+   * @brief Constructor for payloads that already exist.
+   * @param source reference to the source of this message.
+   * @param destination reference to the destination of this message.
+   * @param deviceConfiguration pointer to an existing device configuration.
+   */
+  ConfigDeviceMessage(shared_ptr<MessageInterface> source,
+                      shared_ptr<MessageInterface> destination,
+                      shared_ptr<ConfigurationPayload> deviceConfiguration);
 
   /**
    * @brief Destroy the Config Device Message object

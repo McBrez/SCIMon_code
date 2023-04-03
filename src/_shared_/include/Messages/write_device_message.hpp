@@ -41,8 +41,8 @@ public:
    * @param destination Reference to the destination of this message.
    * @param topic The topic of the message.
    */
-  WriteDeviceMessage(shared_ptr<const MessageInterface> source,
-                     shared_ptr<const MessageInterface> destination,
+  WriteDeviceMessage(shared_ptr<MessageInterface> source,
+                     shared_ptr<MessageInterface> destination,
                      WriteDeviceTopic topic);
   /**
    * @brief Creates a message with the given topic and appends additional data.

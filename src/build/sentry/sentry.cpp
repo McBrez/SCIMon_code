@@ -31,7 +31,7 @@ int main(int argc, char *argv[]) {
       shared_ptr<MessageInterface>(new DeviceOb1Win()));
 
   // Create the worker and add it to the distributor.
-  shared_ptr<SentryWorker> sentryWorker(new SentryWorker());
+  shared_ptr<MessageInterface> sentryWorker(new SentryWorker());
   messageDistributor.addParticipant(sentryWorker);
   // Queue up messages for the worker, so that it starts interacting with the
   // devices immediatelly.

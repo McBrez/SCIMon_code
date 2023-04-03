@@ -33,11 +33,11 @@ TEST_CASE("Testing the implementation of the ElveFlow OB1 device",
   SECTION("Initializing") {
     // Create init payload and init message and send it to the DUT.
     Ob1InitPayload *initPayload = new Ob1InitPayload(
-        "01F8E63F",
-        make_tuple(Z_regulator_type__0_2000_mbar, Z_regulator_type__0_2000_mbar,
+        "01FB0FA3",
+        make_tuple(Z_regulator_type_m1000_1000_mbar, Z_regulator_type_none,
                    Z_regulator_type_none, Z_regulator_type_none));
     shared_ptr<InitDeviceMessage> initMsg(new InitDeviceMessage(
-        shared_ptr<MessageInterface>(), initPayload, dut->getUserId()));
+        shared_ptr<MessageInterface>(), dut, initPayload));
     REQUIRE(dut->write(initMsg) == true);
 
     // A read should return an empty message.
@@ -46,7 +46,7 @@ TEST_CASE("Testing the implementation of the ElveFlow OB1 device",
 
     // Configure the DUT.
     shared_ptr<ConfigDeviceMessage> configMsg(new ConfigDeviceMessage(
-        shared_ptr<MessageInterface>(), new Ob1ConfPayload()));
+        shared_ptr<MessageInterface>(), dut, new Ob1ConfPayload()));
     REQUIRE(dut->write(configMsg));
 
     // Configuration may take a while. Query the DUT until configuration
@@ -84,7 +84,10 @@ TEST_CASE("Testing the implementation of the ElveFlow OB1 device",
       }
     }
     if (true) {
-      REQUIRE(downcastedDut->start());
+      bool startMessageSuccess = dut->write(shared_ptr<WriteDeviceMessage>(
+          new WriteDeviceMessage(dut, dut,
+                                 WriteDeviceTopic::WRITE_TOPIC_RUN)));
+      REQUIRE(startMessageSuccess);
       shared_ptr<WriteDeviceMessage> setPressureMsg(
           new WriteMessageOb1SetPressure(
               shared_ptr<MessageInterface>(), dut,

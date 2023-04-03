@@ -3,8 +3,8 @@
 
 namespace Messages {
 WriteDeviceMessage::WriteDeviceMessage(
-    shared_ptr<const MessageInterface> source,
-    shared_ptr<const MessageInterface> destination, WriteDeviceTopic topic)
+    shared_ptr<MessageInterface> source,
+    shared_ptr<MessageInterface> destination, WriteDeviceTopic topic)
     : DeviceMessage(source, destination), topic(topic) {}
 
 WriteDeviceMessage::WriteDeviceMessage(shared_ptr<MessageInterface> source,

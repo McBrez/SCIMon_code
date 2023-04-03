@@ -22,9 +22,18 @@ public:
    * @param initPayload Pointer to the initialization data. The message takes
    * ownership of the pointer, hence the pointer has to stay valid.
    */
-  InitDeviceMessage(shared_ptr<const MessageInterface> source,
-                    shared_ptr<const MessageInterface> destination,
+  InitDeviceMessage(shared_ptr<MessageInterface> source,
+                    shared_ptr<MessageInterface> destination,
                     InitPayload *initPayload);
+
+  InitDeviceMessage(shared_ptr<MessageInterface> source,
+                    shared_ptr<MessageInterface> destination,
+                    shared_ptr<InitPayload> initPayload);
+
+  /**
+   * @brief Destroy the Init Device Message object
+   */
+  virtual ~InitDeviceMessage() override;
 
   /**
    * @brief Returns the initialization data.

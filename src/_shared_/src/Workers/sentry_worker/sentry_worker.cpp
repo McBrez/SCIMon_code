@@ -21,10 +21,10 @@ SentryWorker::~SentryWorker() {}
 void SentryWorker::work(TimePoint timestamp) {
   // Ensure the devices are in a defined state. Turn them both off.
   this->messageOut.push(shared_ptr<DeviceMessage>(new WriteDeviceMessage(
-      shared_ptr<MessageInterface>(this), this->spectrometer,
+      this->self, this->spectrometer,
       WriteDeviceTopic::WRITE_TOPIC_STOP)));
   this->messageOut.push(shared_ptr<DeviceMessage>(new WriteDeviceMessage(
-      shared_ptr<MessageInterface>(this), this->pumpController,
+      this->self, this->pumpController,
       WriteDeviceTopic::WRITE_TOPIC_STOP)));
 
   while (this->runThread) {
@@ -33,12 +33,12 @@ void SentryWorker::work(TimePoint timestamp) {
 
       // Enable the pump ...
       this->messageOut.push(shared_ptr<DeviceMessage>(new WriteDeviceMessage(
-          shared_ptr<MessageInterface>(this), this->pumpController,
+          this->self, this->pumpController,
           WriteDeviceTopic::WRITE_TOPIC_RUN)));
 
       // ... disable the spectrometer ...
       this->messageOut.push(shared_ptr<DeviceMessage>(new WriteDeviceMessage(
-          shared_ptr<MessageInterface>(this), this->spectrometer,
+          this->self, this->spectrometer,
           WriteDeviceTopic::WRITE_TOPIC_STOP)));
 
       // ... and wait for a specified period.
@@ -50,12 +50,12 @@ void SentryWorker::work(TimePoint timestamp) {
 
       // Disable the pump ...
       this->messageOut.push(shared_ptr<DeviceMessage>(new WriteDeviceMessage(
-          shared_ptr<MessageInterface>(this), this->pumpController,
+          this->self, this->pumpController,
           WriteDeviceTopic::WRITE_TOPIC_STOP)));
 
       // ... enable the spectrometer ...
       this->messageOut.push(shared_ptr<DeviceMessage>(new WriteDeviceMessage(
-          shared_ptr<MessageInterface>(this), this->spectrometer,
+          this->self, this->spectrometer,
           WriteDeviceTopic::WRITE_TOPIC_RUN)));
 
       // Print out measurement results until on time passes.
@@ -115,7 +115,7 @@ bool SentryWorker::handleResponse(shared_ptr<ReadDeviceMessage> response) {
           // Device is not yet ready. Resend the query state message.
           this->messageOut.push(
               shared_ptr<DeviceMessage>(new WriteDeviceMessage(
-                  shared_ptr<MessageInterface>(this), response->getSource(),
+                  this->self, response->getSource(),
                   WriteDeviceTopic::WRITE_TOPIC_QUERY_STATE)));
         }
       }
@@ -130,7 +130,7 @@ bool SentryWorker::handleResponse(shared_ptr<ReadDeviceMessage> response) {
           // Device is not yet ready. Resend the query state message.
           this->messageOut.push(
               shared_ptr<DeviceMessage>(new WriteDeviceMessage(
-                  shared_ptr<MessageInterface>(this), response->getSource(),
+                  this->self, response->getSource(),
                   WriteDeviceTopic::WRITE_TOPIC_QUERY_STATE)));
         }
       }
@@ -146,10 +146,10 @@ bool SentryWorker::handleResponse(shared_ptr<ReadDeviceMessage> response) {
         // Both devices are initialized. Send the configuration message to both
         // and transition to configure state.
         this->messageOut.push(shared_ptr<DeviceMessage>(new ConfigDeviceMessage(
-            shared_ptr<MessageInterface>(this), this->spectrometer,
-            this->initPayload->isx3IsConfigPayload.get())));
+            this->self, this->spectrometer,
+            this->initPayload->isx3IsConfigPayload)));
         this->messageOut.push(shared_ptr<DeviceMessage>(
-            new ConfigDeviceMessage(shared_ptr<MessageInterface>(this),
+            new ConfigDeviceMessage(this->self,
                                     this->pumpController, nullptr)));
 
         this->configureSubState = ConfigureSubState::CONF_SUB_STATE_CONFIGURE;
@@ -176,7 +176,7 @@ bool SentryWorker::handleResponse(shared_ptr<ReadDeviceMessage> response) {
           // Device is not yet ready. Resend the query state message.
           this->messageOut.push(
               shared_ptr<DeviceMessage>(new WriteDeviceMessage(
-                  shared_ptr<MessageInterface>(this), response->getSource(),
+                  this->self, response->getSource(),
                   WriteDeviceTopic::WRITE_TOPIC_QUERY_STATE)));
         }
       }
@@ -190,7 +190,7 @@ bool SentryWorker::handleResponse(shared_ptr<ReadDeviceMessage> response) {
           // Device is not yet ready. Resend the query state message.
           this->messageOut.push(
               shared_ptr<DeviceMessage>(new WriteDeviceMessage(
-                  shared_ptr<MessageInterface>(this), response->getSource(),
+                  this->self, response->getSource(),
                   WriteDeviceTopic::WRITE_TOPIC_QUERY_STATE)));
         }
       }
@@ -206,10 +206,10 @@ bool SentryWorker::handleResponse(shared_ptr<ReadDeviceMessage> response) {
         // Both devices have been configured successfully. Send the
         // start message to both and transition to started state.
         this->messageOut.push(shared_ptr<DeviceMessage>(new WriteDeviceMessage(
-            shared_ptr<MessageInterface>(this), this->spectrometer,
+            this->self, this->spectrometer,
             WriteDeviceTopic::WRITE_TOPIC_RUN)));
         this->messageOut.push(shared_ptr<DeviceMessage>(new WriteDeviceMessage(
-            shared_ptr<MessageInterface>(this), this->pumpController,
+            this->self, this->pumpController,
             WriteDeviceTopic::WRITE_TOPIC_RUN)));
 
         this->configureSubState = ConfigureSubState::CONF_SUB_STATE_STARTED;
@@ -315,20 +315,16 @@ bool SentryWorker::configure(shared_ptr<ConfigurationPayload> configPayload) {
   this->pumpController = pumpControllerTemp;
 
   // Send an init message to them.
-  this->messageOut.push(shared_ptr<DeviceMessage>(
-      new InitDeviceMessage(shared_ptr<MessageInterface>(this), spectrometer,
-                            this->initPayload->isx3InitPayload.get())));
-  this->messageOut.push(shared_ptr<DeviceMessage>(
-      new InitDeviceMessage(shared_ptr<MessageInterface>(this), pumpController,
-                            this->initPayload->ob1InitPayload.get())));
+  this->messageOut.push(shared_ptr<DeviceMessage>(new InitDeviceMessage(
+      this->self, spectrometer, this->initPayload->isx3InitPayload)));
+  this->messageOut.push(shared_ptr<DeviceMessage>(new InitDeviceMessage(
+      this->self, pumpController, this->initPayload->ob1InitPayload)));
 
   // Immediatelly send a state query message to the devices.
-  this->messageOut.push(shared_ptr<DeviceMessage>(
-      new WriteDeviceMessage(shared_ptr<MessageInterface>(this), spectrometer,
-                             WriteDeviceTopic::WRITE_TOPIC_QUERY_STATE)));
-  this->messageOut.push(shared_ptr<DeviceMessage>(
-      new WriteDeviceMessage(shared_ptr<MessageInterface>(this), pumpController,
-                             WriteDeviceTopic::WRITE_TOPIC_QUERY_STATE)));
+  this->messageOut.push(shared_ptr<DeviceMessage>(new WriteDeviceMessage(
+      this->self, spectrometer, WriteDeviceTopic::WRITE_TOPIC_QUERY_STATE)));
+  this->messageOut.push(shared_ptr<DeviceMessage>(new WriteDeviceMessage(
+      this->self, pumpController, WriteDeviceTopic::WRITE_TOPIC_QUERY_STATE)));
 
   // Set the configure sub state.
   this->configureSubState = ConfigureSubState::CONF_SUB_STATE_INIT;

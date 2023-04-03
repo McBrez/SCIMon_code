@@ -9,8 +9,8 @@ using namespace std;
 
 namespace Messages {
 
-DeviceMessage::DeviceMessage(shared_ptr<const MessageInterface> source,
-                             shared_ptr<const MessageInterface> destination)
+DeviceMessage::DeviceMessage(shared_ptr<MessageInterface> source,
+                             shared_ptr<MessageInterface> destination)
     : messageId(this->generateId()), source(source), destination(destination) {}
 
 DeviceMessage::~DeviceMessage() {}
@@ -32,11 +32,11 @@ int DeviceMessage::generateId() {
   }
 }
 
-shared_ptr<const MessageInterface> DeviceMessage::getSource() {
+shared_ptr<MessageInterface> DeviceMessage::getSource() {
   return this->source;
 }
 
-shared_ptr<const MessageInterface> DeviceMessage::getDestination() {
+shared_ptr<MessageInterface> DeviceMessage::getDestination() {
   return this->destination;
 }
 

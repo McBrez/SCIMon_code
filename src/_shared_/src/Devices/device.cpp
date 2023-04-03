@@ -46,7 +46,7 @@ bool Device::write(shared_ptr<WriteDeviceMessage> writeMsg) {
   else if (WriteDeviceTopic::WRITE_TOPIC_QUERY_STATE == writeMsg->getTopic()) {
     // Put the device state into the message queue.
     this->messageOut.push(shared_ptr<DeviceMessage>(new DeviceStatusMessage(
-        shared_ptr<MessageInterface>(this), writeMsg->getSource(),
+        this->self, writeMsg->getSource(),
         READ_TOPIC_DEVICE_STATUS,
         new StatusPayload(this->getUserId(), this->getDeviceStatus()), writeMsg,
         this->getDeviceStatus())));
