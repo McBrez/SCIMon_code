@@ -107,6 +107,12 @@ public:
   UserId getUserId() const;
 
   /**
+   * @brief Returns the Ids this object is the proxy of.
+   * @return The list of proxy ids of this object.
+   */
+  list<UserId> getProxyUserIds() const;
+
+  /**
    * @brief Comparison operator. Two message interface are equal, if their user
    * id is equal.
    * @param other The other message interface.
@@ -114,6 +120,15 @@ public:
    * otherwise.
    */
   bool operator==(MessageInterface &other);
+
+  /**
+   * @brief Returns whether the given id targets this object. The object is
+   * targeted by the id if the id of the object itself matches, or one of the
+   * proxy ids, this object is holding, matches.
+   * @param id The id that shall be checked for.
+   * @return TRUE if the id targets this object. FALSE otherwise.
+   */
+  bool isTarget(UserId id);
 
 protected:
   /// Queue for outgoing messages.
@@ -127,9 +142,15 @@ protected:
   /// the message interface object is added to the distributor as participant.
   shared_ptr<MessageInterface> self;
 
+  bool addProxyId(UserId proxyId);
+
+  bool removeProxyId(UserId proxyId);
+
 private:
   /// The unique id of the object that implements this interface.
   UserId id;
+
+  list<UserId> proxyIds;
 };
 } // namespace Messages
 

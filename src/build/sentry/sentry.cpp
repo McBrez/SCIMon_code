@@ -7,6 +7,7 @@
 #include <device_isx3.hpp>
 #include <device_ob1_win.hpp>
 #include <message_distributor.hpp>
+#include <network_worker.hpp>
 #include <sentry_init_payload.hpp>
 #include <sentry_worker.hpp>
 
@@ -46,6 +47,8 @@ int main(int argc, char *argv[]) {
       shared_ptr<MessageInterface>(new DeviceIsx3()));
   messageDistributor.addParticipant(
       shared_ptr<MessageInterface>(new DeviceOb1Win()));
+  messageDistributor.addParticipant(
+      shared_ptr<MessageInterface>(new NetworkWorker()));
 
   // Create the worker and add it to the distributor.
   shared_ptr<MessageInterface> sentryWorker(new SentryWorker());

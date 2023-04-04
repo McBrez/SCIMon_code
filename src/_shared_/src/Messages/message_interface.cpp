@@ -61,4 +61,38 @@ bool MessageInterface::takeMessage(shared_ptr<DeviceMessage> message) {
   }
 }
 
+bool MessageInterface::addProxyId(UserId proxyId) {
+  auto it = std::find(this->proxyIds.begin(), this->proxyIds.end(), proxyId);
+
+  if (it != this->proxyIds.end()) {
+    this->proxyIds.push_back(proxyId);
+    return true;
+  } else {
+    return false;
+  }
+}
+
+bool MessageInterface::removeProxyId(UserId proxyId) {
+  auto it = std::find(this->proxyIds.begin(), this->proxyIds.end(), proxyId);
+
+  if (it != this->proxyIds.end()) {
+    this->proxyIds.erase(it);
+    return true;
+  } else {
+    return false;
+  }
+}
+
+bool MessageInterface::isTarget(UserId id) {
+  if (this->getUserId() == id) {
+    return true;
+  } else {
+    auto it = find(this->proxyIds.begin(), this->proxyIds.end(), id);
+    if (it == this->proxyIds.end()) {
+      return false;
+    } else {
+      return true;
+    }
+  }
+}
 } // namespace Messages

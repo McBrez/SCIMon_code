@@ -68,7 +68,7 @@ void MessageDistributor::run() {
       auto targetParticipant =
           find_if(this->participants.begin(), this->participants.end(),
                   [destination](shared_ptr<MessageInterface> value) {
-                    return destination == value->getUserId();
+                    return value->isTarget(destination);
                   });
 
       if (targetParticipant == this->participants.end()) {
