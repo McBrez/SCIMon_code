@@ -4,14 +4,15 @@
 // Project includes
 #include <device.hpp>
 #include <device_status_message.hpp>
+#include <dummy_message.hpp>
 #include <status_payload.hpp>
 
 namespace Devices {
 
 Device::Device(DeviceType deviceType)
     : configurationFinished(false), initFinished(false),
-      deviceState(DeviceStatus::UNKNOWN_DEVICE_STATUS), deviceType(deviceType) {
-}
+      deviceState(DeviceStatus::UNKNOWN_DEVICE_STATUS), deviceType(deviceType),
+      startMessageCache(new Messages::DummyMessage()) {}
 
 Device::~Device() {}
 
@@ -46,8 +47,7 @@ bool Device::write(shared_ptr<WriteDeviceMessage> writeMsg) {
   else if (WriteDeviceTopic::WRITE_TOPIC_QUERY_STATE == writeMsg->getTopic()) {
     // Put the device state into the message queue.
     this->messageOut.push(shared_ptr<DeviceMessage>(new DeviceStatusMessage(
-        this->self, writeMsg->getSource(),
-        READ_TOPIC_DEVICE_STATUS,
+        this->self, writeMsg->getSource(), READ_TOPIC_DEVICE_STATUS,
         new StatusPayload(this->getUserId(), this->getDeviceStatus()), writeMsg,
         this->getDeviceStatus())));
     return true;

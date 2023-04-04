@@ -32,12 +32,17 @@ int DeviceMessage::generateId() {
   }
 }
 
-shared_ptr<MessageInterface> DeviceMessage::getSource() {
-  return this->source;
-}
+shared_ptr<MessageInterface> DeviceMessage::getSource() { return this->source; }
 
 shared_ptr<MessageInterface> DeviceMessage::getDestination() {
   return this->destination;
+}
+
+void DeviceMessage::setSource(shared_ptr<MessageInterface> source) {
+  this->source = source;
+}
+void DeviceMessage::setDestination(shared_ptr<MessageInterface> destination) {
+  this->destination = destination;
 }
 
 } // namespace Messages

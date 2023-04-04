@@ -64,7 +64,7 @@ TEST_CASE("Test the backend communication classes") {
 
   SECTION("Connect and disconnect from device") {
     // Connect to the socket.
-    bool connectionSuccess = socketWrapper->open("127.0.0.1", 8888);
+    bool connectionSuccess = socketWrapper->open("128.131.197.41", 8888);
     REQUIRE(connectionSuccess);
     // And disconnect again.
     bool disconnectSuccess = socketWrapper->close();
@@ -72,7 +72,7 @@ TEST_CASE("Test the backend communication classes") {
   }
   SECTION("Try to get device id") {
     // Connect to the socket.
-    bool connectionSuccess = socketWrapper->open("127.0.0.1", 8888);
+    bool connectionSuccess = socketWrapper->open("128.131.197.41", 8888);
     REQUIRE(connectionSuccess);
 
     // Send the GetDeviceId command to device.
@@ -121,7 +121,7 @@ TEST_CASE("Test the backend communication classes") {
   }
 
   SECTION("Try to set up a measurement") {
-    bool connectionSuccess = socketWrapper->open("127.0.0.1", 8888);
+    bool connectionSuccess = socketWrapper->open("128.131.197.41", 8888);
     REQUIRE(connectionSuccess);
     std::vector<unsigned char> readBuffer;
 
@@ -257,7 +257,7 @@ TEST_CASE("Test the backend communication classes") {
     // configured in the previous test.
 
     // Connect to device.
-    bool connectionSuccess = socketWrapper->open("127.0.0.1", 8888);
+    bool connectionSuccess = socketWrapper->open("128.131.197.41", 8888);
     REQUIRE(connectionSuccess);
 
     // Set a few options Channels.
@@ -345,21 +345,21 @@ TEST_CASE("Test the backend communication classes") {
 }
 #endif
 
-#define SKIP_TEST_DEVICEISX3
+// #define SKIP_TEST_DEVICEISX3
 #ifndef SKIP_TEST_DEVICEISX3
 TEST_CASE("Testing the implementation of the Sciospec ISX3 device") {
   shared_ptr<Device> dut(new DeviceIsx3());
 
   // Init the device.
-  shared_ptr<InitDeviceMessage> initMsg(new InitDeviceMessage(
-      shared_ptr<MessageInterface>(), new Isx3InitPayload("127.0.0.1", 8888),
-      dut->getUserId()));
+  shared_ptr<InitDeviceMessage> initMsg(
+      new InitDeviceMessage(shared_ptr<MessageInterface>(), dut,
+                            new Isx3InitPayload("128.131.197.41", 8888)));
   bool initSuccess = dut->write(initMsg);
   REQUIRE(initSuccess);
 
   // Configure the device.
   shared_ptr<ConfigDeviceMessage> configMsg(new ConfigDeviceMessage(
-      shared_ptr<MessageInterface>(),
+      shared_ptr<MessageInterface>(), dut,
       new Isx3IsConfPayload(
           10.0, 100.0, 10, 0,
           map<ChannelFunction, int>({{ChannelFunction::CHAN_FUNC_CP, 10},
@@ -368,7 +368,7 @@ TEST_CASE("Testing the implementation of the Sciospec ISX3 device") {
                                      {ChannelFunction::CHAN_FUNC_WP, 11}}),
           IsScale::LINEAR_SCALE,
           MeasurmentConfigurationRange::MEAS_CONFIG_RANGE_10MA,
-          MeasurmentConfigurationChannel::MEAS_CONFIG_CHANNEL_EXT_PORT,
+          MeasurmentConfigurationChannel::MEAS_CONFIG_CHANNEL_EXT_PORT_2,
           MeasurementConfiguration::MEAS_CONFIG_4_POINT, 1.0, 1.0)));
   bool configSuccess = dut->write(configMsg);
   REQUIRE(configSuccess);

@@ -4,3 +4,6 @@
 [submodule "src/3rd_party/catch2"]
 	path = src/3rd_party/catch2
 	url = git@github.com:catchorg/Catch2.git
+[submodule "src/3rd_party/argparse"]
+	path = src/3rd_party/argparse
+	url = git@github.com:p-ranav/argparse.git

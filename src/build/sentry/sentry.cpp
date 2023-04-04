@@ -1,5 +1,6 @@
 // 3rd party includes
 #include <Elveflow64.h>
+#include <argparse.hpp>
 #include <easylogging++.h>
 
 // Project includes
@@ -20,6 +21,22 @@ using namespace Workers;
 int main(int argc, char *argv[]) {
   LOG(INFO) << "Starting up sentry.";
 
+  // Set up the command line parser.
+  argparse::ArgumentParser program("SCIMon Sentry");
+  program.add_argument("--is_config")
+      .default_value(std::string{""})
+      .help("Path to the impedance spectrum configuration file.");
+
+  try {
+    program.parse_args(argc, argv);
+  } catch (const std::runtime_error &err) {
+    LOG(ERROR) << "Could not parse the command line. Aborting.";
+    return 1;
+  }
+
+  // Parse the commandline.
+  LOG(INFO) << program.get<string>("--is_config");
+
   // Create the distributor.
   MessageDistributor messageDistributor(
       DEFAULT_MESSAGE_DISTRIBUTOR_LOOP_INTERVAL);
@@ -39,7 +56,7 @@ int main(int argc, char *argv[]) {
       shared_ptr<DeviceMessage>(new InitDeviceMessage(
           shared_ptr<MessageInterface>(), sentryWorker,
           new SentryInitPayload(
-              new Isx3InitPayload("127.0.0.1", 8888),
+              new Isx3InitPayload("128.131.197.41", 8888),
               new Isx3IsConfPayload(
                   10.0, 1000.0, 10, 0,
                   map<ChannelFunction, int>({{CHAN_FUNC_CP, 10},
@@ -49,9 +66,9 @@ int main(int argc, char *argv[]) {
                   IsScale::LINEAR_SCALE, MEAS_CONFIG_RANGE_10MA,
                   MEAS_CONFIG_CHANNEL_EXT_PORT_2, MEAS_CONFIG_4_POINT, 1.0,
                   1.0),
-              new Ob1InitPayload("01F8E63F",
+              new Ob1InitPayload("01FB0FA3",
                                  make_tuple(Z_regulator_type__0_2000_mbar,
-                                            Z_regulator_type__0_2000_mbar,
+                                            Z_regulator_type_none, 
                                             Z_regulator_type_none,
                                             Z_regulator_type_none)),
 

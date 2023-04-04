@@ -20,6 +20,7 @@ include_directories(
 
     ${3RDPARTY_DIR}/easyloggingpp/src
     ${3RDPARTY_DIR}/catch2/single_include
+    ${3RDPARTY_DIR}/argparse/include/argparse
     ${3RDPARTY_DIR}/elveflow/x64
 )
 add_executable(sentry
@@ -33,6 +34,7 @@ add_executable(sentry
     ${INCLUDE_DIR}/Messages/config_device_message.hpp
     ${INCLUDE_DIR}/Messages/init_device_message.hpp   
     ${INCLUDE_DIR}/Messages/device_status_message.hpp
+    ${INCLUDE_DIR}/Messages/dummy_message.hpp
     ${INCLUDE_DIR}/Messages/message_interface.hpp
     ${INCLUDE_DIR}/Messages/message_distributor.hpp
     ${INCLUDE_DIR}/Messages/elveflow_ob1/write_message_ob1.hpp
@@ -71,6 +73,7 @@ add_executable(sentry
     ${SOURCE_DIR}/Messages/device_status_message.cpp
     ${SOURCE_DIR}/Messages/init_device_message.cpp
     ${SOURCE_DIR}/Messages/write_device_message.cpp
+    ${SOURCE_DIR}/Messages/dummy_message.cpp
     ${SOURCE_DIR}/Messages/message_interface.cpp
     ${SOURCE_DIR}/Messages/message_distributor.cpp
     ${SOURCE_DIR}/Messages/user_id.cpp
@@ -103,6 +106,8 @@ add_executable(sentry
     ${3RDPARTY_DIR}/easyloggingpp/src/easylogging++.cc
 
     ${3RDPARTY_DIR}/easyloggingpp/src/easylogging++.h
+
+    ${3RDPARTY_DIR}/argparse/include/argparse/argparse.hpp
 )
 
 # Enforce C++20

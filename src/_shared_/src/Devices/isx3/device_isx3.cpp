@@ -20,6 +20,7 @@ DeviceIsx3::DeviceIsx3()
 
 DeviceIsx3::~DeviceIsx3() {
   this->doComm = false;
+  this->commThread->join();
   this->socketWrapper->close();
 };
 
@@ -241,7 +242,7 @@ bool DeviceIsx3::start() {
 
     shared_ptr<Isx3CmdAckStruct> ackStruct = this->pushToSendBuffer(
         this->comInterfaceCodec.buildCmdStartImpedanceMeasurement(true));
-    if (this->waitForAck(ackStruct)) {
+    if (this->waitForAck(ackStruct), 1000) {
       LOG(INFO) << "ISX3 started measurement successfully.";
       this->deviceState = DeviceStatus::OPERATING;
 
@@ -265,7 +266,7 @@ bool DeviceIsx3::stop() {
 
     shared_ptr<Isx3CmdAckStruct> ackStruct = this->pushToSendBuffer(
         this->comInterfaceCodec.buildCmdStartImpedanceMeasurement(false));
-    if (this->waitForAck(ackStruct)) {
+    if (this->waitForAck(ackStruct, 1000)) {
       LOG(INFO) << "ISX3 stopped measurement successfully.";
       this->deviceState = DeviceStatus::IDLE;
 
@@ -362,8 +363,7 @@ bool DeviceIsx3::handleReadPayload(shared_ptr<ReadPayload> readPayload) {
       this->impedanceSpectrumBuffer.push_back(copyIsPayload);
       if (coalescedIsPayload != nullptr) {
         this->messageOut.push(shared_ptr<DeviceMessage>(new ReadDeviceMessage(
-            this->self,
-            this->startMessageCache->getSource(),
+            this->self, this->startMessageCache->getSource(),
             ReadDeviceTopic::READ_TOPIC_DEVICE_SPECIFIC_MSG, coalescedIsPayload,
             this->startMessageCache)));
       } else {
@@ -372,7 +372,8 @@ bool DeviceIsx3::handleReadPayload(shared_ptr<ReadPayload> readPayload) {
 
     } else {
       // Timestamp did not change. Push impedance spectrum to buffer.
-      this->impedanceSpectrumBuffer.push_back(*isPayload);
+      IsPayload copyIsPayload = *isPayload;
+      this->impedanceSpectrumBuffer.push_back(copyIsPayload);
     }
 
     return true;
@@ -392,6 +393,7 @@ bool DeviceIsx3::initialize(shared_ptr<InitPayload> initPayload) {
       dynamic_pointer_cast<Isx3InitPayload>(initPayload);
 
   if (!isx3InitPayload) {
+    LOG(WARNING) << "Got malformed initialize message.";
     return false;
   }
 
@@ -406,6 +408,7 @@ bool DeviceIsx3::initialize(shared_ptr<InitPayload> initPayload) {
       this->initPayload->getIpAddress(), this->initPayload->getPort());
   if (!openSuccess) {
     LOG(ERROR) << "Connection to ISX3 failed.";
+    this->deviceState = DeviceStatus::ERROR;
     return false;
   }
   // Initialize thread.
@@ -430,7 +433,7 @@ bool DeviceIsx3::initialize(shared_ptr<InitPayload> initPayload) {
     this->doComm = false;
     this->socketWrapper->close();
     this->deviceState = DeviceStatus::ERROR;
-
+    LOG(ERROR) << "ISX3 COMM thread was not able to initialize.";
     return false;
   }
 

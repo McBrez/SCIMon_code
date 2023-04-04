@@ -67,6 +67,10 @@ public:
    */
   shared_ptr<MessageInterface> getDestination();
 
+protected:
+  void setSource(shared_ptr<MessageInterface> source);
+  void setDestination(shared_ptr<MessageInterface> destination);
+
 private:
   // The unique id of the mssage.
   int messageId;
