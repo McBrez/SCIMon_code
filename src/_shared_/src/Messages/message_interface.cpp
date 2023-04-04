@@ -7,7 +7,7 @@
 namespace Messages {
 
 MessageInterface::MessageInterface()
-    : id(UserId()), messageDistributor(nullptr) {}
+    : id(UserId(this)), messageDistributor(nullptr) {}
 
 UserId MessageInterface::getUserId() const { return this->id; }
 

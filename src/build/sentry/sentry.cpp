@@ -54,7 +54,7 @@ int main(int argc, char *argv[]) {
   // devices immediatelly.
   messageDistributor.takeMessage(
       shared_ptr<DeviceMessage>(new InitDeviceMessage(
-          shared_ptr<MessageInterface>(), sentryWorker,
+          UserId(), sentryWorker->getUserId(),
           new SentryInitPayload(
               new Isx3InitPayload("128.131.197.41", 8888),
               new Isx3IsConfPayload(
@@ -68,14 +68,13 @@ int main(int argc, char *argv[]) {
                   1.0),
               new Ob1InitPayload("01FB0FA3",
                                  make_tuple(Z_regulator_type__0_2000_mbar,
-                                            Z_regulator_type_none, 
+                                            Z_regulator_type_none,
                                             Z_regulator_type_none,
                                             Z_regulator_type_none)),
 
               true, chrono::seconds(5), chrono::seconds(10)))));
-  messageDistributor.takeMessage(
-      shared_ptr<DeviceMessage>(new ConfigDeviceMessage(
-          shared_ptr<MessageInterface>(), sentryWorker, nullptr)));
+  messageDistributor.takeMessage(shared_ptr<DeviceMessage>(
+      new ConfigDeviceMessage(UserId(), sentryWorker->getUserId(), nullptr)));
 
   // Start the message distribution.
   messageDistributor.run();

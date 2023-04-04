@@ -68,10 +68,10 @@ private:
   /// The current sub state of the configure logic.
   ConfigureSubState configureSubState;
 
-  shared_ptr<MessageInterface> pumpController;
+  UserId pumpController;
   DeviceStatus pumpControllerState;
 
-  shared_ptr<MessageInterface> spectrometer;
+  UserId spectrometer;
   DeviceStatus spectrometerState;
 
   unique_ptr<thread> workerThread;

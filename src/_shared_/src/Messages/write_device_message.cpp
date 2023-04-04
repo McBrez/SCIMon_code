@@ -2,13 +2,11 @@
 #include <write_device_message.hpp>
 
 namespace Messages {
-WriteDeviceMessage::WriteDeviceMessage(
-    shared_ptr<MessageInterface> source,
-    shared_ptr<MessageInterface> destination, WriteDeviceTopic topic)
+WriteDeviceMessage::WriteDeviceMessage(UserId source, UserId destination,
+                                       WriteDeviceTopic topic)
     : DeviceMessage(source, destination), topic(topic) {}
 
-WriteDeviceMessage::WriteDeviceMessage(shared_ptr<MessageInterface> source,
-                                       shared_ptr<MessageInterface> destination,
+WriteDeviceMessage::WriteDeviceMessage(UserId source, UserId destination,
                                        WriteDeviceTopic topic,
                                        AdditionalData additionalData)
     : DeviceMessage(source, destination), topic(topic),

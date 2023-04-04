@@ -43,9 +43,8 @@ public:
    * @param originalMessage Reference to the message, this message is the
    * response to.
    */
-  ReadDeviceMessage(shared_ptr<MessageInterface> source,
-                    shared_ptr<MessageInterface> destination,
-                    ReadDeviceTopic topic, ReadPayload *readPayload,
+  ReadDeviceMessage(UserId source, UserId destination, ReadDeviceTopic topic,
+                    ReadPayload *readPayload,
                     shared_ptr<WriteDeviceMessage> originalMessage);
 
   /**

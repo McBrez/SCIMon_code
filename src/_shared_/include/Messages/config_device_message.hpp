@@ -21,8 +21,7 @@ public:
    * @param deviceConfiguration pointer to a new device configuration.
    * Object takes ownership of the pointer.
    */
-  ConfigDeviceMessage(shared_ptr<MessageInterface> source,
-                      shared_ptr<MessageInterface> destination,
+  ConfigDeviceMessage(UserId source, UserId destination,
                       ConfigurationPayload *deviceConfiguration);
 
   /**
@@ -31,8 +30,7 @@ public:
    * @param destination reference to the destination of this message.
    * @param deviceConfiguration pointer to an existing device configuration.
    */
-  ConfigDeviceMessage(shared_ptr<MessageInterface> source,
-                      shared_ptr<MessageInterface> destination,
+  ConfigDeviceMessage(UserId source, UserId destination,
                       shared_ptr<ConfigurationPayload> deviceConfiguration);
 
   /**

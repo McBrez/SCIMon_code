@@ -363,7 +363,7 @@ bool DeviceIsx3::handleReadPayload(shared_ptr<ReadPayload> readPayload) {
       this->impedanceSpectrumBuffer.push_back(copyIsPayload);
       if (coalescedIsPayload != nullptr) {
         this->messageOut.push(shared_ptr<DeviceMessage>(new ReadDeviceMessage(
-            this->self, this->startMessageCache->getSource(),
+            this->self->getUserId(), this->startMessageCache->getSource(),
             ReadDeviceTopic::READ_TOPIC_DEVICE_SPECIFIC_MSG, coalescedIsPayload,
             this->startMessageCache)));
       } else {

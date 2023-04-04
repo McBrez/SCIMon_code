@@ -1,6 +1,9 @@
 #ifndef DEVICE_MESSAGE_HPP
 #define DEVICE_MESSAGE_HPP
 
+// Project includes
+#include <user_id.hpp>
+
 // Standard includes
 #include <memory>
 #include <string>
@@ -20,10 +23,10 @@ class DeviceMessage {
 public:
   /**
    * @brief Constructs the object.
-   * @param source The message interface this message originates from.
+   * @param source The id of the object this message originates from.
+   * @param destination The id of the object this message shall be sent to.
    */
-  DeviceMessage(shared_ptr<MessageInterface> source,
-                shared_ptr<MessageInterface> destination);
+  DeviceMessage(UserId source, UserId destination);
 
   /**
    * @brief Destroy the Device Message object
@@ -52,34 +55,30 @@ public:
   int getMessageId();
 
   /**
-   * @brief Returns a reference to the message interface that created this
-   * message.
-   * @return A reference to the message interface that created this
-   * message.
+   * @brief Returns the id of the source of this message.
+   * @return The id of the source of this message.
    */
-  shared_ptr<MessageInterface> getSource();
+  UserId getSource();
 
   /**
-   * @brief Returns a reference to the message interface that shall receive this
-   * message.
-   * @return A reference to the message interface that shall receive this
-   * message.
+   * @brief Returns the id of the destination of this message.
+   * @return The id of the destination of this message.
    */
-  shared_ptr<MessageInterface> getDestination();
+  UserId getDestination();
 
 protected:
-  void setSource(shared_ptr<MessageInterface> source);
-  void setDestination(shared_ptr<MessageInterface> destination);
+  void setSource(UserId source);
+  void setDestination(UserId destination);
 
 private:
   // The unique id of the mssage.
   int messageId;
 
-  /// The message interface this message originates from.
-  shared_ptr<MessageInterface> source;
+  /// The id of the object this message originates from.
+  UserId source;
 
-  /// The message interface this message shall be sent to.
-  shared_ptr<MessageInterface> destination;
+  /// The id of the object this message shall be sent to.
+  UserId destination;
 
   /**
    * @brief Generates an unique id.

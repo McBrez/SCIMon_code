@@ -21,8 +21,7 @@ enum Ob1Topic { OB1_TOPIC_INVALID, OB1_TOPIC_SET_PRESSURE };
  */
 class WriteMessageOb1SetPressure : public WriteDeviceMessage {
 public:
-  WriteMessageOb1SetPressure(shared_ptr<MessageInterface> source,
-                             shared_ptr<MessageInterface> destination,
+  WriteMessageOb1SetPressure(UserId source, UserId destination,
                              map<int, double> setPressures);
   virtual string serialize() override;
   map<int, double> getSetPressure();

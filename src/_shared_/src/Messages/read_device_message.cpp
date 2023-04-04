@@ -4,8 +4,7 @@
 namespace Messages {
 
 ReadDeviceMessage::ReadDeviceMessage(
-    shared_ptr<MessageInterface> source,
-    shared_ptr<MessageInterface> destination, ReadDeviceTopic topic,
+    UserId source, UserId destination, ReadDeviceTopic topic,
     ReadPayload *readPayloadData,
     shared_ptr<WriteDeviceMessage> originalMessage)
     : DeviceMessage(source, destination), topic(topic),

@@ -41,9 +41,7 @@ public:
    * @param destination Reference to the destination of this message.
    * @param topic The topic of the message.
    */
-  WriteDeviceMessage(shared_ptr<MessageInterface> source,
-                     shared_ptr<MessageInterface> destination,
-                     WriteDeviceTopic topic);
+  WriteDeviceMessage(UserId source, UserId destination, WriteDeviceTopic topic);
   /**
    * @brief Creates a message with the given topic and appends additional data.
    * @param source Reference to the source of this message.
@@ -52,9 +50,8 @@ public:
    * @param additionalData Additional data, that shall be appended to the
    * message.
    */
-  WriteDeviceMessage(shared_ptr<MessageInterface> source,
-                     shared_ptr<MessageInterface> destination,
-                     WriteDeviceTopic topic, AdditionalData additionalData);
+  WriteDeviceMessage(UserId source, UserId destination, WriteDeviceTopic topic,
+                     AdditionalData additionalData);
 
   /**
    * @brief Returns the additional data, held by the message.

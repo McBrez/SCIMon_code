@@ -64,19 +64,17 @@ void MessageDistributor::run() {
     // Send messages to recipients.
     for (auto message : this->messageCache) {
       // Find the target participant.
-      shared_ptr<const MessageInterface> destination =
-          message->getDestination();
+      UserId destination = message->getDestination();
       auto targetParticipant =
           find_if(this->participants.begin(), this->participants.end(),
                   [destination](shared_ptr<MessageInterface> value) {
-                    return destination == value;
+                    return destination == value->getUserId();
                   });
 
       if (targetParticipant == this->participants.end()) {
         // Destination does not exist. Log this and add a failed response
         // message to the cache.
-        LOG(WARNING) << "Message from "
-                     << message->getSource()->getUserId().id()
+        LOG(WARNING) << "Message from " << message->getSource().id()
                      << " could not be delivered. Destination does not exist.";
         this->failedResponseCache.push_back(shared_ptr<DeviceMessage>(
             new ReadDeviceMessage(message->getDestination(),
@@ -90,7 +88,7 @@ void MessageDistributor::run() {
 
         if (!processSuccess) {
           LOG(WARNING) << "Targeted participant  "
-                       << message->getDestination()->getUserId().id()
+                       << message->getDestination().id()
                        << " was not able to process the message.";
         }
       }

@@ -14,9 +14,8 @@ namespace Messages {
  */
 class DeviceStatusMessage : public ReadDeviceMessage {
 public:
-  DeviceStatusMessage(shared_ptr<MessageInterface> source,
-                      shared_ptr<MessageInterface> destination,
-                      ReadDeviceTopic topic, ReadPayload *readPayload,
+  DeviceStatusMessage(UserId source, UserId destination, ReadDeviceTopic topic,
+                      ReadPayload *readPayload,
                       shared_ptr<WriteDeviceMessage> originalMessage,
                       DeviceStatus deviceStatus,
                       string additionalInformation = "");

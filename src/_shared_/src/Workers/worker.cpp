@@ -39,7 +39,7 @@ bool Worker::write(shared_ptr<WriteDeviceMessage> writeMsg) {
   else if (WriteDeviceTopic::WRITE_TOPIC_QUERY_STATE == writeMsg->getTopic()) {
     // Put the worker state into the message queue.
     this->messageOut.push(shared_ptr<DeviceMessage>(new DeviceStatusMessage(
-        this->self, writeMsg->getSource(),
+        this->self->getUserId(), writeMsg->getSource(),
         READ_TOPIC_DEVICE_STATUS,
         new StatusPayload(this->getUserId(), this->getState()), writeMsg,
         this->getState())));
@@ -80,7 +80,7 @@ list<shared_ptr<DeviceMessage>> Worker::read(TimePoint timestamp) {
 }
 
 bool Worker::write(shared_ptr<InitDeviceMessage> initMsg) {
-  if (initMsg->getDestination().get() != this) {
+  if (initMsg->getDestination() != this->getUserId()) {
     LOG(WARNING) << "Got a message that is not meant for this device.";
     return false;
   }
@@ -89,7 +89,7 @@ bool Worker::write(shared_ptr<InitDeviceMessage> initMsg) {
 }
 
 bool Worker::write(shared_ptr<ConfigDeviceMessage> configMsg) {
-  if (configMsg->getDestination().get() != this) {
+  if (configMsg->getDestination() != this->getUserId()) {
     LOG(WARNING) << "Got a message that is not meant for this device.";
     return false;
   }

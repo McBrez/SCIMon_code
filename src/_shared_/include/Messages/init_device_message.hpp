@@ -22,12 +22,10 @@ public:
    * @param initPayload Pointer to the initialization data. The message takes
    * ownership of the pointer, hence the pointer has to stay valid.
    */
-  InitDeviceMessage(shared_ptr<MessageInterface> source,
-                    shared_ptr<MessageInterface> destination,
+  InitDeviceMessage(UserId source, UserId destination,
                     InitPayload *initPayload);
 
-  InitDeviceMessage(shared_ptr<MessageInterface> source,
-                    shared_ptr<MessageInterface> destination,
+  InitDeviceMessage(UserId source, UserId destination,
                     shared_ptr<InitPayload> initPayload);
 
   /**

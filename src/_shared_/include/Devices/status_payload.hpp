@@ -2,6 +2,7 @@
 #define STATUS_PAYLOAD_HPP
 
 // Project include
+#include <configuration_payload.hpp>
 #include <read_payload.hpp>
 #include <user_id.hpp>
 
@@ -54,6 +55,10 @@ public:
    */
   UserId getDeviceId();
 
+  DeviceType getDeviceType();
+
+  string getDeviceName();
+
   /**
    * @brief Serializes the payload into a human-readable string.
    * @return The string representation of the payload.
@@ -66,6 +71,12 @@ private:
 
   /// The device id.
   UserId deviceId;
+
+  /// The device type.
+  DeviceType deviceType;
+
+  /// The device name.
+  string deviceName;
 };
 
 } // namespace Devices
