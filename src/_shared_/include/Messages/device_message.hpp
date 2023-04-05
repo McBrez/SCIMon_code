@@ -7,6 +7,7 @@
 // Standard includes
 #include <memory>
 #include <string>
+#include <vector>
 
 using namespace std;
 
@@ -34,10 +35,18 @@ public:
   virtual ~DeviceMessage() = 0;
 
   /**
-   * @brief Serializes the message into a string.
+   * @brief Serializes the message into a human-friendly string.
    * @return A string containing the contents of the message.
    */
   virtual string serialize() = 0;
+
+  /**
+   * @brief Serializes the message into vector of chars. Used for serial
+   * transmition. Sub classes should call the bytes() method of the super class
+   * and append to it.
+   * @return The serial representation of the object.
+   */
+  virtual vector<unsigned char> bytes();
 
   /**
    * @brief Deserializes the given string into a message.

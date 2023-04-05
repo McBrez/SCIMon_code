@@ -23,7 +23,87 @@ WinSocket::~WinSocket() {
   delete[] recvbuf;
 }
 
-bool WinSocket::open(string ip, int port) {
+bool WinSocket::listenConnection(std::shared_ptr<bool> doListen, int port) {
+  if (this->isConnected) {
+    LOG(WARNING)
+        << "Can not start listening, as an connection is already open.";
+    return false;
+  }
+
+  WSADATA wsaData;
+  int iResult;
+  SOCKET ListenSocket = INVALID_SOCKET;
+
+  // Initialize Winsock
+  iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+  if (iResult != 0) {
+    LOG(ERROR) << "WSAStartup failed.";
+    return false;
+  }
+
+  struct addrinfo *result;
+  struct addrinfo hints;
+
+  ZeroMemory(&hints, sizeof(hints));
+  hints.ai_family = AF_INET;
+  hints.ai_socktype = SOCK_STREAM;
+  hints.ai_protocol = IPPROTO_TCP;
+  hints.ai_flags = AI_PASSIVE;
+
+  // Resolve the local address and port to be used by the server
+  iResult = getaddrinfo(NULL, std::to_string(port).c_str(), &hints, &result);
+  if (iResult != 0) {
+    LOG(ERROR) << "getaddrinfo failed: " << iResult;
+    WSACleanup();
+    return 1;
+  }
+
+  // Create a SOCKET for the server to listen for client connections.
+  ListenSocket =
+      socket(result->ai_family, result->ai_socktype, result->ai_protocol);
+  if (ListenSocket == INVALID_SOCKET) {
+    LOG(ERROR) << "Creation of socket failed.";
+    WSACleanup();
+    return false;
+  }
+
+  // Setup the TCP listening socket
+  iResult = bind(ListenSocket, result->ai_addr, result->ai_addrlen);
+  if (iResult == SOCKET_ERROR) {
+    LOG(ERROR) << "Bind failed with error: " << WSAGetLastError();
+    closesocket(ListenSocket);
+    WSACleanup();
+    return false;
+  }
+
+  iResult = listen(ListenSocket, SOMAXCONN);
+  if (iResult == SOCKET_ERROR) {
+    LOG(ERROR) << "listen failed with error: " << WSAGetLastError();
+    closesocket(ListenSocket);
+    WSACleanup();
+    return false;
+  }
+
+  // Accept a client socket
+  this->connectSocket = accept(ListenSocket, NULL, NULL);
+  if (this->connectSocket == INVALID_SOCKET) {
+    LOG(ERROR) << "Accept failed with error: " << WSAGetLastError();
+    closesocket(ListenSocket);
+    WSACleanup();
+    return false;
+  }
+
+  this->isConnected = true;
+  return true;
+}
+
+bool WinSocket::open(std::string ip, int port) {
+  if (this->isConnected) {
+    LOG(WARNING)
+        << "Can not start connecting, as an connection is already open.";
+    return false;
+  }
+
   WSADATA wsaData;
   struct addrinfo *result = NULL, *ptr = NULL, hints;
 
@@ -33,7 +113,7 @@ bool WinSocket::open(string ip, int port) {
   // Initialize Winsock
   iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
   if (iResult != 0) {
-    LOG(ERROR) << "WSAStartup failed with error: " << to_string(iResult);
+    LOG(ERROR) << "WSAStartup failed with error: " << std::to_string(iResult);
     return false;
   }
 
@@ -44,11 +124,11 @@ bool WinSocket::open(string ip, int port) {
 
   // Resolve the server address and port.
   PCSTR ipCstr = ip.c_str();
-  string portStr = to_string(port);
+  std::string portStr = std::to_string(port);
   PCSTR portCstr = portStr.c_str();
   iResult = getaddrinfo(ipCstr, portCstr, &hints, &result);
   if (iResult != 0) {
-    LOG(ERROR) << "getaddrinfo failed with error: " << to_string(iResult);
+    LOG(ERROR) << "getaddrinfo failed with error: " << std::to_string(iResult);
     WSACleanup();
     return false;
   }
@@ -101,7 +181,7 @@ bool WinSocket::close() {
   return true;
 }
 
-int WinSocket::write(const vector<unsigned char> &bytes) {
+int WinSocket::write(const std::vector<unsigned char> &bytes) {
   if (!this->isConnected) {
     return false;
   }
@@ -118,7 +198,7 @@ int WinSocket::write(const vector<unsigned char> &bytes) {
 
 int WinSocket::getBufferLength() { return WIN_SOCKET_DEFAULT_BUFFER_LEN; }
 
-int WinSocket::read(vector<unsigned char> &bytes) {
+int WinSocket::read(std::vector<unsigned char> &bytes) {
 
   if (!this->isConnected) {
     return false;
@@ -130,9 +210,9 @@ int WinSocket::read(vector<unsigned char> &bytes) {
   // Receive bytes.
   int iResult = recv(this->connectSocket, recvbuf, this->getBufferLength(), 0);
   if (iResult > 0) {
-    LOG(INFO) << "Bytes received: " << to_string(iResult);
-    bytes =
-        vector((unsigned char *)recvbuf, (unsigned char *)recvbuf + iResult);
+    LOG(INFO) << "Bytes received: " << std::to_string(iResult);
+    bytes = std::vector((unsigned char *)recvbuf,
+                        (unsigned char *)recvbuf + iResult);
     return iResult;
 
   } else if (iResult == 0) {

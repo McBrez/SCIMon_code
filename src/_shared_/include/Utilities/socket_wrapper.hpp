@@ -6,8 +6,6 @@
 #include <string>
 #include <vector>
 
-using namespace std;
-
 namespace Utilities {
 /**
  * @brief Defines an interface to a class that can read from sockets.
@@ -20,12 +18,19 @@ public:
   virtual ~SocketWrapper() = 0;
 
   /**
+   * @brief Starts waiting for a connection.
+   * @return true
+   * @return false
+   */
+  virtual bool listenConnection(std::shared_ptr<bool> doListen, int port) = 0;
+
+  /**
    * @brief Trys to connect to the given ip and port.
    * @param ip The ip that shall be connected to.
    * @param port The port that shall be connected to.
    * @return TRUE if connection was succesful. FALSE otherwise.
    */
-  virtual bool open(string ip, int port) = 0;
+  virtual bool open(std::string ip, int port) = 0;
 
   /**
    * @brief Closes an active socket connection.
@@ -40,7 +45,7 @@ public:
    * @return The count of bytes that have been written. A negative value
    * indicates an error.
    */
-  virtual int write(const vector<unsigned char> &bytes) = 0;
+  virtual int write(const std::vector<unsigned char> &bytes) = 0;
 
   /**
    * @brief Reads bytes from the socket.
@@ -48,7 +53,7 @@ public:
    * @return The count of bytes that have been read from the socket. A negative
    * value indicates an error.
    */
-  virtual int read(vector<unsigned char> &bytes) = 0;
+  virtual int read(std::vector<unsigned char> &bytes) = 0;
 
   /**
    * @brief Clears the internal receive buffer.

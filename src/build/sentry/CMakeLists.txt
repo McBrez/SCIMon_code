@@ -68,6 +68,7 @@ add_executable(sentry
     ${INCLUDE_DIR}/Workers/sentry_worker/sentry_worker.hpp
     ${INCLUDE_DIR}/Workers/sentry_worker/sentry_init_payload.hpp
     ${INCLUDE_DIR}/Workers/network_worker/network_worker.hpp
+    ${INCLUDE_DIR}/Workers/network_worker/network_worker_init_payload.hpp
 
     ${SOURCE_DIR}/Messages/device_message.cpp
     ${SOURCE_DIR}/Messages/config_device_message.cpp
@@ -104,6 +105,7 @@ add_executable(sentry
     ${SOURCE_DIR}/Workers/sentry_worker/sentry_worker.cpp
     ${SOURCE_DIR}/Workers/sentry_worker/sentry_init_payload.cpp
     ${SOURCE_DIR}/Workers/network_worker/network_worker.cpp
+    ${SOURCE_DIR}/Workers/network_worker/network_worker_init_payload.cpp
 
     ${3RDPARTY_DIR}/catch2/single_include/catch2/catch.hpp
     ${3RDPARTY_DIR}/easyloggingpp/src/easylogging++.cc

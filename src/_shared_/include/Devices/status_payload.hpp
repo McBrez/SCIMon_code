@@ -1,6 +1,9 @@
 #ifndef STATUS_PAYLOAD_HPP
 #define STATUS_PAYLOAD_HPP
 
+// Standard includes
+#include <list>
+
 // Project include
 #include <configuration_payload.hpp>
 #include <read_payload.hpp>
@@ -41,7 +44,9 @@ public:
    * @param userId The id of the device, this payload originates from.
    * @param deviceStatus The status of the device.
    */
-  StatusPayload(UserId deviceId, DeviceStatus deviceStatus);
+  StatusPayload(UserId deviceId, DeviceStatus deviceStatus,
+                std::list<UserId> proxyIds, DeviceType deviceType,
+                std::string deviceName);
 
   /**
    * @brief Returns the status of the device.
@@ -59,6 +64,8 @@ public:
 
   string getDeviceName();
 
+  list<UserId> getProxyIds();
+
   /**
    * @brief Serializes the payload into a human-readable string.
    * @return The string representation of the payload.
@@ -71,6 +78,9 @@ private:
 
   /// The device id.
   UserId deviceId;
+
+  /// The proxy ids of the device.
+  list<UserId> proxyIds;
 
   /// The device type.
   DeviceType deviceType;

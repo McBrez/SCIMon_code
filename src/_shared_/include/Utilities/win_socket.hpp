@@ -29,13 +29,16 @@ public:
    */
   virtual ~WinSocket() override;
 
+  virtual bool listenConnection(std::shared_ptr<bool> doListen,
+                                int port) override;
+
   /**
    * @brief Trys to connect to the given ip and port.
    * @param ip The ip that shall be connected to.
    * @param port The port that shall be connected to.
    * @return TRUE if connection was succesful. FALSE otherwise.
    */
-  virtual bool open(string ip, int port) override;
+  virtual bool open(std::string ip, int port) override;
 
   /**
    * @brief Closes an active socket connection.
@@ -50,7 +53,7 @@ public:
    * @return The count of bytes that have been written. A negative value
    * indicates an error.
    */
-  virtual int write(const vector<unsigned char> &bytes) override;
+  virtual int write(const std::vector<unsigned char> &bytes) override;
 
   /**
    * @brief Reads bytes from the socket.
@@ -58,7 +61,7 @@ public:
    * @return The count of bytes that have been read from the socket. A negative
    * value indicates an error.
    */
-  virtual int read(vector<unsigned char> &bytes) override;
+  virtual int read(std::vector<unsigned char> &bytes) override;
 
   /**
    * @brief Clears the internal receive buffer.

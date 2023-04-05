@@ -41,8 +41,10 @@ bool Worker::write(shared_ptr<WriteDeviceMessage> writeMsg) {
     this->messageOut.push(shared_ptr<DeviceMessage>(new DeviceStatusMessage(
         this->self->getUserId(), writeMsg->getSource(),
         READ_TOPIC_DEVICE_STATUS,
-        new StatusPayload(this->getUserId(), this->getState()), writeMsg,
-        this->getState())));
+        new StatusPayload(this->getUserId(), this->getState(),
+                          this->getProxyUserIds(), DeviceType::UNSPECIFIED,
+                          "Worker"),
+        writeMsg, this->getState())));
     return true;
   }
 

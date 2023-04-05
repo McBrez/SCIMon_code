@@ -2,9 +2,22 @@
 #define NETWORK_WORKER_HPP
 
 // Project includes
+#include <network_worker_init_payload.hpp>
+#include <socket_wrapper.hpp>
 #include <worker.hpp>
 
+using namespace Utilities;
+
 namespace Workers {
+
+enum NetworkWorkerCommState {
+  NETWORK_WOKER_COMM_STATE_INVALID,
+  NETWORK_WOKER_COMM_STATE_LISTENING,
+  NETWORK_WOKER_COMM_STATE_HANDSHAKING,
+  NETWORK_WOKER_COMM_STATE_WORKING,
+  NETWORK_WOKER_COMM_STATE_ERROR
+};
+
 /**
  * @brief Encapsulates a worker that allows communication over a socket.
  */
@@ -50,6 +63,25 @@ public:
    * otherwise.
    */
   virtual bool handleResponse(shared_ptr<ReadDeviceMessage> response) override;
+
+  void listenWorker();
+
+  void commWorker();
+
+private:
+  shared_ptr<NetworkWorkerInitPayload> initPayload;
+
+  shared_ptr<SocketWrapper> socketWrapper;
+
+  unique_ptr<thread> commThread;
+
+  unique_ptr<thread> listenerThread;
+
+  shared_ptr<bool> doListen;
+
+  NetworkWorkerCommState commState;
+
+  bool doComm;
 };
 } // namespace Workers
 

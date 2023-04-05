@@ -95,4 +95,9 @@ bool MessageInterface::isTarget(UserId id) {
     }
   }
 }
+
+list<UserId> MessageInterface::getProxyUserIds() const {
+  return this->proxyIds;
+}
+
 } // namespace Messages

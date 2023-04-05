@@ -26,6 +26,8 @@ enum WriteDeviceTopic {
   WRITE_TOPIC_DATA,
   /// The targeted device shall respond with its current state.
   WRITE_TOPIC_QUERY_STATE,
+  /// The targeted device shall respond with a handshake message.
+  WRITE_TOPIC_HANDSHAKE,
   /// A device specific write topic.
   WRITE_TOPIC_DEVICE_SPECIFIC
 };

@@ -49,8 +49,10 @@ bool Device::write(shared_ptr<WriteDeviceMessage> writeMsg) {
     this->messageOut.push(shared_ptr<DeviceMessage>(new DeviceStatusMessage(
         this->self->getUserId(), writeMsg->getSource(),
         READ_TOPIC_DEVICE_STATUS,
-        new StatusPayload(this->getUserId(), this->getDeviceStatus()), writeMsg,
-        this->getDeviceStatus())));
+        new StatusPayload(this->getUserId(), this->getDeviceStatus(),
+                          this->getProxyUserIds(), this->getDeviceType(),
+                          this->getDeviceTypeName()),
+        writeMsg, this->getDeviceStatus())));
     return true;
   }
 
