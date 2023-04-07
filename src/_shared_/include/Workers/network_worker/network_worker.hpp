@@ -10,11 +10,21 @@ using namespace Utilities;
 
 namespace Workers {
 
+/// Identifies the states of the network communication.
 enum NetworkWorkerCommState {
+  /// Invalid state.
   NETWORK_WOKER_COMM_STATE_INVALID,
+  /// Worker is listening to connection requests.
   NETWORK_WOKER_COMM_STATE_LISTENING,
+  /// Worker is starting up.
+  NETWORK_WOKER_COMM_STATE_STARTING,
+  /// Worker is sending the handshake message.
   NETWORK_WOKER_COMM_STATE_HANDSHAKING,
+  /// Worker is waiting for the handshake response.
+  NETWORK_WOKER_COMM_STATE_WAITING_FOR_HANDSHAKE_RESPONSE,
+  /// Worker is connected and continuosly sending/receiving.
   NETWORK_WOKER_COMM_STATE_WORKING,
+  /// Worker encountered an error and is waiting to be initialized again.
   NETWORK_WOKER_COMM_STATE_ERROR
 };
 

@@ -4,6 +4,8 @@
 // Project includes
 #include <network_worker.hpp>
 
+using namespace Messages;
+
 namespace Workers {
 NetworkWorker::NetworkWorker()
     : Worker(), socketWrapper(SocketWrapper::getSocketWrapper()),
@@ -134,9 +136,18 @@ void NetworkWorker::commWorker() {
     if (NetworkWorkerCommState::NETWORK_WOKER_COMM_STATE_HANDSHAKING ==
         this->commState) {
 
+      // Server and client have different roles here. Server waits for the
+      // handshake message, while the client sends it.
       if (NetworkWorkerOperationMode::NETWORK_WORKER_OP_MODE_CLIENT ==
           this->initPayload->getOperationMode()) {
         // The client initiates the handshake. Send a query state message.
+        shared_ptr<DeviceMessage> handshakeMsg(
+            new WriteDeviceMessage(this->self->getUserId(), UserId(),
+                                   WriteDeviceTopic::WRITE_TOPIC_HANDSHAKE));
+        this->socketWrapper->write(handshakeMsg->bytes());                                
+
+      } else {
+        // The server just Waits for the hand shake message.
       }
 
     } else if (NetworkWorkerCommState::NETWORK_WOKER_COMM_STATE_WORKING ==
