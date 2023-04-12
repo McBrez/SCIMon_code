@@ -46,8 +46,24 @@ bool MessageDistributor::addParticipant(
   return true;
 }
 
-list<shared_ptr<MessageInterface>> MessageDistributor::getParticipants() {
-  return this->participants;
+list<UserId> MessageDistributor::getParticipants() {
+  list<UserId> retVal;
+  for (auto participant : this->participants) {
+    retVal.push_back(participant->getUserId());
+  }
+
+  return retVal;
+}
+
+list<shared_ptr<StatusPayload>> MessageDistributor::getStatus() {
+  list<shared_ptr<StatusPayload>> retVal;
+
+  for (auto participant : this->participants) {
+
+    retVal.emplace_back(participant->constructStatus());
+  }
+
+  return retVal;
 }
 
 void MessageDistributor::run() {

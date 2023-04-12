@@ -46,7 +46,13 @@ public:
    * @brief Return all the participants of the message interface.
    * @return A list of all participants of the message interface.
    */
-  list<shared_ptr<MessageInterface>> getParticipants();
+  list<UserId> getParticipants();
+
+  /**
+   * @brief Returns the status of all participants.
+   * @return List containing the status of all participants.
+   */
+  list<shared_ptr<StatusPayload>> getStatus();
 
   /**
    * @brief Starts the execution loop. Note that this method blocks, until it is

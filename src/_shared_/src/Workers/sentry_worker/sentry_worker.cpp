@@ -296,21 +296,16 @@ bool SentryWorker::configure(shared_ptr<ConfigurationPayload> configPayload) {
 
   this->workerState = DeviceStatus::CONFIGURING;
   // Check if an pump controller and a impedance spectrometer are present.
-  list<shared_ptr<MessageInterface>> participants =
-      this->messageDistributor->getParticipants();
+  list<shared_ptr<StatusPayload>> participants =
+      this->messageDistributor->getStatus();
   UserId spectrometerTemp;
   UserId pumpControllerTemp;
   for (auto participant : participants) {
-    auto device = dynamic_pointer_cast<Device>(participant);
-    if (!device) {
-      continue;
+    if (participant->getDeviceType() == DeviceType::IMPEDANCE_SPECTROMETER) {
+      spectrometerTemp = participant->getDeviceId();
     }
-
-    if (device->getDeviceType() == DeviceType::IMPEDANCE_SPECTROMETER) {
-      spectrometerTemp = device->getUserId();
-    }
-    if (device->getDeviceType() == DeviceType::PUMP_CONTROLLER) {
-      pumpControllerTemp = device->getUserId();
+    if (participant->getDeviceType() == DeviceType::PUMP_CONTROLLER) {
+      pumpControllerTemp = participant->getDeviceId();
     }
   }
   if (!spectrometerTemp || !pumpControllerTemp) {
@@ -342,6 +337,13 @@ bool SentryWorker::configure(shared_ptr<ConfigurationPayload> configPayload) {
 
   // Configuration logic continues in handleResponse().
   return true;
+}
+
+bool SentryWorker::write(shared_ptr<HandshakeMessage> writeMsg) {
+  // Sentry worker does not react to handshake messages.
+  LOG(WARNING) << "Sentry worker received handshake message. This will be "
+                  "ignored.";
+  return false;
 }
 
 } // namespace Workers

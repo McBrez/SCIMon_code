@@ -9,6 +9,7 @@
 
 // Project includes
 #include <config_device_message.hpp>
+#include <handshake_message.hpp>
 #include <init_device_message.hpp>
 #include <read_device_message.hpp>
 #include <user_id.hpp>
@@ -59,6 +60,13 @@ public:
    * @return True if successful. False otherwise.
    */
   virtual bool write(shared_ptr<WriteDeviceMessage> writeMsg) = 0;
+
+  /**
+   * @brief Writes a handshake message to the device.
+   * @param writeMsg The handshake message that shall be written to the device.
+   * @return True if successful. False otherwise.
+   */
+  virtual bool write(shared_ptr<HandshakeMessage> writeMsg) = 0;
 
   /**
    * @brief Handles a device specific message. Called by
@@ -129,6 +137,12 @@ public:
    * @return TRUE if the id targets this object. FALSE otherwise.
    */
   bool isTarget(UserId id);
+
+  /**
+   * @brief Constructs the current status of the object.
+   * @return Pointer to the current status of the object.
+   */
+  virtual shared_ptr<StatusPayload> constructStatus() = 0;
 
 protected:
   /// Queue for outgoing messages.

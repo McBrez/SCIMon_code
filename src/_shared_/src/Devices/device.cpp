@@ -120,16 +120,23 @@ bool Device::write(shared_ptr<InitDeviceMessage> initMsg) {
   return this->initialize(initMsg->returnPayload());
 }
 
-/**
- * @brief Writes a message to the device that triggers a configuration.
- * @param configMsg The configuration message.
- * @return True if configuration was succesfull. False otherwise.
- */
 bool Device::write(shared_ptr<ConfigDeviceMessage> configMsg) {
 
   return this->configure(configMsg->getConfiguration());
 }
 
+bool Device::write(shared_ptr<HandshakeMessage> writeMsg) {
+  // Devices should not react to handshake messages.
+  LOG(WARNING) << "Device received a handshake message. This will be ingnored.";
+  return false;
+}
+
 DeviceType Device::getDeviceType() { return this->deviceType; }
+
+shared_ptr<StatusPayload> Device::constructStatus() {
+  return shared_ptr<StatusPayload>(new StatusPayload(
+      this->getUserId(), this->getDeviceStatus(), this->getProxyUserIds(),
+      this->getDeviceType(), this->getDeviceTypeName()));
+}
 
 } // namespace Devices

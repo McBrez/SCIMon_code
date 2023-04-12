@@ -18,7 +18,8 @@ enum NetworkWorkerCommState {
   NETWORK_WOKER_COMM_STATE_LISTENING,
   /// Worker is starting up.
   NETWORK_WOKER_COMM_STATE_STARTING,
-  /// Worker is sending the handshake message.
+  /// When Worker is server, request for handshake is waited for. When worker is
+  /// client, handshake is sent.
   NETWORK_WOKER_COMM_STATE_HANDSHAKING,
   /// Worker is waiting for the handshake response.
   NETWORK_WOKER_COMM_STATE_WAITING_FOR_HANDSHAKE_RESPONSE,
@@ -47,6 +48,13 @@ public:
 
   virtual bool
   configure(shared_ptr<ConfigurationPayload> configPayload) override;
+
+  /**
+   * @brief Writes a handshake message to the device.
+   * @param writeMsg The handshake message that shall be written to the device.
+   * @return True if successful. False otherwise.
+   */
+  virtual bool write(shared_ptr<HandshakeMessage> writeMsg) override;
 
   /**
    * @brief Handles a device specific message. Called by

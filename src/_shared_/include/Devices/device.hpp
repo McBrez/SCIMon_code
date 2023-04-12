@@ -123,12 +123,25 @@ public:
   virtual bool write(shared_ptr<ConfigDeviceMessage> configMsg) override;
 
   /**
+   * @brief Writes a handshake message to the device.
+   * @param writeMsg The handshake message that shall be written to the device.
+   * @return True if successful. False otherwise.
+   */
+  virtual bool write(shared_ptr<HandshakeMessage> writeMsg) override;
+
+  /**
    * @brief Reads all messages from the message queue.
    * @param timestamp The time at which this method is called.
    * @return List of references to the messages from the message queue. May
    * return an empty list, if there was nothing to read.
    */
   virtual list<shared_ptr<DeviceMessage>> read(TimePoint timestamp) override;
+
+  /**
+   * @brief Constructs the current status of the object.
+   * @return Pointer to the current status of the object.
+   */
+  virtual shared_ptr<StatusPayload> constructStatus() override;
 
   /**
    * @brief Returns the string representation of the given device status.

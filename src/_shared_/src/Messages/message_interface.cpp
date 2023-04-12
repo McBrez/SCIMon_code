@@ -43,18 +43,26 @@ bool MessageInterface::takeMessage(shared_ptr<DeviceMessage> message) {
       }
 
       else {
-        // It is not an init message, not a config message and not a write
-        // message. Is it a response message?
-        auto readDeviceMessage =
-            dynamic_pointer_cast<ReadDeviceMessage>(message);
-        if (readDeviceMessage) {
+        // It is not an init and not a config message. Is it a handshake
+        // message?
+        auto handshakeMessage = dynamic_pointer_cast<HandshakeMessage>(message);
+        if (handshakeMessage) {
           // ... it is. Trigger an config call.
-          return this->handleResponse(readDeviceMessage);
+          return this->write(handshakeMessage);
         } else {
-          // Unknown message type. Abort here.
-          LOG(WARNING)
-              << "Encountered unknown message type. Message will be ignored";
-          return false;
+          // It is not an init message, not a config message and not a write
+          // message. Is it a response message?
+          auto readDeviceMessage =
+              dynamic_pointer_cast<ReadDeviceMessage>(message);
+          if (readDeviceMessage) {
+            // ... it is. Trigger an config call.
+            return this->handleResponse(readDeviceMessage);
+          } else {
+            // Unknown message type. Abort here.
+            LOG(WARNING)
+                << "Encountered unknown message type. Message will be ignored";
+            return false;
+          }
         }
       }
     }

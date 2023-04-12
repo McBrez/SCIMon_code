@@ -68,6 +68,12 @@ public:
    */
   DeviceStatus getState() const;
 
+  /**
+   * @brief Constructs the current status of the object.
+   * @return Pointer to the current status of the object.
+   */
+  virtual shared_ptr<StatusPayload> constructStatus() override;
+
 protected:
   /// The id of the worker.
   WorkerId workerId;
