@@ -17,6 +17,7 @@ public:
    * @return The payload in string representation.
    */
   virtual string serialize() = 0;
+
 };
 } // namespace Devices
 

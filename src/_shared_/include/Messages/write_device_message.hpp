@@ -71,12 +71,6 @@ public:
    */
   virtual string serialize() override;
 
-  /**
-   * @brief Returns the destination of this message.
-   * @return The destination of this object.
-   */
-  shared_ptr<const MessageInterface> getDestination();
-
 private:
   /// The additional data.
   AdditionalData additionalData;

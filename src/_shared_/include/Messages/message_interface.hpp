@@ -139,6 +139,15 @@ public:
   bool isTarget(UserId id);
 
   /**
+   * @brief Returns whether the given id identifies this object. An id
+   * identifies an object if the given id is identical to the primary id of the
+   * object.
+   * @param id The id that shall be checked for.
+   * @return TRUE if the given id identifies this object. FALSE otherwise.
+   */
+  bool isExactTarget(UserId id);
+
+  /**
    * @brief Constructs the current status of the object.
    * @return Pointer to the current status of the object.
    */
@@ -156,9 +165,25 @@ protected:
   /// the message interface object is added to the distributor as participant.
   shared_ptr<MessageInterface> self;
 
+  /**
+   * @brief Adds the given proxy id to the internal list of proxy ids of this
+   * object.
+   * @param proxyId The proxy id that shall be added.
+   * @return True if the id has been added. False otherwise.
+   */
   bool addProxyId(UserId proxyId);
 
+  /**
+   * @brief Removes the given proxy id from the internal list of proxy ids.
+   * @param proxyId The proxy ids that shall be removed.
+   * @return True if the id has been removed. False otherwise.
+   */
   bool removeProxyId(UserId proxyId);
+
+  /**
+   * @brief Clear the internal list of proxy ids.
+   */
+  void clearProxyIds();
 
 private:
   /// The unique id of the object that implements this interface.

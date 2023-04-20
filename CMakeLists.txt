@@ -13,6 +13,8 @@ add_subdirectory(${TEST_DIR}/test_utility)
 add_subdirectory(${TEST_DIR}/test_sciospec_com_interface)
 add_subdirectory(${TEST_DIR}/test_epix)
 add_subdirectory(${TEST_DIR}/test_message_distributor)
+add_subdirectory(${TEST_DIR}/test_message_factory)
+add_subdirectory(${TEST_DIR}/test_network_worker)
 
 enable_testing()
 add_test(NAME build_test_utility COMMAND test_utility)
@@ -20,6 +22,8 @@ add_test(NAME build_message_distributor COMMAND test_message_distributor)
 add_test(NAME build_test_ob1 COMMAND test_ob1)
 add_test(NAME build_test_sciospec_com_interface COMMAND test_sciospec_com_interface)
 add_test(NAME build_test_test_epix COMMAND test_epix)
+add_test(NAME build_test_message_factory COMMAND test_message_factory)
+add_test(NAME build_test_network_worker COMMAND test_network_worker)
 
 add_subdirectory(${PROJECT_DIR}/sentry)
 

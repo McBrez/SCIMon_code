@@ -72,6 +72,8 @@ public:
    */
   virtual string serialize() override;
 
+  bool operator==(const StatusPayload &other) const;
+
 private:
   /// The device status.
   DeviceStatus deviceStatus;

@@ -108,4 +108,8 @@ list<UserId> MessageInterface::getProxyUserIds() const {
   return this->proxyIds;
 }
 
+void MessageInterface::clearProxyIds() { this->proxyIds.clear(); }
+
+bool MessageInterface::isExactTarget(UserId id) { return this->id == id; }
+
 } // namespace Messages

@@ -41,14 +41,6 @@ public:
   virtual string serialize() = 0;
 
   /**
-   * @brief Serializes the message into vector of chars. Used for serial
-   * transmition. Sub classes should call the bytes() method of the super class
-   * and append to it.
-   * @return The serial representation of the object.
-   */
-  virtual vector<unsigned char> bytes();
-
-  /**
    * @brief Deserializes the given string into a message.
    *
    * @param data

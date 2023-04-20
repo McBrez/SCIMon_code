@@ -41,6 +41,7 @@ add_executable(sentry
     ${INCLUDE_DIR}/Messages/message_distributor.hpp
     ${INCLUDE_DIR}/Messages/elveflow_ob1/write_message_ob1.hpp
     ${INCLUDE_DIR}/Messages/user_id.hpp
+    ${INCLUDE_DIR}/Messages/message_factory.hpp
     ${INCLUDE_DIR}/Devices/isx3/isx3_constants.hpp
     ${INCLUDE_DIR}/Devices/isx3/device_isx3.hpp
     ${INCLUDE_DIR}/Devices/isx3/isx3_init_payload.hpp
@@ -82,6 +83,7 @@ add_executable(sentry
     ${SOURCE_DIR}/Messages/message_interface.cpp
     ${SOURCE_DIR}/Messages/message_distributor.cpp
     ${SOURCE_DIR}/Messages/user_id.cpp
+    ${SOURCE_DIR}/Messages/message_factory.cpp
     ${SOURCE_DIR}/Messages/elveflow_ob1/write_message_ob1.cpp
     ${SOURCE_DIR}/Devices/device.cpp
     ${SOURCE_DIR}/Devices/configuration_payload.cpp

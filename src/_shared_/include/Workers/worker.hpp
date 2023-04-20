@@ -38,11 +38,11 @@ public:
 
   virtual list<shared_ptr<DeviceMessage>> read(TimePoint timestamp) override;
 
-  bool write(shared_ptr<WriteDeviceMessage> writeMsg) override;
+  virtual bool write(shared_ptr<WriteDeviceMessage> writeMsg) override;
 
-  bool write(shared_ptr<InitDeviceMessage> initMsg) override;
+  virtual bool write(shared_ptr<InitDeviceMessage> initMsg) override;
 
-  bool write(shared_ptr<ConfigDeviceMessage> configMsg) override;
+  virtual bool write(shared_ptr<ConfigDeviceMessage> configMsg) override;
 
   /**
    * @brief Tells the worker to start its operation.

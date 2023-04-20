@@ -18,4 +18,14 @@ string StatusPayload::getDeviceName() { return this->deviceName; }
 
 string StatusPayload::serialize() { return ""; }
 
+list<UserId> StatusPayload::getProxyIds() { return this->proxyIds; }
+
+bool StatusPayload::operator==(const StatusPayload &other) const {
+  return this->deviceId == other.deviceId &&
+         this->deviceName == other.deviceName &&
+         this->deviceStatus == other.deviceStatus &&
+         this->deviceType == other.deviceType &&
+         this->proxyIds == other.proxyIds;
+}
+
 } // namespace Devices

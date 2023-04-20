@@ -1,10 +1,16 @@
 #ifndef NETWORK_WORKER_HPP
 #define NETWORK_WORKER_HPP
 
+// Standard includes
+#include <mutex>
+#include <queue>
+
 // Project includes
+#include <message_factory.hpp>
 #include <network_worker_init_payload.hpp>
 #include <socket_wrapper.hpp>
 #include <worker.hpp>
+
 
 using namespace Utilities;
 
@@ -34,20 +40,56 @@ enum NetworkWorkerCommState {
  */
 class NetworkWorker : public Worker {
 public:
+  /**
+   * @brief Construct a new Network Worker object
+   */
   NetworkWorker();
 
+  /**
+   * @brief Destroy the Network Worker object
+   */
   virtual ~NetworkWorker() override;
 
+  /**
+   * @brief Worker function of the network worker.
+   * @param timestamp The timestamp of the time point this function has been
+   * called.
+   */
   virtual void work(TimePoint timestamp) override;
 
+  /**
+   * @brief Starts operation of the network worker.
+   * @return TRUE if operation could be started. FALSE otherwise.
+   */
   virtual bool start();
 
+  /**
+   * @brief Stops operation of the network worker.
+   * @return TRUE if the operation could be stopped. FALSE otherwise.
+   */
   virtual bool stop();
 
+  /**
+   * @brief Triggers an initialization of the network worker. I.e. the worker
+   * stores the payload
+   * @param initPayload The initialization data.
+   * @return TRUE if initialization was successfull. FALSE otherwise.
+   */
   virtual bool initialize(shared_ptr<InitPayload> initPayload) override;
 
+  /**
+   * @brief Triggers a configuration of the network worker.
+   * @param configPayload The initialization data.
+   * @return TRUE if initialization was successfull. FALSE otherwise.
+   */
   virtual bool
   configure(shared_ptr<ConfigurationPayload> configPayload) override;
+
+  virtual bool write(shared_ptr<WriteDeviceMessage> writeMsg) override;
+
+  virtual bool write(shared_ptr<InitDeviceMessage> initMsg) override;
+
+  virtual bool write(shared_ptr<ConfigDeviceMessage> configMsg) override;
 
   /**
    * @brief Writes a handshake message to the device.
@@ -82,8 +124,14 @@ public:
    */
   virtual bool handleResponse(shared_ptr<ReadDeviceMessage> response) override;
 
+  /**
+   * @brief Worker function that is used by the listener thread.
+   */
   void listenWorker();
 
+  /**
+   * @brief Worker function that is used by the comm thread.
+   */
   void commWorker();
 
 private:
@@ -100,6 +148,17 @@ private:
   NetworkWorkerCommState commState;
 
   bool doComm;
+
+  /// The read buffer used by the comm thread.
+  vector<unsigned char> readBuffer;
+
+  /// Buffer for the messages that shall be sent over the network.
+  queue<shared_ptr<DeviceMessage>> outgoingNetworkMessages;
+
+  /// Mutex that guards the buffer for the outgoing messages.
+  mutex outgoingNetworkMessagesMutex;
+
+  MessageFactory messageFactory;
 };
 } // namespace Workers
 

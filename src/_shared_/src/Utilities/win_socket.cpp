@@ -210,7 +210,7 @@ int WinSocket::read(std::vector<unsigned char> &bytes) {
   // Receive bytes.
   int iResult = recv(this->connectSocket, recvbuf, this->getBufferLength(), 0);
   if (iResult > 0) {
-    LOG(INFO) << "Bytes received: " << std::to_string(iResult);
+    LOG(DEBUG) << "Bytes received: " << std::to_string(iResult);
     bytes = std::vector((unsigned char *)recvbuf,
                         (unsigned char *)recvbuf + iResult);
     return iResult;

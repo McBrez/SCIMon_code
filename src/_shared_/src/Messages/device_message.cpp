@@ -43,21 +43,4 @@ void DeviceMessage::setDestination(UserId destination) {
   this->destination = destination;
 }
 
-vector<unsigned char> DeviceMessage::bytes() {
-  vector<unsigned char>;
-  stringstream s;
-
-  UserId sourceId = this->getSource().id();
-  s.write(reinterpret_cast<const char *>(&sourceId), sizeof(const char));
-  UserId destinationId = this->getDestination().id();
-  s.write(reinterpret_cast<const char *>(&destinationId), sizeof(const char));
-  s.write(reinterpret_cast<const char *>(&this->messageId), sizeof(const char));
-
-  string *str = new string();
-  *str = s.str();
-  return vector<unsigned char>((const unsigned char *)str->c_str(),
-                               (const unsigned char *)str->c_str() +
-                                   str->length());
-}
-
 } // namespace Messages

@@ -21,6 +21,10 @@ public:
    */
   UserId(MessageInterface *messageInterface);
 
+  /**
+   * @brief Copy constructor.
+   * @param other The UserId that shall be copied.
+   */
   UserId(const UserId &other);
 
   /**
