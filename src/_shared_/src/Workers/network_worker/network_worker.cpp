@@ -50,8 +50,7 @@ bool NetworkWorker::start() {
              this->initPayload->getOperationMode()) {
     // Start comm thread.
     this->workerState = DeviceStatus::BUSY;
-    this->commState =
-        NetworkWorkerCommState::NETWORK_WOKER_COMM_STATE_HANDSHAKING;
+    this->commState = NetworkWorkerCommState::NETWORK_WOKER_COMM_STATE_STARTING;
     this->doComm = true;
     this->commThread.reset(new thread(&NetworkWorker::commWorker, this));
 
@@ -213,8 +212,40 @@ void NetworkWorker::commWorker() {
   LOG(INFO) << "Comm thread of Network Worker started.";
 
   while (this->doComm) {
-    if (NetworkWorkerCommState::NETWORK_WOKER_COMM_STATE_HANDSHAKING ==
+    if (NetworkWorkerCommState::NETWORK_WOKER_COMM_STATE_STARTING ==
         this->commState) {
+
+      // Client initiates the connection here.
+      if (NetworkWorkerOperationMode::NETWORK_WORKER_OP_MODE_CLIENT ==
+          this->initPayload->getOperationMode()) {
+        LOG(INFO) << "Network worker starts connection to "
+                  << this->initPayload->getIpAddress() << ":"
+                  << this->initPayload->getPort();
+        bool success = this->socketWrapper->open(
+            this->initPayload->getIpAddress(), this->initPayload->getPort());
+
+        if (success) {
+          LOG(INFO) << "Network worker successfully connected to "
+                    << this->initPayload->getIpAddress() << ":"
+                    << this->initPayload->getPort();
+          this->commState =
+              NetworkWorkerCommState::NETWORK_WOKER_COMM_STATE_HANDSHAKING;
+        } else {
+          LOG(ERROR) << "Network worker was not able to connect to "
+                     << this->initPayload->getIpAddress() << ":"
+                     << this->initPayload->getPort();
+          this->commState =
+              NetworkWorkerCommState::NETWORK_WOKER_COMM_STATE_ERROR;
+        }
+      } else {
+        // Other roles shouldnt get here.
+        this->commState =
+            NetworkWorkerCommState::NETWORK_WOKER_COMM_STATE_ERROR;
+      }
+    }
+
+    else if (NetworkWorkerCommState::NETWORK_WOKER_COMM_STATE_HANDSHAKING ==
+             this->commState) {
 
       // Server and client have different roles here. Server waits for the
       // handshake message, while the client sends it.
@@ -262,10 +293,19 @@ void NetworkWorker::commWorker() {
         for (auto statusPayload : handshakeMsg->getPayload()) {
           this->addProxyId(statusPayload->getDeviceId());
         }
+        // Send back a handshake message.
+        shared_ptr<DeviceMessage> handshakeMsgResponse(new HandshakeMessage(
+            this->self->getUserId(), handshakeMsg->getSource(),
+            this->messageDistributor->getStatus()));
+        this->socketWrapper->write(
+            MessageFactory::encodeMessage(handshakeMsgResponse));
+
+        // Handshake was successful. Proceed to next state.
         this->commState =
             NetworkWorkerCommState::NETWORK_WOKER_COMM_STATE_WORKING;
         this->workerState = DeviceStatus::OPERATING;
         this->readBuffer.clear();
+
       }
 
       else {

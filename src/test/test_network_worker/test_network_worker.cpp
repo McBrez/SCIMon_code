@@ -5,6 +5,7 @@
 
 // Project includes
 #include <init_device_message.hpp>
+#include <message_distributor.hpp>
 #include <network_worker.hpp>
 #include <network_worker_init_payload.hpp>
 
@@ -14,41 +15,57 @@ using namespace Workers;
 using namespace Messages;
 
 TEST_CASE("Test the network workers") {
-  NetworkWorker server;
-  NetworkWorker client;
+  MessageDistributor distributorServer(100);
+  MessageDistributor distributorClient(100);
+  shared_ptr<MessageInterface> server(new NetworkWorker());
+  shared_ptr<MessageInterface> client(new NetworkWorker());
+  shared_ptr<NetworkWorker> serverWorker =
+      dynamic_pointer_cast<NetworkWorker>(server);
+  shared_ptr<NetworkWorker> clientWorker =
+      dynamic_pointer_cast<NetworkWorker>(client);
+
+  distributorServer.addParticipant(server);
+  distributorClient.addParticipant(client);
 
   shared_ptr<InitDeviceMessage> serverInitMessage(new InitDeviceMessage(
-      UserId(), server.getUserId(),
+      UserId(), server->getUserId(),
       new NetworkWorkerInitPayload(
           NetworkWorkerOperationMode::NETWORK_WORKER_OP_MODE_SERVER,
           "127.0.0.1", 54321)));
   shared_ptr<InitDeviceMessage> clientInitMessage(new InitDeviceMessage(
-      UserId(), client.getUserId(),
+      UserId(), client->getUserId(),
       new NetworkWorkerInitPayload(
           NetworkWorkerOperationMode::NETWORK_WORKER_OP_MODE_CLIENT,
           "127.0.0.1", 54321)));
 
-  REQUIRE(server.write(serverInitMessage));
-  REQUIRE(client.write(clientInitMessage));
+  REQUIRE(server->write(serverInitMessage));
+  REQUIRE(client->write(clientInitMessage));
 
   shared_ptr<ConfigDeviceMessage> serverConfigMessage(
-      new ConfigDeviceMessage(UserId(), server.getUserId(), nullptr));
+      new ConfigDeviceMessage(UserId(), server->getUserId(), nullptr));
   shared_ptr<ConfigDeviceMessage> clientConfigMessage(
-      new ConfigDeviceMessage(UserId(), client.getUserId(), nullptr));
+      new ConfigDeviceMessage(UserId(), client->getUserId(), nullptr));
 
-  REQUIRE(server.write(serverConfigMessage));
-  REQUIRE(client.write(clientConfigMessage));
+  REQUIRE(server->write(serverConfigMessage));
+  REQUIRE(client->write(clientConfigMessage));
 
   shared_ptr<WriteDeviceMessage> serverStartMessage(new WriteDeviceMessage(
-      UserId(), server.getUserId(), WriteDeviceTopic::WRITE_TOPIC_RUN));
+      UserId(), server->getUserId(), WriteDeviceTopic::WRITE_TOPIC_RUN));
   shared_ptr<WriteDeviceMessage> clientStartMessage(new WriteDeviceMessage(
-      UserId(), client.getUserId(), WriteDeviceTopic::WRITE_TOPIC_RUN));
+      UserId(), client->getUserId(), WriteDeviceTopic::WRITE_TOPIC_RUN));
 
-  REQUIRE(server.write(serverStartMessage));
+  REQUIRE(server->write(serverStartMessage));
   this_thread::sleep_for(chrono::milliseconds(1000));
-  REQUIRE(client.write(clientStartMessage));
+  REQUIRE(client->write(clientStartMessage));
 
-  for (int i = 0; i < 5; i++) {
-    this_thread::sleep_for(chrono::milliseconds(1000));
-  }
+  this_thread::sleep_for(chrono::milliseconds(100));
+
+  // Workers should no both be in operating state.
+  REQUIRE(serverWorker->getState() == DeviceStatus::OPERATING);
+  REQUIRE(clientWorker->getState() == DeviceStatus::OPERATING);
+  // Workers should now have each others user id as proxy id.
+  REQUIRE(serverWorker->getProxyUserIds() ==
+          list<UserId>{clientWorker->getUserId()});
+  REQUIRE(clientWorker->getProxyUserIds() ==
+          list<UserId>{serverWorker->getUserId()});
 }

@@ -2,8 +2,13 @@
 #include <sstream>
 
 // Project includes
+#include <config_device_message.hpp>
 #include <handshake_message.hpp>
+#include <init_device_message.hpp>
+#include <is_payload.hpp>
 #include <message_factory.hpp>
+#include <read_device_message.hpp>
+#include <read_payload_ob1.hpp>
 #include <write_device_message.hpp>
 
 namespace Messages {
@@ -37,6 +42,8 @@ MessageFactory::encodeMessage(shared_ptr<DeviceMessage> msg) {
 
   // Cast down the message and encode the more specific parts.
   MessageType messageType;
+
+  // Write device message
   auto writeMsg = dynamic_pointer_cast<WriteDeviceMessage>(msg);
   if (writeMsg) {
     messageType = WRITE_DEVICE_MESSAGE;
@@ -45,6 +52,7 @@ MessageFactory::encodeMessage(shared_ptr<DeviceMessage> msg) {
             sizeof(const WriteDeviceTopic));
   } else {
 
+    // Handshake message.
     auto handshakeMsg = dynamic_pointer_cast<HandshakeMessage>(msg);
     if (handshakeMsg) {
       messageType = HANDSHAKE_MESSAGE;
@@ -73,25 +81,45 @@ MessageFactory::encodeMessage(shared_ptr<DeviceMessage> msg) {
         }
       }
     }
+
+    // Read device message
+    auto readMsg = dynamic_pointer_cast<ReadDeviceMessage>(msg);
+    if (readMsg) {
+
+    }
+
+    else {
+      // Init device message
+      auto initMsg = dynamic_pointer_cast<InitDeviceMessage>(msg);
+      if (initMsg) {
+      }
+
+      else {
+        // Config device message
+        auto configMsg = dynamic_pointer_cast<ConfigDeviceMessage>(msg);
+        if (configMsg) {
+        }
+      }
+    }
+
+    // Wrap the message with the message type and the length of the payload.
+    string *str = new string();
+    *str = s.str();
+    short msgLen = str->length() & 0xFFFF;
+    const char *msgLenPtr = reinterpret_cast<const char *>(&msgLen);
+
+    // Prepend the two length bytes in little-endian fashion.
+    *str = *(msgLenPtr + 1) + *str;
+    *str = *msgLenPtr + *str;
+
+    const char *messageTypePtr = reinterpret_cast<const char *>(&messageType);
+
+    *str = *messageTypePtr + *str + *messageTypePtr;
+
+    return vector<unsigned char>((const unsigned char *)str->c_str(),
+                                 (const unsigned char *)str->c_str() +
+                                     str->length());
   }
-
-  // Wrap the message with the message type and the length of the payload.
-  string *str = new string();
-  *str = s.str();
-  short msgLen = str->length() & 0xFFFF;
-  const char *msgLenPtr = reinterpret_cast<const char *>(&msgLen);
-
-  // Prepend the two length bytes in little-endian fashion.
-  *str = *(msgLenPtr + 1) + *str;
-  *str = *msgLenPtr + *str;
-
-  const char *messageTypePtr = reinterpret_cast<const char *>(&messageType);
-
-  *str = *messageTypePtr + *str + *messageTypePtr;
-
-  return vector<unsigned char>((const unsigned char *)str->c_str(),
-                               (const unsigned char *)str->c_str() +
-                                   str->length());
 }
 
 bool MessageFactory::isMessageTypeTag(char byte) const {
@@ -120,14 +148,15 @@ MessageFactory::extractFrame(list<unsigned char> &buffer) {
       return vector<unsigned char>();
     }
 
-    // Opening message type tag detected. The next two bytes should contain the
-    // length of the frame. Look ahead and find the closing message type tag.
+    // Opening message type tag detected. The next two bytes should contain
+    // the length of the frame. Look ahead and find the closing message type
+    // tag.
     auto bufferIt = buffer.begin();
     unsigned short len = *(++bufferIt) + (*(++bufferIt) << 8);
     if (len > buffer.size() - 1) {
-      // Buffer ends prematurely. It might be the case that the closing command
-      // tag has not been received yet. Return here and wait until more bytes
-      // have been received.
+      // Buffer ends prematurely. It might be the case that the closing
+      // command tag has not been received yet. Return here and wait until
+      // more bytes have been received.
       return vector<unsigned char>();
     }
     std::advance(bufferIt, len + 1);
@@ -137,7 +166,8 @@ MessageFactory::extractFrame(list<unsigned char> &buffer) {
       // again.
       buffer.pop_front();
     } else {
-      // Found closing command tag. Remove the frame from the buffer and return.
+      // Found closing command tag. Remove the frame from the buffer and
+      // return.
       std::vector<unsigned char> extractedFrame(buffer.begin(), ++bufferIt);
       buffer.erase(buffer.begin(), bufferIt);
       return extractedFrame;
@@ -190,6 +220,7 @@ MessageFactory::decodeFrame(vector<unsigned char> &buffer,
       UserId id(objectId);
       DeviceStatus deviceStatus = static_cast<DeviceStatus>(*(++bufferIt));
       DeviceType deviceType = static_cast<DeviceType>(*(++bufferIt));
+
       short deviceTypeLen = *(++bufferIt) + (*(++bufferIt) << 8);
       string deviceName(bufferIt, bufferIt + deviceTypeLen);
       short proxyIdsLen = *(++bufferIt) + (*(++bufferIt) << 8);
@@ -212,6 +243,43 @@ MessageFactory::decodeFrame(vector<unsigned char> &buffer,
   } else {
     return shared_ptr<DeviceMessage>();
   }
+}
+
+vector<unsigned char>
+MessageFactory::encodeReadPayload(shared_ptr<ReadPayload> readPayload) {
+
+  stringstream s;
+  PayloadType payloadType;
+
+  // IS payload
+  auto isPayload = dynamic_pointer_cast<IsPayload>(readPayload);
+  if (isPayload) {
+    payloadType = PayloadType::IS_PAYLOAD;
+    s.write(reinterpret_cast(const char *)(&payloadType));
+    unsigned int channelNumber = isPayload->getChannelNumber();
+    s.write(reinterpret_cast(const char *)(&channelNumber),
+            size_of(unsigned int));
+    double timestamp;
+    /// The impedance spectrum.
+    ImpedanceSpectrum impedanceSpectrum;
+  } else {
+
+    // Status payload
+    auto statusPayload = dynamic_pointer_cast<StatusPayload>(readPayload);
+    if (statusPayload) {
+
+    } else {
+      // Read OB1 payload
+      auto readOb1Payload = dynamic_pointer_cast<ReadPayloadOb1>(readPayload);
+    }
+  }
+
+  string *str = new string();
+  *str = s.str();
+  return vector<unsigned char>(str->c_str(), str->c_str() + str->length());
+}
+
+shared_ptr<ReadPayload> decodeReadPayload(const vector<unsigned char> &buffer) {
 }
 
 } // namespace Messages

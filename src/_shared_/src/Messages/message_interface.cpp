@@ -70,13 +70,20 @@ bool MessageInterface::takeMessage(shared_ptr<DeviceMessage> message) {
 }
 
 bool MessageInterface::addProxyId(UserId proxyId) {
-  auto it = std::find(this->proxyIds.begin(), this->proxyIds.end(), proxyId);
 
-  if (it != this->proxyIds.end()) {
+  if (this->proxyIds.empty()) {
+    // Always add the given id if the list is empty.
     this->proxyIds.push_back(proxyId);
-    return true;
   } else {
-    return false;
+    // If the list is not empty, check if the id is already in there.
+    auto it = std::find(this->proxyIds.begin(), this->proxyIds.end(), proxyId);
+
+    if (it != this->proxyIds.end()) {
+      this->proxyIds.push_back(proxyId);
+      return true;
+    } else {
+      return false;
+    }
   }
 }
 
