@@ -7,7 +7,7 @@
 
 namespace Devices {
 /**
- * @brief Encapsulates the ID of a device.S
+ * @brief Encapsulates the ID of a device.
  */
 class IdPayload : public ReadPayload {
 public:

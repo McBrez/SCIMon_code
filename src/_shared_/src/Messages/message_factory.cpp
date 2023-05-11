@@ -255,12 +255,14 @@ MessageFactory::encodeReadPayload(shared_ptr<ReadPayload> readPayload) {
   auto isPayload = dynamic_pointer_cast<IsPayload>(readPayload);
   if (isPayload) {
     payloadType = PayloadType::IS_PAYLOAD;
-    s.write(reinterpret_cast(const char *)(&payloadType));
+    s.write(reinterpret_cast<const char *>(&payloadType), sizeof(PayloadType));
+
     unsigned int channelNumber = isPayload->getChannelNumber();
-    s.write(reinterpret_cast(const char *)(&channelNumber),
-            size_of(unsigned int));
+    s.write(reinterpret_cast<const char *>(&channelNumber),
+            sizeof(unsigned int));
+
     double timestamp;
-    /// The impedance spectrum.
+
     ImpedanceSpectrum impedanceSpectrum;
   } else {
 
@@ -280,6 +282,7 @@ MessageFactory::encodeReadPayload(shared_ptr<ReadPayload> readPayload) {
 }
 
 shared_ptr<ReadPayload> decodeReadPayload(const vector<unsigned char> &buffer) {
+  return shared_ptr<ReadPayload>();
 }
 
 } // namespace Messages

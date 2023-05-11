@@ -10,6 +10,7 @@ include_directories(
     ${INCLUDE_DIR}
     ${INCLUDE_DIR}/Core
     ${INCLUDE_DIR}/Devices
+    ${INCLUDE_DIR}/Devices/elveflow_ob1
     ${INCLUDE_DIR}/Messages
     ${INCLUDE_DIR}/Utilities
     ${INCLUDE_DIR}/Workers
@@ -42,6 +43,8 @@ add_executable(test_network_worker
     ${INCLUDE_DIR}/Devices/read_payload.hpp
     ${INCLUDE_DIR}/Devices/init_payload.hpp
     ${INCLUDE_DIR}/Devices/configuration_payload.hpp
+    ${INCLUDE_DIR}/Devices/is_payload.hpp
+    ${INCLUDE_DIR}/Devices/elveflow_ob1/read_payload_ob1.hpp
     ${INCLUDE_DIR}/Utilities/socket_wrapper.hpp
 
     ${SOURCE_DIR}/Workers/worker.cpp
@@ -62,8 +65,10 @@ add_executable(test_network_worker
     ${SOURCE_DIR}/Devices/device.cpp
     ${SOURCE_DIR}/Devices/dummy_device.cpp
     ${SOURCE_DIR}/Devices/status_payload.cpp
+    ${SOURCE_DIR}/Devices/is_payload.cpp
     ${SOURCE_DIR}/Devices/read_payload.cpp
     ${SOURCE_DIR}/Devices/configuration_payload.cpp
+    ${SOURCE_DIR}/Devices/elveflow_ob1/read_payload_ob1.cpp
     ${SOURCE_DIR}/Utilities/socket_wrapper.cpp
 
     ${3RDPARTY_DIR}/catch2/single_include/catch2/catch.hpp

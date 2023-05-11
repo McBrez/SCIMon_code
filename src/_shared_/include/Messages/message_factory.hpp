@@ -26,7 +26,7 @@ enum MessageType {
 /**
  * @brief Identifies the payload types and their identifier byte.
  */
-enum PayloadType { IS_PAYLOAD = 0x01; };
+enum PayloadType { IS_PAYLOAD = 0x01 };
 
 /**
  * @brief Factory class, that enables convenient creation, encoding and decoding
