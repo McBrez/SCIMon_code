@@ -1,0 +1,28 @@
+include "write_device_message_content.fbs";
+include "handshake_message_content.fbs";
+
+namespace Messages.Serialization;
+ 
+enum MessageType:byte {
+  INVALID_MESSAGE_TYPE = 0x00,
+  WRITE_DEVICE_MESSAGE = 0x01,
+  READ_DEVICE_MESSAGE = 0x02,
+  HANDSHAKE_MESSAGE = 0x03,
+  INIT_DEVICE_MESSAGE = 0x04,
+  CONFIG_DEVICE_MESSAGE = 0x05
+}
+ 
+union Content {
+    WriteDeviceMessageContent,
+    HandshakeMessageContent
+}
+  
+table Message {
+  sourceId:int64;
+  desinationId:int64;
+  msgId:int64;
+  messageType:MessageType; // possibly not needed.
+  content:Content;
+}
+
+root_type Message;

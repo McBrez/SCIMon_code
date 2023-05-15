@@ -3,10 +3,17 @@ project(SCIMon)
 
 set(PROJECT_DIR src/build)
 set(TEST_DIR src/test)
+set(3RDPARTY_DIR src/3rd_party)
 
-# add_subdirectory(${PROJECT_DIR}/latency_tester)
+# ------------------------------------------------------------ Pre-requisites --
 
-# add_subdirectory(${TEST_DIR}/test_isx3)
+add_subdirectory(
+    ${3RDPARTY_DIR}/flatbuffers
+    ${CMAKE_CURRENT_BINARY_DIR}/flatbuffers-build
+)
+target_compile_definitions(flatbuffers PUBLIC NOMINMAX=1)
+
+# --------------------------------------------------------------------- Tests --
 add_subdirectory(${TEST_DIR}/test_ob1)
 add_subdirectory(${TEST_DIR}/test_is_measurement)
 add_subdirectory(${TEST_DIR}/test_utility)

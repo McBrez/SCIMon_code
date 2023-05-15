@@ -1,8 +1,17 @@
 #ifndef MESSAGE_FACTORY_HPP
 #define MESSAGE_FACTORY_HPP
 
+// Standard includes
+#include <list>
+
 // Project includes
 #include <device_message.hpp>
+#include <read_payload.hpp>
+
+// Generated includes
+#include <message_generated.h>
+
+using namespace Devices;
 
 namespace Messages {
 
@@ -56,6 +65,8 @@ public:
    */
   static vector<unsigned char> encodeMessage(shared_ptr<DeviceMessage> msg);
 
+  shared_ptr<DeviceMessage> decodeMessageOld(vector<unsigned char> &buffer);
+
 private:
   /**
    * @brief Checks if the given byte is an message type tag.
@@ -73,6 +84,9 @@ private:
 
   shared_ptr<ReadPayload>
   decodeReadPayload(const vector<unsigned char> &buffer);
+
+  shared_ptr<DeviceMessage>
+  translateHandshakeMessageContent(Serialization::Message *msg);
 };
 
 } // namespace Messages

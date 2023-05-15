@@ -1,0 +1,20 @@
+namespace Messages.Serialization;
+
+enum WriteDeviceTopic:byte {
+  /// Invalid topic
+  WRITE_TOPIC_INVALID,
+  /// The device shall start its operation with a previously sent configuration.
+  WRITE_TOPIC_RUN,
+  /// The device shall stop its operation.
+  WRITE_TOPIC_STOP,
+  /// The message contains data for the device.
+  WRITE_TOPIC_DATA,
+  /// The targeted device shall respond with its current state.
+  WRITE_TOPIC_QUERY_STATE,
+  /// A device specific write topic.
+  WRITE_TOPIC_DEVICE_SPECIFIC
+}
+
+table WriteDeviceMessageContent {
+    writeDeviceTopic:WriteDeviceTopic;
+}

@@ -1,0 +1,47 @@
+namespace Messages.Serialization;
+
+enum DeviceStatus:byte {
+  /// Device status is not known.
+  UNKNOWN_DEVICE_STATUS,
+  /// Device is initializing.
+  INITIALIZING,
+  /// Device has been successfully initialized.
+  INITIALIZED,
+  /// Device is configuring.
+  CONFIGURING,
+  /// Device is operating and can accept commands.
+  OPERATING,
+  /// Device is initialized, configured, not operating and is waiting for
+  /// commands.
+  IDLE,
+  /// Device is operating and can not accept commands.
+  BUSY,
+  /// Device ran into an error.
+  ERROR
+}
+
+enum DeviceType:byte {
+  // Invalid device type.
+  INVALID = -1,
+
+  /// Unspecified device type.
+  UNSPECIFIED = 0,
+
+  // A pump controller
+  PUMP_CONTROLLER = 1,
+
+  // An impedance spectrometer.
+  IMPEDANCE_SPECTROMETER = 2
+}
+
+table statusPayload {
+    deviceId:int64;
+    deviceStatus:DeviceStatus;
+    proxyIds:[int64];
+    deviceType:DeviceType;
+    deviceName:string;
+}
+
+table HandshakeMessageContent {
+    statusPayloads:[statusPayload];
+}

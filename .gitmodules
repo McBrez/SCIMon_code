@@ -7,3 +7,6 @@
 [submodule "src/3rd_party/argparse"]
 	path = src/3rd_party/argparse
 	url = git@github.com:p-ranav/argparse.git
+[submodule "src/3rd_party/flatbuffers"]
+	path = src/3rd_party/flatbuffers
+	url = https://github.com/google/flatbuffers

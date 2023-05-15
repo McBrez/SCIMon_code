@@ -1,4 +1,5 @@
 // Standard includes
+#include <list>
 #include <sstream>
 
 // Project includes
@@ -10,6 +11,10 @@
 #include <read_device_message.hpp>
 #include <read_payload_ob1.hpp>
 #include <write_device_message.hpp>
+
+// 3rd party includes
+#include <easylogging++.h>
+#include <flatbuffers/flatbuffers.h>
 
 namespace Messages {
 
@@ -30,26 +35,23 @@ MessageFactory::decodeMessage(vector<unsigned char> &buffer) {
 
 vector<unsigned char>
 MessageFactory::encodeMessage(shared_ptr<DeviceMessage> msg) {
-  stringstream s;
+  Serialization::MessageT intermediateObject;
 
-  // Construct the header of the message.
-  size_t sourceId = msg->getSource().id();
-  s.write(reinterpret_cast<const char *>(&sourceId), sizeof(const size_t));
-  size_t destinationId = msg->getDestination().id();
-  s.write(reinterpret_cast<const char *>(&destinationId), sizeof(const size_t));
-  int msgId = msg->getMessageId();
-  s.write(reinterpret_cast<const char *>(&msgId), sizeof(int));
+  intermediateObject.sourceId = msg->getSource().id();
+  intermediateObject.desinationId = msg->getDestination().id();
+  intermediateObject.msgId = msg->getMessageId();
 
   // Cast down the message and encode the more specific parts.
   MessageType messageType;
-
   // Write device message
   auto writeMsg = dynamic_pointer_cast<WriteDeviceMessage>(msg);
   if (writeMsg) {
     messageType = WRITE_DEVICE_MESSAGE;
-    WriteDeviceTopic topic = writeMsg->getTopic();
-    s.write(reinterpret_cast<const char *>(&topic),
-            sizeof(const WriteDeviceTopic));
+    Serialization::WriteDeviceMessageContentT writeDeviceMessageContent;
+    writeDeviceMessageContent.writeDeviceTopic =
+        static_cast<Messages::Serialization::WriteDeviceTopic>(
+            writeMsg->getTopic());
+    intermediateObject.content.Set(writeDeviceMessageContent);
   } else {
 
     // Handshake message.
@@ -57,27 +59,18 @@ MessageFactory::encodeMessage(shared_ptr<DeviceMessage> msg) {
     if (handshakeMsg) {
       messageType = HANDSHAKE_MESSAGE;
 
-      size_t payloadCount = handshakeMsg->getPayload().size();
-      s.write(reinterpret_cast<const char *>(&payloadCount), sizeof(size_t));
+      Serialization::HandshakeMessageContentT handshakeMessageContent;
       for (auto statusPayload : handshakeMsg->getPayload()) {
-        size_t id = statusPayload->getDeviceId().id();
-        s.write(reinterpret_cast<const char *>(&id), sizeof(size_t));
-
-        DeviceStatus deviceStatus = statusPayload->getDeviceStatus();
-        s.write(reinterpret_cast<const char *>(&deviceStatus), 1);
-
-        DeviceType deviceType = statusPayload->getDeviceType();
-        s.write(reinterpret_cast<const char *>(&deviceType), 1);
-
-        short deviceNameLen = statusPayload->getDeviceName().length();
-        s.write(reinterpret_cast<const char *>(&deviceNameLen), 2);
-        s << statusPayload->getDeviceName();
-
-        short proxyIdsLen = statusPayload->getProxyIds().size();
-        s.write(reinterpret_cast<const char *>(&proxyIdsLen), 2);
+        Serialization::statusPayloadT intermediatePayload;
+        intermediatePayload.deviceId = statusPayload->getDeviceId().id();
+        intermediatePayload.deviceStatus =
+            static_cast<Serialization::DeviceStatus>(
+                statusPayload->getDeviceStatus());
+        intermediatePayload.deviceType = static_cast<Serialization::DeviceType>(
+            statusPayload->getDeviceType());
+        intermediatePayload.deviceName = statusPayload->getDeviceName();
         for (auto proxyId : statusPayload->getProxyIds()) {
-          size_t id = proxyId.id();
-          s.write(reinterpret_cast<const char *>(&id), sizeof(size_t));
+          intermediatePayload.proxyIds.push_back(proxyId.id());
         }
       }
     }
@@ -101,25 +94,25 @@ MessageFactory::encodeMessage(shared_ptr<DeviceMessage> msg) {
         }
       }
     }
-
-    // Wrap the message with the message type and the length of the payload.
-    string *str = new string();
-    *str = s.str();
-    short msgLen = str->length() & 0xFFFF;
-    const char *msgLenPtr = reinterpret_cast<const char *>(&msgLen);
-
-    // Prepend the two length bytes in little-endian fashion.
-    *str = *(msgLenPtr + 1) + *str;
-    *str = *msgLenPtr + *str;
-
-    const char *messageTypePtr = reinterpret_cast<const char *>(&messageType);
-
-    *str = *messageTypePtr + *str + *messageTypePtr;
-
-    return vector<unsigned char>((const unsigned char *)str->c_str(),
-                                 (const unsigned char *)str->c_str() +
-                                     str->length());
   }
+
+  // Serialize the intermediate object.
+  flatbuffers::FlatBufferBuilder builder;
+  builder.Finish(Serialization::Message::Pack(builder, &intermediateObject));
+  uint8_t *buffer = builder.GetBufferPointer();
+
+  // Wrap the buffer with two length bytes an the message type.
+  int msgLen = builder.GetSize() && 0xFFFF;
+  vector<unsigned char> bufferVect =
+      vector<unsigned char>((const unsigned char *)buffer,
+                            (const unsigned char *)buffer + builder.GetSize());
+
+  bufferVect.insert(bufferVect.begin(), (msgLen && 0xFF00) >> 8);
+  bufferVect.insert(bufferVect.begin(), (msgLen && 0x00FF));
+  bufferVect.insert(bufferVect.begin(), messageType);
+  bufferVect.push_back(messageType);
+
+  return bufferVect;
 }
 
 bool MessageFactory::isMessageTypeTag(char byte) const {
@@ -186,59 +179,11 @@ MessageFactory::decodeFrame(vector<unsigned char> &buffer,
   // Get the frame length from the next two bytes.
   short msgLen = *(++bufferIt) + (*(++bufferIt) << 8);
 
-  // Get the user id of source and destination.
-  size_t sourceId = *(++bufferIt) + (*(++bufferIt) << 8) +
-                    (*(++bufferIt) << 16) + (*(++bufferIt) << 24) +
-                    (*(++bufferIt) << 32) + (*(++bufferIt) << 40) +
-                    (*(++bufferIt) << 48) + (*(++bufferIt) << 56);
-  UserId source(sourceId);
-  size_t destinationId = *(++bufferIt) + (*(++bufferIt) << 8) +
-                         (*(++bufferIt) << 16) + (*(++bufferIt) << 24) +
-                         (*(++bufferIt) << 32) + (*(++bufferIt) << 40) +
-                         (*(++bufferIt) << 48) + (*(++bufferIt) << 56);
-  UserId destination(destinationId);
-
-  // Get the message id.
-  int msgId = *(++bufferIt) + (*(++bufferIt) << 8) + (*(++bufferIt) << 16) +
-              (*(++bufferIt) << 24);
-
   // Decode the payload according to the message type.
   if (MessageType::HANDSHAKE_MESSAGE == messageType) {
-    // Get the count of ids this message holds.
-    size_t countIds = *(++bufferIt) + (*(++bufferIt) << 8) +
-                      (*(++bufferIt) << 16) + (*(++bufferIt) << 24) +
-                      (*(++bufferIt) << 32) + (*(++bufferIt) << 40) +
-                      (*(++bufferIt) << 48) + (*(++bufferIt) << 56);
-    // Decode the status payloads into a list.
-    list<shared_ptr<StatusPayload>> statusPayloads;
-    for (int i = 0; i < countIds; i++) {
-      size_t objectId = *(++bufferIt) + (*(++bufferIt) << 8) +
-                        (*(++bufferIt) << 16) + (*(++bufferIt) << 24) +
-                        (*(++bufferIt) << 32) + (*(++bufferIt) << 40) +
-                        (*(++bufferIt) << 48) + (*(++bufferIt) << 56);
-      ;
-      UserId id(objectId);
-      DeviceStatus deviceStatus = static_cast<DeviceStatus>(*(++bufferIt));
-      DeviceType deviceType = static_cast<DeviceType>(*(++bufferIt));
-
-      short deviceTypeLen = *(++bufferIt) + (*(++bufferIt) << 8);
-      string deviceName(bufferIt, bufferIt + deviceTypeLen);
-      short proxyIdsLen = *(++bufferIt) + (*(++bufferIt) << 8);
-      list<UserId> proxyIds;
-      for (int i = 0; i < proxyIdsLen; i++) {
-        size_t proxyIdValue = *(++bufferIt) + (*(++bufferIt) << 8) +
-                              (*(++bufferIt) << 16) + (*(++bufferIt) << 24) +
-                              (*(++bufferIt) << 32) + (*(++bufferIt) << 40) +
-                              (*(++bufferIt) << 48) + (*(++bufferIt) << 56);
-        proxyIds.emplace_back(UserId(proxyIdValue));
-      }
-
-      statusPayloads.emplace_back(shared_ptr<StatusPayload>(new StatusPayload(
-          id, deviceStatus, proxyIds, deviceType, deviceName)));
-    }
-
-    return shared_ptr<DeviceMessage>(
-        new HandshakeMessage(source, destination, statusPayloads));
+    Serialization::Message *handshakeMsg =
+        Serialization::GetMessage(buffer.data());
+    return this->translateHandshakeMessageContent(handshakeMsg);
 
   } else {
     return shared_ptr<DeviceMessage>();
@@ -283,6 +228,29 @@ MessageFactory::encodeReadPayload(shared_ptr<ReadPayload> readPayload) {
 
 shared_ptr<ReadPayload> decodeReadPayload(const vector<unsigned char> &buffer) {
   return shared_ptr<ReadPayload>();
+}
+
+shared_ptr<DeviceMessage>
+MessageFactory::translateHandshakeMessageContent(Serialization::Message *msg) {
+  const Serialization::HandshakeMessageContent *content =
+      msg->content_as_HandshakeMessageContent();
+
+  list<shared_ptr<StatusPayload>> statusPayloads;
+  for (auto payload : *content->statusPayloads()) {
+    list<UserId> proxyIds;
+    for (auto proxyId : *(payload->proxyIds())) {
+      proxyIds.push_back(proxyId);
+    }
+
+    statusPayloads.emplace_back(shared_ptr<StatusPayload>(new StatusPayload(
+        UserId(payload->deviceId()),
+        static_cast<DeviceStatus>(payload->deviceStatus()), proxyIds,
+        static_cast<DeviceType>(payload->deviceType()),
+        payload->deviceName()->str())));
+  }
+
+  shared_ptr<HandshakeMessage> handshakeMsg(new HandshakeMessage(
+      msg->sourceId(), msg->desinationId(), statusPayloads));
 }
 
 } // namespace Messages

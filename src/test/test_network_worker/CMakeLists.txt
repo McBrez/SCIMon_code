@@ -1,9 +1,37 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.15)
 project(test_network_worker)
 
 set(SOURCE_DIR ../../_shared_/src)
 set(INCLUDE_DIR ../../_shared_/include)
 set(3RDPARTY_DIR ../../3rd_party)
+set(RES_DIR ../../res)
+
+include(${3RDPARTY_DIR}/flatbuffers/Cmake/BuildFlatBuffers.cmake)
+
+# The flatbuffer schema files, that shall be translated.
+set(
+    FB_FILES 
+    ${RES_DIR}/flatbuffers/message.fbs 
+    ${RES_DIR}/flatbuffers/write_device_message_content.fbs 
+    ${RES_DIR}/flatbuffers/handshake_message_content.fbs 
+)
+# Construct path to the flatbuffer output files.
+list(
+    TRANSFORM FB_FILES REPLACE .fbs _generated.h
+    OUTPUT_VARIABLE FB_FILES_GENERATED)
+# Instruct flatbuffers to generate object oriented API.
+set(FLATBUFFERS_FLATC_SCHEMA_EXTRA_ARGS 
+    ${FLATBUFFERS_FLATC_SCHEMA_EXTRA_ARGS} --gen-object-api)
+    # Build the flatbuffer schemas.
+build_flatbuffers(
+    "${FB_FILES}"
+    "${RES_DIR}/flatbuffers"
+    my_generated_headers_target
+    ""
+    "${RES_DIR}/flatbuffers"
+    ""
+    ""
+)
 
 include_directories(
     .
@@ -17,6 +45,7 @@ include_directories(
     ${INCLUDE_DIR}/Workers/network_worker
     ${3RDPARTY_DIR}/easyloggingpp/src
     ${3RDPARTY_DIR}/catch2/single_include
+    ${3RDPARTY_DIR}/flatbuffers/include
 )
 add_executable(test_network_worker
 
@@ -72,21 +101,40 @@ add_executable(test_network_worker
     ${SOURCE_DIR}/Utilities/socket_wrapper.cpp
 
     ${3RDPARTY_DIR}/catch2/single_include/catch2/catch.hpp
+    ${3RDPARTY_DIR}/flatbuffers/include/flatbuffers/flatbuffers.h
+    ${3RDPARTY_DIR}/easyloggingpp/src/easylogging++.h
+
     ${3RDPARTY_DIR}/easyloggingpp/src/easylogging++.cc
 
-    ${3RDPARTY_DIR}/easyloggingpp/src/easylogging++.h
+    ${FB_FILES_GENERATED}
+)
+
+add_dependencies(test_network_worker my_generated_headers_target)
+
+target_link_libraries(test_network_worker
+    PRIVATE flatbuffers
+)
+
+# Generated files shall be cleaned properly.
+set_property(
+    TARGET test_network_worker
+    APPEND
+    PROPERTY ADDITIONAL_CLEAN_FILES FB_FILES_GENERATED
 )
 
 # Enforce C++20
 set_property(TARGET test_network_worker PROPERTY CXX_STANDARD 20)
+target_compile_definitions(test_network_worker PUBLIC NOMINMAX=1)
 
+
+# OS specific configuration.
 if (WIN32)
     # Disable the "byte" type, introduced by MSVC in newer versions. Otherwise, 
     # it would clash with the std::byte type. 
     add_compile_definitions(_HAS_STD_BYTE=0)
 
     target_link_libraries(test_network_worker
-        Ws2_32 
+        PRIVATE Ws2_32
     )
     target_sources(test_network_worker PRIVATE
         ${INCLUDE_DIR}/Utilities/win_socket.hpp
