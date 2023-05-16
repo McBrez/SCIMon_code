@@ -15,7 +15,7 @@ UserId::UserId(MessageInterface *messageInterface) {
 
 UserId::UserId(const UserId &other) { this->userId = other.id(); }
 
-UserId::UserId(int userId) : userId(userId) {}
+UserId::UserId(size_t userId) : userId(userId) {}
 
 size_t UserId::id() const { return this->userId; }
 

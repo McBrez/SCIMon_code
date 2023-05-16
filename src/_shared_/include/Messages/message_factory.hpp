@@ -9,7 +9,7 @@
 #include <read_payload.hpp>
 
 // Generated includes
-#include <message_generated.h>
+#include <device_message_generated.h>
 
 using namespace Devices;
 
@@ -86,7 +86,7 @@ private:
   decodeReadPayload(const vector<unsigned char> &buffer);
 
   shared_ptr<DeviceMessage>
-  translateHandshakeMessageContent(Serialization::Message *msg);
+  translateHandshakeMessageContent(const Serialization::DeviceMessage *msg);
 };
 
 } // namespace Messages

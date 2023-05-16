@@ -16,22 +16,22 @@ namespace Devices {
 /// Identifies the possible stati of a device.
 enum DeviceStatus {
   /// Device status is not known.
-  UNKNOWN_DEVICE_STATUS,
+  UNKNOWN_DEVICE_STATUS = 0x00,
   /// Device is initializing.
-  INITIALIZING,
+  INITIALIZING = 0x01,
   /// Device has been successfully initialized.
-  INITIALIZED,
+  INITIALIZED = 0x02,
   /// Device is configuring.
-  CONFIGURING,
+  CONFIGURING = 0x03,
   /// Device is operating and can accept commands.
-  OPERATING,
+  OPERATING = 0x04,
   /// Device is initialized, configured, not operating and is waiting for
   /// commands.
-  IDLE,
+  IDLE = 0x05,
   /// Device is operating and can not accept commands.
-  BUSY,
+  BUSY = 0x06,
   /// Device ran into an error.
-  ERROR
+  ERROR = 0xFF
 };
 
 /**

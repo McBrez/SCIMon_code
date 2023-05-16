@@ -17,12 +17,12 @@ union Content {
     HandshakeMessageContent
 }
   
-table Message {
-  sourceId:int64;
-  desinationId:int64;
-  msgId:int64;
+table DeviceMessage {
+  sourceId:uint64;
+  desinationId:uint64;
+  msgId:uint64;
   messageType:MessageType; // possibly not needed.
   content:Content;
 }
 
-root_type Message;
+root_type DeviceMessage;

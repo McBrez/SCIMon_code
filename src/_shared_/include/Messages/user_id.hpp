@@ -31,7 +31,7 @@ public:
    * @brief Creates an device id with the given id.
    * @param userId: The id of the object.
    */
-  UserId(int UserId);
+  UserId(size_t UserId);
 
   /**
    * @brief Returns the id.

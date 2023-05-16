@@ -11,7 +11,7 @@ include(${3RDPARTY_DIR}/flatbuffers/Cmake/BuildFlatBuffers.cmake)
 # The flatbuffer schema files, that shall be translated.
 set(
     FB_FILES 
-    ${RES_DIR}/flatbuffers/message.fbs 
+    ${RES_DIR}/flatbuffers/device_message.fbs 
     ${RES_DIR}/flatbuffers/write_device_message_content.fbs 
     ${RES_DIR}/flatbuffers/handshake_message_content.fbs 
 )
@@ -124,7 +124,15 @@ set_property(
 
 # Enforce C++20
 set_property(TARGET test_network_worker PROPERTY CXX_STANDARD 20)
-target_compile_definitions(test_network_worker PUBLIC NOMINMAX=1)
+
+# Add some defines
+target_compile_definitions(test_network_worker
+    # Undefine a WIN function, that would otherwise clash with flatbuffers.
+    PUBLIC NOMINMAX=1  
+    # Make easylogging++ thread safe
+    PUBLIC ELPP_THREAD_SAFE  
+    PUBLIC ELPP_FORCE_USE_STD_THREAD
+)
 
 
 # OS specific configuration.

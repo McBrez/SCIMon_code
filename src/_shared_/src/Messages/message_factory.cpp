@@ -35,7 +35,7 @@ MessageFactory::decodeMessage(vector<unsigned char> &buffer) {
 
 vector<unsigned char>
 MessageFactory::encodeMessage(shared_ptr<DeviceMessage> msg) {
-  Serialization::MessageT intermediateObject;
+  Serialization::DeviceMessageT intermediateObject;
 
   intermediateObject.sourceId = msg->getSource().id();
   intermediateObject.desinationId = msg->getDestination().id();
@@ -98,7 +98,7 @@ MessageFactory::encodeMessage(shared_ptr<DeviceMessage> msg) {
 
   // Serialize the intermediate object.
   flatbuffers::FlatBufferBuilder builder;
-  builder.Finish(Serialization::Message::Pack(builder, &intermediateObject));
+  builder.Finish(Serialization::DeviceMessage::Pack(builder, &intermediateObject));
   uint8_t *buffer = builder.GetBufferPointer();
 
   // Wrap the buffer with two length bytes an the message type.
@@ -181,8 +181,8 @@ MessageFactory::decodeFrame(vector<unsigned char> &buffer,
 
   // Decode the payload according to the message type.
   if (MessageType::HANDSHAKE_MESSAGE == messageType) {
-    Serialization::Message *handshakeMsg =
-        Serialization::GetMessage(buffer.data());
+    const Serialization::DeviceMessage *handshakeMsg =
+        Serialization::GetDeviceMessage(buffer.data());
     return this->translateHandshakeMessageContent(handshakeMsg);
 
   } else {
@@ -231,7 +231,7 @@ shared_ptr<ReadPayload> decodeReadPayload(const vector<unsigned char> &buffer) {
 }
 
 shared_ptr<DeviceMessage>
-MessageFactory::translateHandshakeMessageContent(Serialization::Message *msg) {
+MessageFactory::translateHandshakeMessageContent(const Serialization::DeviceMessage *msg) {
   const Serialization::HandshakeMessageContent *content =
       msg->content_as_HandshakeMessageContent();
 
@@ -239,18 +239,19 @@ MessageFactory::translateHandshakeMessageContent(Serialization::Message *msg) {
   for (auto payload : *content->statusPayloads()) {
     list<UserId> proxyIds;
     for (auto proxyId : *(payload->proxyIds())) {
-      proxyIds.push_back(proxyId);
+      proxyIds.emplace_back(UserId(static_cast<size_t>(proxyId)));
     }
 
     statusPayloads.emplace_back(shared_ptr<StatusPayload>(new StatusPayload(
-        UserId(payload->deviceId()),
+        UserId(static_cast<size_t>(payload->deviceId())),
         static_cast<DeviceStatus>(payload->deviceStatus()), proxyIds,
         static_cast<DeviceType>(payload->deviceType()),
         payload->deviceName()->str())));
   }
 
-  shared_ptr<HandshakeMessage> handshakeMsg(new HandshakeMessage(
-      msg->sourceId(), msg->desinationId(), statusPayloads));
+  return shared_ptr<HandshakeMessage>(new HandshakeMessage(
+      UserId(static_cast<size_t>(msg->sourceId())), 
+      UserId(static_cast<size_t>(msg->desinationId())), statusPayloads));
 }
 
 } // namespace Messages

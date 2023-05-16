@@ -58,9 +58,9 @@ TEST_CASE("Test the network workers") {
   this_thread::sleep_for(chrono::milliseconds(1000));
   REQUIRE(client->write(clientStartMessage));
 
-  this_thread::sleep_for(chrono::milliseconds(100));
+  this_thread::sleep_for(chrono::milliseconds(1000));
 
-  // Workers should no both be in operating state.
+  // Workers should now both be in operating state.
   REQUIRE(serverWorker->getState() == DeviceStatus::OPERATING);
   REQUIRE(clientWorker->getState() == DeviceStatus::OPERATING);
   // Workers should now have each others user id as proxy id.
