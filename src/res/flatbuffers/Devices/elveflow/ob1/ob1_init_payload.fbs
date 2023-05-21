@@ -1,0 +1,15 @@
+namespace Devices.Serialization;
+
+struct ChannelConfiguration {
+    channel1:int;
+    channel2:int;
+    channel3:int;
+    channel4:int;
+}
+
+table Ob1InitPayload {
+    deviceName:string;
+    channelconfiguration:ChannelConfiguration;
+}
+
+root_type Ob1InitPayload;

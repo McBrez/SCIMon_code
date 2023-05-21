@@ -11,7 +11,7 @@ using namespace std;
 
 namespace Devices {
 
-enum IsScale { LINEAR_SCALE, LOGARITHMIC_SCALE };
+enum IsScale { LINEAR_SCALE = 0x00, LOGARITHMIC_SCALE = 0x01 };
 
 /**
  * Encapsulates the configuration on an impedance spectrum measurement.
@@ -32,6 +32,12 @@ public:
   /// Count of impedance spectrums, that shall be gathered. Value of <= 0
   /// indicates unlimited measurement.
   const int repetitions;
+
+  /**
+   * @brief Serializes the payload into bytes.
+   * @return Byte vector, that depicts the payload.
+   */
+  virtual vector<unsigned char> bytes() override;
 };
 } // namespace Devices
 

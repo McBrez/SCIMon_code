@@ -1,6 +1,9 @@
 #ifndef CONFIGURATION_PAYLOAD_HPP
 #define CONFIGURATION_PAYLOAD_HPP
 
+// Project includes
+#include <payload.hpp>
+
 namespace Devices {
 /**
  * @brief Identifies the different device types.
@@ -22,7 +25,7 @@ enum DeviceType {
 /**
  * @brief Base class that encapsulates any device configuration.
  */
-class ConfigurationPayload {
+class ConfigurationPayload : public Payload {
 public:
   /**
    * @brief Construct a new Device Configuration object
@@ -34,7 +37,7 @@ public:
   /**
    * @brief Destroy the Device Configuration object
    */
-  virtual ~ConfigurationPayload() = 0;
+  virtual ~ConfigurationPayload();
 
   /**
    * @brief Returns the device type, this object is targeting.

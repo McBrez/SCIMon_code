@@ -4,6 +4,9 @@
 // Standard includes
 #include <string>
 
+// Project includes
+#include <payload.hpp>
+
 using namespace std;
 
 namespace Devices {
@@ -11,7 +14,7 @@ namespace Devices {
 /**
  * @brief Base class for a read data package.
  */
-class ReadPayload {
+class ReadPayload : public Payload {
 public:
   /**
    * @brief Construct a new ReadPayload object.

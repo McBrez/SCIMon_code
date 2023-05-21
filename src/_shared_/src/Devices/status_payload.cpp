@@ -28,4 +28,6 @@ bool StatusPayload::operator==(const StatusPayload &other) const {
          this->proxyIds == other.proxyIds;
 }
 
+vector<unsigned char> StatusPayload::bytes() { return vector<unsigned char>(); }
+
 } // namespace Devices

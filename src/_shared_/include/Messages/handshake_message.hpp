@@ -19,10 +19,12 @@ public:
    * @param source The source of the message.
    * @param destination The destination of the message.
    * @param statusPayloads The status payloads that shall be held by this
-   * message.
+   * @param version The version of the message lib of the host that generated
+   * this message. message.
    */
   HandshakeMessage(UserId source, UserId destination,
-                   list<shared_ptr<StatusPayload>> statusPayloads);
+                   list<shared_ptr<StatusPayload>> statusPayloads,
+                   string version);
 
   /**
    * @brief Destroy the Handshake Message object
@@ -47,9 +49,20 @@ public:
    */
   list<shared_ptr<StatusPayload>> getPayload();
 
+  /**
+   * @brief Returns the message lib version string of the host that generated
+   * this message.
+   * @return The message lib version string of the host that generated
+   * this message.
+   */
+  string getVersion();
+
 private:
   /// The status payloads.
   list<shared_ptr<StatusPayload>> statusPayloads;
+
+  /// The version of the message lib of the host that generated this message.
+  string version;
 };
 } // namespace Messages
 

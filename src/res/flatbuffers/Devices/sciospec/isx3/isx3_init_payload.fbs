@@ -1,0 +1,8 @@
+namespace Devices.Serialization;
+
+table Isx3InitPayload {
+    ipAddress:string;
+    port:int;
+}
+
+root_type Isx3InitPayload;

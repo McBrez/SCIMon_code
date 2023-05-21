@@ -26,6 +26,12 @@ public:
 
   Ob1ChannelPressures getChannelPressures();
 
+  /**
+   * @brief Serializes the payload into bytes.
+   * @return Byte vector, that depicts the payload.
+   */
+  virtual vector<unsigned char> bytes() override;
+
 private:
   /// The channel pressures. In mBar,
   Ob1ChannelPressures channelPressures;

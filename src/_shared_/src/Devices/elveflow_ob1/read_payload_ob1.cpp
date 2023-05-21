@@ -25,4 +25,9 @@ string ReadPayloadOb1::serialize() {
   retVal += to_string(get<3>(this->channelPressures));
   return retVal;
 }
+
+vector<unsigned char> ReadPayloadOb1::bytes() {
+  return vector<unsigned char>();
+}
+
 } // namespace Devices

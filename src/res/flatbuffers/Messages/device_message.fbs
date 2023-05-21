@@ -1,5 +1,8 @@
 include "write_device_message_content.fbs";
 include "handshake_message_content.fbs";
+include "read_device_message_content.fbs";
+include "init_device_message_content.fbs";
+include "config_device_message_content.fbs";
 
 namespace Messages.Serialization;
  
@@ -14,7 +17,10 @@ enum MessageType:byte {
  
 union Content {
     WriteDeviceMessageContent,
-    HandshakeMessageContent
+    HandshakeMessageContent,
+    ReadDeviceMessageContent,
+    InitDeviceMessageContent,
+    ConfigDeviceMessageContent
 }
   
 table DeviceMessage {

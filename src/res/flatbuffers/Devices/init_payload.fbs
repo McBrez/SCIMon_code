@@ -1,0 +1,8 @@
+include "isx3_init_payload.fbs";
+
+
+
+union InitPayload {
+    Isx3InitPayload,
+    Ob1InitPayload
+}

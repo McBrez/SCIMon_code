@@ -54,6 +54,12 @@ public:
    */
   virtual string serialize() override;
 
+  /**
+   * @brief Serializes the payload into bytes.
+   * @return Byte vector, that depicts the payload.
+   */
+  virtual vector<unsigned char> bytes() override;
+
 private:
   /// The number of the channel the impedance spectrum has been gathered from.
   unsigned int channelNumber;

@@ -1,0 +1,5 @@
+namespace Messages.Serialization;
+
+table InitDeviceMessageContent {
+    initPayoad:[uint8];
+}

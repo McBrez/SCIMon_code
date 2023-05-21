@@ -66,6 +66,12 @@ public:
    */
   virtual string serialize() override;
 
+  /**
+   * @brief Serializes the payload into bytes.
+   * @return Byte vector, that depicts the payload.
+   */
+  virtual vector<unsigned char> bytes() override;
+
 private:
   /// The operation mode that the network worker should initializie into.
   NetworkWorkerOperationMode operationMode;

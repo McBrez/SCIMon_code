@@ -15,16 +15,16 @@ namespace Messages {
  */
 enum ReadDeviceTopic {
   /// Invalid topic
-  READ_TOPIC_INVALID,
+  READ_TOPIC_INVALID = 0x00,
 
   /// The message contains the status of the device.
-  READ_TOPIC_DEVICE_STATUS,
+  READ_TOPIC_DEVICE_STATUS = 0x01,
 
   /// The target device could not be reached.
-  READ_TOPIC_FAILED_RESPONSE,
+  READ_TOPIC_FAILED_RESPONSE = 0x02,
 
   /// A device specific message.
-  READ_TOPIC_DEVICE_SPECIFIC_MSG
+  READ_TOPIC_DEVICE_SPECIFIC_MSG = 0x03
 };
 
 /**

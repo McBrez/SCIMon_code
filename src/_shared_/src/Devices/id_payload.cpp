@@ -10,4 +10,6 @@ IdPayload::IdPayload(string manufacturer, DeviceType deviceType,
 
 string IdPayload::serialize() { return ""; }
 
+vector<unsigned char> IdPayload::bytes() { return vector<unsigned char>(); }
+
 } // namespace Devices

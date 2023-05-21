@@ -28,6 +28,12 @@ public:
 
   Isx3CmdTag getCmdTag();
 
+  /**
+   * @brief Serializes the payload into bytes.
+   * @return Byte vector, that depicts the payload.
+   */
+  virtual vector<unsigned char> bytes() override;
+
 private:
   /// The acknowledgement type.
   Isx3AckType ackType;

@@ -19,4 +19,8 @@ int NetworkWorkerInitPayload::getPort() { return this->port; }
 
 string NetworkWorkerInitPayload::serialize() { return ""; }
 
+vector<unsigned char> NetworkWorkerInitPayload::bytes() {
+  return vector<unsigned char>();
+}
+
 } // namespace Workers

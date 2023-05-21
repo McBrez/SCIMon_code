@@ -17,7 +17,7 @@ namespace Messages {
  */
 enum WriteDeviceTopic {
   /// Invalid topic
-  WRITE_TOPIC_INVALID =0x00,
+  WRITE_TOPIC_INVALID = 0x00,
   /// The device shall start its operation with a previously sent configuration.
   WRITE_TOPIC_RUN = 0x01,
   /// The device shall stop its operation.

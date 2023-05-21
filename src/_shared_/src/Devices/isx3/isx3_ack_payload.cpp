@@ -12,4 +12,8 @@ Isx3AckType Isx3AckPayload::getAckType() { return this->ackType; }
 
 Isx3CmdTag Isx3AckPayload::getCmdTag() { return this->cmdTag; }
 
+vector<unsigned char> Isx3AckPayload::bytes() {
+  return vector<unsigned char>();
+}
+
 } // namespace Devices

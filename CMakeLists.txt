@@ -32,5 +32,6 @@ add_test(NAME build_test_test_epix COMMAND test_epix)
 add_test(NAME build_test_message_factory COMMAND test_message_factory)
 add_test(NAME build_test_network_worker COMMAND test_network_worker)
 
+add_subdirectory(${PROJECT_DIR}/scimon_message_lib)
 add_subdirectory(${PROJECT_DIR}/sentry)
 

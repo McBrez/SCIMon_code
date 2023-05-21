@@ -3,9 +3,11 @@
 
 // Standard includes
 #include <list>
+#include <string>
 
 // Project includes
 #include <device_message.hpp>
+#include <payload_decoder.hpp>
 #include <read_payload.hpp>
 
 // Generated includes
@@ -44,11 +46,6 @@ enum PayloadType { IS_PAYLOAD = 0x01 };
 class MessageFactory {
 public:
   /**
-   * @brief Construct a new Message Factory object
-   */
-  MessageFactory();
-
-  /**
    * @brief Decodes a serialized message into a device message object.
    * @param buffer The buffer that contains the serialized message. If a message
    * has been detected in the buffer and has been successfully decoded, the
@@ -63,9 +60,32 @@ public:
    * @param msg The message that shall be ecnoded.
    * @return The encoded message.
    */
-  static vector<unsigned char> encodeMessage(shared_ptr<DeviceMessage> msg);
+  vector<unsigned char> encodeMessage(shared_ptr<DeviceMessage> msg);
 
-  shared_ptr<DeviceMessage> decodeMessageOld(vector<unsigned char> &buffer);
+  /**
+   * @brief Create an instance of the message factory, if there is not already
+   * one existing.
+   * @param payloadDecoders The payload decoders that the message factory shall
+   * use, when decoding messages.
+   * @return Pointer to a message factory instance. Null if an instance already
+   * existed.
+   */
+  static MessageFactory *
+  createInstace(list<shared_ptr<PayloadDecoder>> payloadDecoders);
+
+  /**
+   * @brief Gets the only instance of the class, assuming createInstance() has
+   * already been called before.
+   * @return Pointer to the only message factory instance. Null if
+   * createInstance has not already been called.
+   */
+  static MessageFactory *getInstace();
+
+  /**
+   * @brief Returns the version of the scimon message interface implementation.
+   * @return The version of the scimon message interface implementation.
+   */
+  string getVersion() const;
 
 private:
   /**
@@ -75,18 +95,25 @@ private:
    */
   bool isMessageTypeTag(char byte) const;
 
-  vector<unsigned char> extractFrame(list<unsigned char> &buffer);
+  vector<unsigned char> *extractFrame(list<unsigned char> &buffer);
 
-  shared_ptr<DeviceMessage> decodeFrame(vector<unsigned char> &buffer,
+  shared_ptr<DeviceMessage> decodeFrame(vector<unsigned char> *buffer,
                                         MessageType &msgTypeHint);
 
-  vector<unsigned char> encodeReadPayload(shared_ptr<ReadPayload> readPayload);
-
-  shared_ptr<ReadPayload>
-  decodeReadPayload(const vector<unsigned char> &buffer);
-
   shared_ptr<DeviceMessage>
-  translateHandshakeMessageContent(const Serialization::DeviceMessage *msg);
+  translateHandshakeMessageContent(const Serialization::DeviceMessageT *msg);
+
+  /**
+   * @brief Construct a new Message Factory object
+   */
+  MessageFactory(list<shared_ptr<PayloadDecoder>> payloadDecoders);
+
+  /// @brief The only instance of the class.
+  static MessageFactory *instance;
+
+  /// @brief List of payload decoders, that are available to the message
+  /// factory.
+  list<shared_ptr<PayloadDecoder>> payloadDecoders;
 };
 
 } // namespace Messages

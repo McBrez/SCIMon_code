@@ -1,0 +1,30 @@
+namespace Devices.Serialization;
+
+struct complex {
+    real:float64;
+    imaginary:float64;
+}
+
+table IsPayload {
+  channelNumber:uint;
+  timestamp:float64;
+  frequencies:[float64];
+  impedances:[complex];
+}
+
+
+struct Ob1Pressures {
+    channel1:double;
+    channel2:double;
+    channel3:double;
+    channel4:double;
+}
+
+table Ob1Payload {
+    ob1Pressures:Ob1Pressures;
+}
+
+union ReadPayload {
+    IsPayload,
+    Ob1Payload
+}

@@ -11,7 +11,6 @@
 #include <socket_wrapper.hpp>
 #include <worker.hpp>
 
-
 using namespace Utilities;
 
 namespace Workers {
@@ -158,7 +157,7 @@ private:
   /// Mutex that guards the buffer for the outgoing messages.
   mutex outgoingNetworkMessagesMutex;
 
-  MessageFactory messageFactory;
+  MessageFactory *messageFactory;
 };
 } // namespace Workers
 

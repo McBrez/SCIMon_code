@@ -9,7 +9,7 @@
 #include <is_payload.hpp>
 #include <message_factory.hpp>
 #include <read_device_message.hpp>
-#include <read_payload_ob1.hpp>
+#include <utilities.hpp>
 #include <write_device_message.hpp>
 
 // 3rd party includes
@@ -18,14 +18,17 @@
 
 namespace Messages {
 
-MessageFactory::MessageFactory() {}
+MessageFactory *MessageFactory::instance = nullptr;
+
+MessageFactory::MessageFactory(list<shared_ptr<PayloadDecoder>> payloadDecoders)
+    : payloadDecoders(payloadDecoders) {}
 
 shared_ptr<DeviceMessage>
 MessageFactory::decodeMessage(vector<unsigned char> &buffer) {
 
   list<unsigned char> bufferList(buffer.begin(), buffer.end());
-  vector<unsigned char> frame = this->extractFrame(bufferList);
-  if (frame.empty()) {
+  vector<unsigned char> *frame = this->extractFrame(bufferList);
+  if (frame == nullptr) {
     return shared_ptr<DeviceMessage>();
   }
 
@@ -43,10 +46,10 @@ MessageFactory::encodeMessage(shared_ptr<DeviceMessage> msg) {
 
   // Cast down the message and encode the more specific parts.
   MessageType messageType;
-  // Write device message
+  // --------------------------------------------------- Write device message --
   auto writeMsg = dynamic_pointer_cast<WriteDeviceMessage>(msg);
   if (writeMsg) {
-    messageType = WRITE_DEVICE_MESSAGE;
+    messageType = MessageType::WRITE_DEVICE_MESSAGE;
     Serialization::WriteDeviceMessageContentT writeDeviceMessageContent;
     writeDeviceMessageContent.writeDeviceTopic =
         static_cast<Messages::Serialization::WriteDeviceTopic>(
@@ -54,41 +57,57 @@ MessageFactory::encodeMessage(shared_ptr<DeviceMessage> msg) {
     intermediateObject.content.Set(writeDeviceMessageContent);
   } else {
 
-    // Handshake message.
+    // ---------------------------------------------------- Handshake message --
     auto handshakeMsg = dynamic_pointer_cast<HandshakeMessage>(msg);
     if (handshakeMsg) {
-      messageType = HANDSHAKE_MESSAGE;
+      messageType = MessageType::HANDSHAKE_MESSAGE;
 
       Serialization::HandshakeMessageContentT handshakeMessageContent;
+      handshakeMessageContent.version = this->getVersion();
       for (auto statusPayload : handshakeMsg->getPayload()) {
-        Serialization::statusPayloadT intermediatePayload;
-        intermediatePayload.deviceId = statusPayload->getDeviceId().id();
-        intermediatePayload.deviceStatus =
+        Serialization::statusPayloadT *intermediatePayload =
+            new Serialization::statusPayloadT();
+        intermediatePayload->deviceId = statusPayload->getDeviceId().id();
+        intermediatePayload->deviceStatus =
             static_cast<Serialization::DeviceStatus>(
                 statusPayload->getDeviceStatus());
-        intermediatePayload.deviceType = static_cast<Serialization::DeviceType>(
-            statusPayload->getDeviceType());
-        intermediatePayload.deviceName = statusPayload->getDeviceName();
+        intermediatePayload->deviceType =
+            static_cast<Serialization::DeviceType>(
+                statusPayload->getDeviceType());
+        intermediatePayload->deviceName = statusPayload->getDeviceName();
         for (auto proxyId : statusPayload->getProxyIds()) {
-          intermediatePayload.proxyIds.push_back(proxyId.id());
+          intermediatePayload->proxyIds.push_back(proxyId.id());
         }
+        handshakeMessageContent.statusPayloads.emplace_back(
+            unique_ptr<Serialization::statusPayloadT>(intermediatePayload));
       }
+      intermediateObject.content.Set(handshakeMessageContent);
     }
 
-    // Read device message
+    // -------------------------------------------------- Read device message --
     auto readMsg = dynamic_pointer_cast<ReadDeviceMessage>(msg);
     if (readMsg) {
+      messageType = MessageType::READ_DEVICE_MESSAGE;
+      Serialization::ReadDeviceMessageContentT readDeviceMessageContent;
+      readDeviceMessageContent.readDeviceTopic =
+          static_cast<Serialization::ReadDeviceTopic>(readMsg->getTopic());
+      readDeviceMessageContent.readPayload = readMsg->getReadPaylod()->bytes();
 
+      intermediateObject.content.Set(readDeviceMessageContent);
     }
 
     else {
-      // Init device message
+      // ------------------------------------------------ Init device message --
       auto initMsg = dynamic_pointer_cast<InitDeviceMessage>(msg);
       if (initMsg) {
+        Serialization::InitDeviceMessageContentT initDeviceMessageContent;
+        initDeviceMessageContent.initPayoad = initMsg->returnPayload()->bytes();
+
+        intermediateObject.content.Set(initDeviceMessageContent);
       }
 
       else {
-        // Config device message
+        // -------------------------------------------- Config device message --
         auto configMsg = dynamic_pointer_cast<ConfigDeviceMessage>(msg);
         if (configMsg) {
         }
@@ -98,17 +117,18 @@ MessageFactory::encodeMessage(shared_ptr<DeviceMessage> msg) {
 
   // Serialize the intermediate object.
   flatbuffers::FlatBufferBuilder builder;
-  builder.Finish(Serialization::DeviceMessage::Pack(builder, &intermediateObject));
+  builder.Finish(
+      Serialization::DeviceMessage::Pack(builder, &intermediateObject));
   uint8_t *buffer = builder.GetBufferPointer();
 
   // Wrap the buffer with two length bytes an the message type.
-  int msgLen = builder.GetSize() && 0xFFFF;
+  int msgLen = builder.GetSize() & 0xFFFF;
   vector<unsigned char> bufferVect =
       vector<unsigned char>((const unsigned char *)buffer,
                             (const unsigned char *)buffer + builder.GetSize());
 
-  bufferVect.insert(bufferVect.begin(), (msgLen && 0xFF00) >> 8);
-  bufferVect.insert(bufferVect.begin(), (msgLen && 0x00FF));
+  bufferVect.insert(bufferVect.begin(), (msgLen & 0xFF00) >> 8);
+  bufferVect.insert(bufferVect.begin(), (msgLen & 0x00FF));
   bufferVect.insert(bufferVect.begin(), messageType);
   bufferVect.push_back(messageType);
 
@@ -123,7 +143,7 @@ bool MessageFactory::isMessageTypeTag(char byte) const {
          MessageType::CONFIG_DEVICE_MESSAGE == byte;
 }
 
-vector<unsigned char>
+vector<unsigned char> *
 MessageFactory::extractFrame(list<unsigned char> &buffer) {
   while (true) {
     // Search for the next message type tag.
@@ -138,7 +158,7 @@ MessageFactory::extractFrame(list<unsigned char> &buffer) {
       }
     }
     if (!msgTypeTagFound) {
-      return vector<unsigned char>();
+      return nullptr;
     }
 
     // Opening message type tag detected. The next two bytes should contain
@@ -150,7 +170,7 @@ MessageFactory::extractFrame(list<unsigned char> &buffer) {
       // Buffer ends prematurely. It might be the case that the closing
       // command tag has not been received yet. Return here and wait until
       // more bytes have been received.
-      return vector<unsigned char>();
+      return nullptr;
     }
     std::advance(bufferIt, len + 1);
     if (*bufferIt != msgTypeTag) {
@@ -161,7 +181,8 @@ MessageFactory::extractFrame(list<unsigned char> &buffer) {
     } else {
       // Found closing command tag. Remove the frame from the buffer and
       // return.
-      std::vector<unsigned char> extractedFrame(buffer.begin(), ++bufferIt);
+      std::vector<unsigned char> *extractedFrame =
+          new std::vector<unsigned char>(buffer.begin(), ++bufferIt);
       buffer.erase(buffer.begin(), bufferIt);
       return extractedFrame;
     }
@@ -169,9 +190,9 @@ MessageFactory::extractFrame(list<unsigned char> &buffer) {
 }
 
 shared_ptr<DeviceMessage>
-MessageFactory::decodeFrame(vector<unsigned char> &buffer,
+MessageFactory::decodeFrame(vector<unsigned char> *buffer,
                             MessageType &msgTypeHint) {
-  auto bufferIt = buffer.begin();
+  auto bufferIt = buffer->begin();
 
   // Get the message type from the first byte.
   MessageType messageType = static_cast<MessageType>(*bufferIt);
@@ -179,79 +200,69 @@ MessageFactory::decodeFrame(vector<unsigned char> &buffer,
   // Get the frame length from the next two bytes.
   short msgLen = *(++bufferIt) + (*(++bufferIt) << 8);
 
+  // Create a new vector that only containt the flatbuffer payload. flatbuffer
+  // will take ownership of this pointer.
+  vector<unsigned char> *flatbufferPayload =
+      new vector<unsigned char>(++bufferIt, buffer->end() - 1);
+
   // Decode the payload according to the message type.
   if (MessageType::HANDSHAKE_MESSAGE == messageType) {
-    const Serialization::DeviceMessage *handshakeMsg =
-        Serialization::GetDeviceMessage(buffer.data());
-    return this->translateHandshakeMessageContent(handshakeMsg);
+    const Serialization::DeviceMessageT *handshakeMsg =
+        Serialization::GetDeviceMessage(flatbufferPayload->data())->UnPack();
 
+    return this->translateHandshakeMessageContent(handshakeMsg);
   } else {
     return shared_ptr<DeviceMessage>();
   }
 }
 
-vector<unsigned char>
-MessageFactory::encodeReadPayload(shared_ptr<ReadPayload> readPayload) {
-
-  stringstream s;
-  PayloadType payloadType;
-
-  // IS payload
-  auto isPayload = dynamic_pointer_cast<IsPayload>(readPayload);
-  if (isPayload) {
-    payloadType = PayloadType::IS_PAYLOAD;
-    s.write(reinterpret_cast<const char *>(&payloadType), sizeof(PayloadType));
-
-    unsigned int channelNumber = isPayload->getChannelNumber();
-    s.write(reinterpret_cast<const char *>(&channelNumber),
-            sizeof(unsigned int));
-
-    double timestamp;
-
-    ImpedanceSpectrum impedanceSpectrum;
-  } else {
-
-    // Status payload
-    auto statusPayload = dynamic_pointer_cast<StatusPayload>(readPayload);
-    if (statusPayload) {
-
-    } else {
-      // Read OB1 payload
-      auto readOb1Payload = dynamic_pointer_cast<ReadPayloadOb1>(readPayload);
-    }
-  }
-
-  string *str = new string();
-  *str = s.str();
-  return vector<unsigned char>(str->c_str(), str->c_str() + str->length());
-}
-
-shared_ptr<ReadPayload> decodeReadPayload(const vector<unsigned char> &buffer) {
-  return shared_ptr<ReadPayload>();
-}
-
-shared_ptr<DeviceMessage>
-MessageFactory::translateHandshakeMessageContent(const Serialization::DeviceMessage *msg) {
-  const Serialization::HandshakeMessageContent *content =
-      msg->content_as_HandshakeMessageContent();
+shared_ptr<DeviceMessage> MessageFactory::translateHandshakeMessageContent(
+    const Serialization::DeviceMessageT *msg) {
+  const Serialization::HandshakeMessageContentT *content =
+      msg->content.AsHandshakeMessageContent();
 
   list<shared_ptr<StatusPayload>> statusPayloads;
-  for (auto payload : *content->statusPayloads()) {
+  for (int i = 0; i < content->statusPayloads.size(); i++) {
     list<UserId> proxyIds;
-    for (auto proxyId : *(payload->proxyIds())) {
+
+    for (auto proxyId : content->statusPayloads[i]->proxyIds) {
       proxyIds.emplace_back(UserId(static_cast<size_t>(proxyId)));
     }
 
     statusPayloads.emplace_back(shared_ptr<StatusPayload>(new StatusPayload(
-        UserId(static_cast<size_t>(payload->deviceId())),
-        static_cast<DeviceStatus>(payload->deviceStatus()), proxyIds,
-        static_cast<DeviceType>(payload->deviceType()),
-        payload->deviceName()->str())));
+        UserId(static_cast<size_t>(content->statusPayloads[i]->deviceId)),
+        static_cast<DeviceStatus>(content->statusPayloads[i]->deviceStatus),
+        proxyIds,
+        static_cast<DeviceType>(content->statusPayloads[i]->deviceType),
+        content->statusPayloads[i]->deviceName)));
   }
 
   return shared_ptr<HandshakeMessage>(new HandshakeMessage(
-      UserId(static_cast<size_t>(msg->sourceId())), 
-      UserId(static_cast<size_t>(msg->desinationId())), statusPayloads));
+      UserId(static_cast<size_t>(msg->sourceId)),
+      UserId(static_cast<size_t>(msg->desinationId)), statusPayloads,
+      msg->content.AsHandshakeMessageContent()->version));
+}
+
+MessageFactory *MessageFactory::createInstace(
+    list<shared_ptr<PayloadDecoder>> payloadDecoders) {
+  if (MessageFactory::instance == nullptr) {
+    MessageFactory::instance = new MessageFactory(payloadDecoders);
+    return MessageFactory::instance;
+  } else {
+    return nullptr;
+  }
+}
+
+MessageFactory *MessageFactory::getInstace() {
+  return MessageFactory::instance;
+}
+
+string MessageFactory::getVersion() const {
+#ifdef SCIMON_MESSAGE_LIB_VERSION
+  return SCIMON_MESSAGE_LIB_VERSION;
+#else
+  return "UNDEFINED";
+#endif
 }
 
 } // namespace Messages

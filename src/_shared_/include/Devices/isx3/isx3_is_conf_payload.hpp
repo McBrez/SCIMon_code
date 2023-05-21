@@ -27,6 +27,12 @@ public:
 
   ~Isx3IsConfPayload();
 
+  /**
+   * @brief Serializes the payload into bytes.
+   * @return Byte vector, that depicts the payload.
+   */
+  virtual vector<unsigned char> bytes() override;
+
   /// maps from channel function to channel number
   map<ChannelFunction, int> channel;
   const IsScale scale;

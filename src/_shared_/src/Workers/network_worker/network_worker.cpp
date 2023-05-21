@@ -13,7 +13,8 @@ NetworkWorker::NetworkWorker()
     : Worker(), socketWrapper(SocketWrapper::getSocketWrapper()),
       doListen(new bool(false)), doComm(false),
       commState(NetworkWorkerCommState::NETWORK_WOKER_COMM_STATE_INVALID),
-      messageFactory(), commThread(nullptr), listenerThread(nullptr) {}
+      messageFactory(MessageFactory::getInstace()), commThread(nullptr),
+      listenerThread(nullptr) {}
 
 NetworkWorker::~NetworkWorker() {
   *this->doListen = false;
@@ -254,8 +255,10 @@ void NetworkWorker::commWorker() {
         // The client initiates the handshake. Send a handshake message.
         shared_ptr<DeviceMessage> handshakeMsg(
             new HandshakeMessage(this->self->getUserId(), UserId(),
-                                 this->messageDistributor->getStatus()));
-        this->socketWrapper->write(MessageFactory::encodeMessage(handshakeMsg));
+                                 this->messageDistributor->getStatus(),
+                                 this->messageFactory->getVersion()));
+        this->socketWrapper->write(
+            this->messageFactory->encodeMessage(handshakeMsg));
         this->commState =
             NETWORK_WOKER_COMM_STATE_WAITING_FOR_HANDSHAKE_RESPONSE;
 
@@ -269,7 +272,7 @@ void NetworkWorker::commWorker() {
         // that.
         int readRet = this->socketWrapper->read(this->readBuffer);
         shared_ptr<DeviceMessage> msg =
-            this->messageFactory.decodeMessage(this->readBuffer);
+            this->messageFactory->decodeMessage(this->readBuffer);
 
         // Has a message been decoded?
         if (!msg) {
@@ -296,9 +299,10 @@ void NetworkWorker::commWorker() {
         // Send back a handshake message.
         shared_ptr<DeviceMessage> handshakeMsgResponse(new HandshakeMessage(
             this->self->getUserId(), handshakeMsg->getSource(),
-            this->messageDistributor->getStatus()));
+            this->messageDistributor->getStatus(),
+            this->messageFactory->getVersion()));
         this->socketWrapper->write(
-            MessageFactory::encodeMessage(handshakeMsgResponse));
+            this->messageFactory->encodeMessage(handshakeMsgResponse));
 
         // Handshake was successful. Proceed to next state.
         this->commState =
@@ -325,7 +329,7 @@ void NetworkWorker::commWorker() {
       // Read from the socket and try to decode a message from that.
       int readRet = this->socketWrapper->read(this->readBuffer);
       shared_ptr<DeviceMessage> msg =
-          this->messageFactory.decodeMessage(this->readBuffer);
+          this->messageFactory->decodeMessage(this->readBuffer);
 
       // Has a message been decoded?
       if (!msg) {
@@ -365,7 +369,7 @@ void NetworkWorker::commWorker() {
       // Read from socket.
       int readSuccess = this->socketWrapper->read(this->readBuffer);
       shared_ptr<DeviceMessage> msg =
-          this->messageFactory.decodeMessage(this->readBuffer);
+          this->messageFactory->decodeMessage(this->readBuffer);
       // If a message could be decoded, push it to the queue.
       if (msg) {
         LOG(DEBUG) << "Network worker decoded a message from "
@@ -379,7 +383,8 @@ void NetworkWorker::commWorker() {
         shared_ptr<DeviceMessage> message =
             this->outgoingNetworkMessages.front();
         this->outgoingNetworkMessages.pop();
-        this->socketWrapper->write(MessageFactory::encodeMessage(message));
+        this->socketWrapper->write(
+            this->messageFactory->encodeMessage(message));
       }
       this->outgoingNetworkMessagesMutex.unlock();
     }

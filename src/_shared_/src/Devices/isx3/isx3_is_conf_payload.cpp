@@ -20,4 +20,8 @@ Isx3IsConfPayload::Isx3IsConfPayload(
 
 Isx3IsConfPayload::~Isx3IsConfPayload() {}
 
+vector<unsigned char> Isx3IsConfPayload::bytes() {
+  return vector<unsigned char>();
+}
+
 } // namespace Devices

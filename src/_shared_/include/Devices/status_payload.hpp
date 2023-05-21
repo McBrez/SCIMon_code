@@ -74,6 +74,12 @@ public:
 
   bool operator==(const StatusPayload &other) const;
 
+  /**
+   * @brief Serializes the payload into bytes.
+   * @return Byte vector, that depicts the payload.
+   */
+  virtual vector<unsigned char> bytes() override;
+
 private:
   /// The device status.
   DeviceStatus deviceStatus;

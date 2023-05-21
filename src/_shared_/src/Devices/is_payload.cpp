@@ -1,4 +1,12 @@
+// Project includes
 #include <is_payload.hpp>
+#include <utilities.hpp>
+
+// 3rd party includes
+#include <flatbuffers/flatbuffers.h>
+
+// Generated includes
+#include <is_payload_generated.h>
 
 namespace Devices {
 
@@ -42,6 +50,27 @@ string IsPayload::serialize() {
   }
 
   return retVal;
+}
+
+vector<unsigned char> IsPayload::bytes() {
+  Serialization::IsPayloadT intermediateObject;
+  intermediateObject.channelNumber = this->channelNumber;
+  intermediateObject.timestamp = this->timestamp;
+  vector<double> frequencies;
+  vector<Impedance> impedances;
+  Utilities::splitImpedanceSpectrum(this->impedanceSpectrum, frequencies,
+                                    impedances);
+  intermediateObject.frequencies = frequencies;
+  for (auto impedance : impedances) {
+    intermediateObject.impedances.emplace_back(
+        Serialization::complex(impedance.real(), impedance.imag()));
+  }
+
+  flatbuffers::FlatBufferBuilder builder;
+  builder.Finish(Serialization::IsPayload::Pack(builder, &intermediateObject));
+  uint8_t *buffer = builder.GetBufferPointer();
+
+  return vector<unsigned char>(buffer, buffer + builder.GetSize());
 }
 
 } // namespace Devices

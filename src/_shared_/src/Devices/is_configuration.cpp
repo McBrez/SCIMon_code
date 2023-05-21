@@ -10,4 +10,8 @@ IsConfiguration::IsConfiguration(double frequencyFrom, double frequencyTo,
 
 IsConfiguration::~IsConfiguration() {}
 
+vector<unsigned char> IsConfiguration::bytes() {
+  return vector<unsigned char>();
+}
+
 } // namespace Devices

@@ -33,4 +33,15 @@ vector<string> split(const string &str, unsigned char token) {
   return retVal;
 }
 
+void splitImpedanceSpectrum(const ImpedanceSpectrum &isSpectrum,
+                            vector<double> &frequencies,
+                            vector<Impedance> &impedance) {
+
+  frequencies.reserve(isSpectrum.size());
+  for (auto impedancePoint : isSpectrum) {
+    frequencies.push_back(get<0>(impedancePoint));
+    impedance.push_back(get<1>(impedancePoint));
+  }
+}
+
 } // namespace Utilities

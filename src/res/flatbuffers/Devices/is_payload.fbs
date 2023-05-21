@@ -1,0 +1,15 @@
+namespace Devices.Serialization;
+
+struct complex {
+    real:float64;
+    imaginary:float64;
+}
+
+table IsPayload {
+  channelNumber:uint;
+  timestamp:float64;
+  frequencies:[float64];
+  impedances:[complex];
+}
+
+root_type IsPayload;

@@ -8,7 +8,11 @@
 #include <string>
 #include <vector>
 
+// Project includes.
+#include <common.hpp>
+
 using namespace std;
+using namespace Core;
 
 namespace Utilities {
 
@@ -25,5 +29,17 @@ using Duration = std::chrono::duration<int, std::milli>;
  * @return The splitted strings.
  */
 vector<string> split(const string &str, unsigned char token);
+
+/**
+ * @brief Splits the impedance spectrum into two separate vectors containing the
+ * frequencies and impedances respectivelly.
+ *
+ * @param isSpectrum The Impedance spectrum that shall be split.
+ * @param frequencies A vector containing the frequencies of the spectrum.
+ * @param impedance A vector containing the impedances of the spectrum.
+ */
+void splitImpedanceSpectrum(const ImpedanceSpectrum &isSpectrum,
+                            vector<double> &frequencies,
+                            vector<Impedance> &impedance);
 } // namespace Utilities
 #endif

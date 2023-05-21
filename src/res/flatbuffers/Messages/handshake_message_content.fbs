@@ -44,4 +44,5 @@ table statusPayload {
 
 table HandshakeMessageContent {
     statusPayloads:[statusPayload];
+    version:string;
 }
