@@ -1,0 +1,7 @@
+namespace Devices.Serialization;
+
+table Isx3ReadPayload {
+    // Intentionally empty.
+}
+
+root_type Isx3ReadPayload;

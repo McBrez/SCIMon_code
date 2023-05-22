@@ -93,6 +93,7 @@ bool WinSocket::listenConnection(std::shared_ptr<bool> doListen, int port) {
     return false;
   }
 
+  closesocket(ListenSocket);
   this->isConnected = true;
   return true;
 }
@@ -175,7 +176,7 @@ bool WinSocket::close() {
     return false;
   }
 
-  closesocket(this->connectSocket);
+  int retVal = closesocket(this->connectSocket);
   WSACleanup();
   this->isConnected = false;
   return true;

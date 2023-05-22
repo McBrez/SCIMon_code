@@ -1,1 +1,55 @@
 namespace Devices.Serialization;
+
+struct ChannelFunction {
+    channelFunction:int;
+    channel:int;
+}
+
+enum IsScale:ubyte {
+    LINEAR_SCALE = 0x00,
+    LOGARITHMIC_SCALE = 0x01
+}
+
+enum MeasurmentConfigurationRange:ubyte {
+  MEAS_CONFIG_RANGE_INVALID = 0xFF,
+  // Flatbuffer requires at least one enum value to be 0.
+  MEAS_CONFIG_RANGE_FLATBUFFER_DEFAULT = 0x00, 
+  MEAS_CONFIG_RANGE_10MA = 0x01,
+  MEAS_CONFIG_RANGE_100UA = 0x02,
+  MEAS_CONFIG_RANGE_1UA = 0x04,
+  MEAS_CONFIG_RANGE_10NA = 0x06
+}
+
+enum MeasurmentConfigurationChannel:ubyte {
+  MEAS_CONFIG_CHANNEL_INVALID = 0xFF,
+  // Flatbuffer requires at least one enum value to be 0.
+  MEAS_CONFIG_CHANNEL_FLATBUFFER_DEFAULT = 0x00,
+  MEAS_CONFIG_CHANNEL_BNC = 0x01,
+  MEAS_CONFIG_CHANNEL_EXT_PORT = 0x02,
+  MEAS_CONFIG_CHANNEL_EXT_PORT_2 = 0x03
+}
+
+enum MeasurementConfiguration:ubyte {
+  MEAS_CONFIG_INVALID = 0xFF,
+  // Flatbuffer requires at least one enum value to be 0.
+  MEAS_CONFIG_FLATBUFFER_DEFAULT = 0x00,
+  MEAS_CONFIG_2_POINT = 0x01,
+  MEAS_CONFIG_3_POINT = 0x03,
+  MEAS_CONFIG_4_POINT = 0x02,
+}
+
+table Isx3IsConfPayload {
+    frequencyFrom:double;
+    frequencyTo:double;
+    measurementPoints:int;
+    repetitions:int;
+    channelFunctionMapping:[ChannelFunction];
+    isScale:IsScale;
+    measurementConfigurationRage:MeasurmentConfigurationRange;
+    measurmentConfigurationChannel:MeasurmentConfigurationChannel;
+    measurementConfiguration:MeasurementConfiguration;
+    precision:double;
+    amplitude:double;
+}
+
+root_type Isx3IsConfPayload;

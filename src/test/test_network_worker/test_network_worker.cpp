@@ -33,7 +33,6 @@ TEST_CASE("Test the network worker handshake") {
       dynamic_pointer_cast<NetworkWorker>(server);
   shared_ptr<NetworkWorker> clientWorker =
       dynamic_pointer_cast<NetworkWorker>(client);
-
   distributorServer.addParticipant(server);
   distributorClient.addParticipant(client);
 
@@ -78,9 +77,22 @@ TEST_CASE("Test the network worker handshake") {
           list<UserId>{clientWorker->getUserId()});
   REQUIRE(clientWorker->getProxyUserIds() ==
           list<UserId>{serverWorker->getUserId()});
+
+  // Shut down the connection.
+  shared_ptr<WriteDeviceMessage> serverStopMessage(new WriteDeviceMessage(
+      UserId(), server->getUserId(), WriteDeviceTopic::WRITE_TOPIC_STOP));
+  shared_ptr<WriteDeviceMessage> clientStopMessage(new WriteDeviceMessage(
+      UserId(), client->getUserId(), WriteDeviceTopic::WRITE_TOPIC_STOP));
+
+  REQUIRE(server->write(serverStopMessage));
+  this_thread::sleep_for(chrono::milliseconds(1000));
+  REQUIRE(client->write(clientStopMessage));
+
+  REQUIRE(serverWorker->getState() == DeviceStatus::IDLE);
+  REQUIRE(clientWorker->getState() == DeviceStatus::IDLE);
 }
 
-TEST_CASE("Test the network worker communication") {
+TEST_CASE("Test communication between the end points") {
   MessageFactory::createInstace(list<shared_ptr<PayloadDecoder>>{
       shared_ptr<PayloadDecoder>(new Isx3PayloadDecoder()),
       shared_ptr<PayloadDecoder>(new Ob1PayloadDecoder())});
@@ -140,4 +152,17 @@ TEST_CASE("Test the network worker communication") {
           list<UserId>{clientWorker->getUserId()});
   REQUIRE(clientWorker->getProxyUserIds() ==
           list<UserId>{serverWorker->getUserId()});
+
+  // Shut down the connection.
+  shared_ptr<WriteDeviceMessage> serverStopMessage(new WriteDeviceMessage(
+      UserId(), server->getUserId(), WriteDeviceTopic::WRITE_TOPIC_STOP));
+  shared_ptr<WriteDeviceMessage> clientStopMessage(new WriteDeviceMessage(
+      UserId(), client->getUserId(), WriteDeviceTopic::WRITE_TOPIC_STOP));
+
+  REQUIRE(server->write(serverStopMessage));
+  this_thread::sleep_for(chrono::milliseconds(1000));
+  REQUIRE(client->write(clientStopMessage));
+
+  REQUIRE(serverWorker->getState() == DeviceStatus::IDLE);
+  REQUIRE(clientWorker->getState() == DeviceStatus::IDLE);
 }

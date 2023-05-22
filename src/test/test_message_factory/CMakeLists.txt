@@ -1,6 +1,3 @@
-cmake_minimum_required(VERSION 3.10)
-project(test_message_factory)
-
 set(SOURCE_DIR ../../_shared_/src)
 set(INCLUDE_DIR ../../_shared_/include)
 set(3RDPARTY_DIR ../../3rd_party)

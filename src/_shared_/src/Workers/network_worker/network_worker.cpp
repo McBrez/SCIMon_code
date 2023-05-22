@@ -368,6 +368,12 @@ void NetworkWorker::commWorker() {
 
       // Read from socket.
       int readSuccess = this->socketWrapper->read(this->readBuffer);
+      if (readSuccess <= 0) {
+        // Connection seems to be closed. Set the worker in an invalid state.
+        LOG(INFO) << "Other end point seems to have closed the connection. "
+                     "Closing down socket.";
+        this->doComm = false;
+      }
       shared_ptr<DeviceMessage> msg =
           this->messageFactory->decodeMessage(this->readBuffer);
       // If a message could be decoded, push it to the queue.
@@ -383,20 +389,27 @@ void NetworkWorker::commWorker() {
         shared_ptr<DeviceMessage> message =
             this->outgoingNetworkMessages.front();
         this->outgoingNetworkMessages.pop();
-        this->socketWrapper->write(
+        int sendSuccess = this->socketWrapper->write(
             this->messageFactory->encodeMessage(message));
+        if (sendSuccess == 0) {
+          LOG(INFO) << "Other end point seems to have closed the connection. "
+                       "Closing down socket.";
+          this->doComm = false;
+        }
       }
       this->outgoingNetworkMessagesMutex.unlock();
     }
 
     else {
       LOG(ERROR) << "Invalid communication state. Aborting.";
+
       break;
     }
   }
 
   this->commState = NetworkWorkerCommState::NETWORK_WOKER_COMM_STATE_INVALID;
   LOG(INFO) << "Network Worker thread is finished. Shutting down.";
+  this->socketWrapper->close();
 }
 
 bool NetworkWorker::write(shared_ptr<HandshakeMessage> writeMsg) {

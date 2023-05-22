@@ -13,6 +13,14 @@ add_subdirectory(
 )
 target_compile_definitions(flatbuffers PUBLIC NOMINMAX=1)
 
+# --------------------------------------------------------- Project Libraries --
+
+add_subdirectory(${PROJECT_DIR}/scimon_message_lib)
+
+# ------------------------------------------------------- Project Executables --
+add_subdirectory(${PROJECT_DIR}/sentry)
+add_subdirectory(${PROJECT_DIR}/control)
+
 # --------------------------------------------------------------------- Tests --
 add_subdirectory(${TEST_DIR}/test_ob1)
 add_subdirectory(${TEST_DIR}/test_is_measurement)
@@ -31,7 +39,3 @@ add_test(NAME build_test_sciospec_com_interface COMMAND test_sciospec_com_interf
 add_test(NAME build_test_test_epix COMMAND test_epix)
 add_test(NAME build_test_message_factory COMMAND test_message_factory)
 add_test(NAME build_test_network_worker COMMAND test_network_worker)
-
-add_subdirectory(${PROJECT_DIR}/scimon_message_lib)
-add_subdirectory(${PROJECT_DIR}/sentry)
-
