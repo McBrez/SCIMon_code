@@ -189,6 +189,7 @@ private:
   /// The unique id of the object that implements this interface.
   UserId id;
 
+  /// The unique ids of the objects that are represented by this object.
   list<UserId> proxyIds;
 };
 } // namespace Messages

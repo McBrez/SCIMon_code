@@ -190,10 +190,6 @@ ComInterfaceCodec::decodeMessage(std::vector<unsigned char> bytes) {
       shared_ptr<IdPayload> idPayload(
           new IdPayload("Sciospec", DeviceType::IMPEDANCE_SPECTROMETER,
                         deviceIdentifier, serialNumber));
-      string dateOfDeliveryString =
-          "Date of Delivery: " + to_string(dateOfDeliveryMonth) + "." +
-          to_string(dateOfDeliveryYear);
-      idPayload->setAdditionalData(dateOfDeliveryString);
       return idPayload;
     }
   }

@@ -82,6 +82,14 @@ public:
    * @return TRUE if device has been started. FALSE if an error occured.
    */
   virtual bool stop() override;
+
+  vector<unsigned char> returnReceivedVector();
+
+private:
+  /// String that identifies this type of device.
+  static const string TEST_DEVICE_TYPE_NAME;
+  UserId remoteTestDeviceId;
+  vector<unsigned char> receivedVector;
 };
 } // namespace Devices
 

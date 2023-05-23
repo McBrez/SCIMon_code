@@ -60,6 +60,11 @@ public:
    */
   void run();
 
+  /**
+   * @brief Stops the execution loop.
+   */
+  void stop();
+
 private:
   /// Chaches messages until the next call to deliverMessages().
   list<shared_ptr<DeviceMessage>> messageCache;

@@ -3,6 +3,7 @@
 #include <sstream>
 
 // Project includes
+#include <builtin_payload_decoder.hpp>
 #include <config_device_message.hpp>
 #include <handshake_message.hpp>
 #include <init_device_message.hpp>
@@ -21,7 +22,10 @@ namespace Messages {
 MessageFactory *MessageFactory::instance = nullptr;
 
 MessageFactory::MessageFactory(list<shared_ptr<PayloadDecoder>> payloadDecoders)
-    : payloadDecoders(payloadDecoders) {}
+    : payloadDecoders(payloadDecoders) {
+  this->payloadDecoders.push_back(
+      shared_ptr<PayloadDecoder>(new BuiltinPayloadDecoder()));
+}
 
 shared_ptr<DeviceMessage>
 MessageFactory::decodeMessage(vector<unsigned char> &buffer) {

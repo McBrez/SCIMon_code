@@ -1,3 +1,6 @@
+// Standard includes
+#include <thread>
+
 // 3rd party includes
 #define CATCH_CONFIG_MAIN
 #include <catch2/catch.hpp>
@@ -13,6 +16,7 @@
 #include <network_worker.hpp>
 #include <network_worker_init_payload.hpp>
 #include <ob1_payload_decoder.hpp>
+#include <test_device.hpp>
 
 INITIALIZE_EASYLOGGINGPP
 
@@ -104,12 +108,12 @@ TEST_CASE("Test communication between the end points") {
       dynamic_pointer_cast<NetworkWorker>(server);
   shared_ptr<NetworkWorker> clientWorker =
       dynamic_pointer_cast<NetworkWorker>(client);
-  distributorServer.addParticipant(
-      shared_ptr<MessageInterface>(new DeviceIsx3()));
-  distributorServer.addParticipant(
-      shared_ptr<MessageInterface>(new DeviceOb1Win()));
   distributorServer.addParticipant(server);
   distributorClient.addParticipant(client);
+  shared_ptr<TestDevice> serverDevice(new TestDevice());
+  shared_ptr<TestDevice> clientDevice(new TestDevice());
+  distributorServer.addParticipant(serverDevice);
+  distributorClient.addParticipant(clientDevice);
 
   shared_ptr<InitDeviceMessage> serverInitMessage(new InitDeviceMessage(
       UserId(), server->getUserId(),
@@ -153,16 +157,16 @@ TEST_CASE("Test communication between the end points") {
   REQUIRE(clientWorker->getProxyUserIds() ==
           list<UserId>{serverWorker->getUserId()});
 
-  // Shut down the connection.
-  shared_ptr<WriteDeviceMessage> serverStopMessage(new WriteDeviceMessage(
-      UserId(), server->getUserId(), WriteDeviceTopic::WRITE_TOPIC_STOP));
-  shared_ptr<WriteDeviceMessage> clientStopMessage(new WriteDeviceMessage(
-      UserId(), client->getUserId(), WriteDeviceTopic::WRITE_TOPIC_STOP));
+  clientDevice->start();
+  std::thread serverThread(&MessageDistributor::run, &distributorServer);
+  std::thread clientThread(&MessageDistributor::run, &distributorClient);
+  this_thread::sleep_for(chrono::milliseconds(20000));
 
-  REQUIRE(server->write(serverStopMessage));
-  this_thread::sleep_for(chrono::milliseconds(1000));
-  REQUIRE(client->write(clientStopMessage));
+  REQUIRE(clientDevice->returnReceivedVector() ==
+          vector<unsigned char>{1, 2, 3});
 
-  REQUIRE(serverWorker->getState() == DeviceStatus::IDLE);
-  REQUIRE(clientWorker->getState() == DeviceStatus::IDLE);
+  distributorServer.stop();
+  distributorClient.stop();
+  serverThread.join();
+  clientThread.join();
 }

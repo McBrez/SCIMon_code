@@ -128,4 +128,6 @@ void MessageDistributor::run() {
   }
 }
 
+void MessageDistributor::stop() { this->doRun = false; }
+
 } // namespace Messages

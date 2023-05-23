@@ -5,7 +5,9 @@
 #include <chrono>
 #include <complex>
 #include <list>
+#include <string>
 #include <tuple>
+
 
 using namespace std;
 
@@ -24,5 +26,8 @@ typedef list<ImpedancePoint> ImpedanceSpectrum;
 
 /// @brief shortcut to a type that enables timestamping.
 using TimePoint = std::chrono::time_point<std::chrono::system_clock>;
+
+const string NETWORK_WORKER_TYPE_NAME = "Network Worker";
+
 } // namespace Core
 #endif

@@ -133,6 +133,12 @@ public:
    */
   void commWorker();
 
+  /**
+   * @brief Returns the name of the worker.
+   * @return A string that identifies the type of the worker.
+   */
+  virtual string getWorkerName() override;
+
 private:
   shared_ptr<NetworkWorkerInitPayload> initPayload;
 

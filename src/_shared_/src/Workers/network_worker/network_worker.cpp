@@ -2,6 +2,7 @@
 #include <easylogging++.h>
 
 // Project includes
+#include <common.hpp>
 #include <message_distributor.hpp>
 #include <message_factory.hpp>
 #include <network_worker.hpp>
@@ -372,7 +373,7 @@ void NetworkWorker::commWorker() {
         // Connection seems to be closed. Set the worker in an invalid state.
         LOG(INFO) << "Other end point seems to have closed the connection. "
                      "Closing down socket.";
-        this->doComm = false;
+        // this->doComm = false;
       }
       shared_ptr<DeviceMessage> msg =
           this->messageFactory->decodeMessage(this->readBuffer);
@@ -463,5 +464,7 @@ bool NetworkWorker::write(shared_ptr<ConfigDeviceMessage> configMsg) {
     return true;
   }
 }
+
+string NetworkWorker::getWorkerName() { return Core::NETWORK_WORKER_TYPE_NAME; }
 
 } // namespace Workers

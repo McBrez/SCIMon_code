@@ -1,0 +1,7 @@
+namespace Devices.Serialization;
+
+table GenericReadPayload {
+    byteVector:[uint8];
+}
+
+root_type GenericReadPayload;

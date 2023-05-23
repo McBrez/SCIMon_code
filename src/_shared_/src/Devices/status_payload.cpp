@@ -6,7 +6,8 @@ namespace Devices {
 StatusPayload::StatusPayload(UserId deviceId, DeviceStatus deviceStatus,
                              list<UserId> proxyIds, DeviceType deviceType,
                              string deviceName)
-    : deviceId(deviceId), deviceStatus(deviceStatus) {}
+    : deviceId(deviceId), deviceStatus(deviceStatus), proxyIds(proxyIds),
+      deviceType(deviceType), deviceName(deviceName) {}
 
 DeviceStatus StatusPayload::getDeviceStatus() { return this->deviceStatus; }
 

@@ -31,22 +31,6 @@ public:
    * @return The payload in string representation.
    */
   virtual string serialize() = 0;
-
-  /**
-   * @brief Returns the additional data held by this object.
-   * @return The additional data string.
-   */
-  string getAdditionalData() const;
-
-  /**
-   * @brief Sets the additional data field of this object.
-   * @param additionalData The additional data that shall be set.
-   */
-  void setAdditionalData(const string &additionalData);
-
-private:
-  /// String for uncritical additional data.
-  string additionalData;
 };
 
 } // namespace Devices

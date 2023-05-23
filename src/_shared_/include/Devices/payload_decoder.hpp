@@ -16,6 +16,9 @@ namespace Devices {
  * specific payload. Each device has to implement its payload decoder.
  */
 class PayloadDecoder {
+public:
+  PayloadDecoder() {}
+
   virtual shared_ptr<InitPayload>
   decodeInitPayload(const vector<unsigned char> &data) = 0;
 

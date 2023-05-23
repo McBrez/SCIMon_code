@@ -17,7 +17,8 @@ set(
     ${RES_DIR}/flatbuffers/Messages/init_device_message_content.fbs 
     ${RES_DIR}/flatbuffers/Messages/config_device_message_content.fbs 
 
-    ${RES_DIR}/flatbuffers/Devices/is_payload.fbs 
+    ${RES_DIR}/flatbuffers/Devices/is_payload.fbs
+    ${RES_DIR}/flatbuffers/Devices/generic_read_payload.fbs 
 
     ${RES_DIR}/flatbuffers/Devices/elveflow/ob1/ob1_config_payload.fbs
     ${RES_DIR}/flatbuffers/Devices/elveflow/ob1/ob1_init_payload.fbs
@@ -93,12 +94,14 @@ target_sources(scimon_message PUBLIC
     ${INCLUDE_DIR}/Devices/payload.hpp
     ${INCLUDE_DIR}/Devices/status_payload.hpp
     ${INCLUDE_DIR}/Devices/read_payload.hpp
+    ${INCLUDE_DIR}/Devices/generic_read_payload.hpp
     ${INCLUDE_DIR}/Devices/init_payload.hpp
     ${INCLUDE_DIR}/Devices/configuration_payload.hpp
     ${INCLUDE_DIR}/Devices/is_configuration.hpp
     ${INCLUDE_DIR}/Devices/is_payload.hpp
     ${INCLUDE_DIR}/Devices/id_payload.hpp
     ${INCLUDE_DIR}/Devices/payload_decoder.hpp
+    ${INCLUDE_DIR}/Devices/builtin_payload_decoder.hpp
     ${INCLUDE_DIR}/Workers/worker.hpp
     ${INCLUDE_DIR}/Workers/network_worker/network_worker.hpp
     ${INCLUDE_DIR}/Workers/network_worker/network_worker_init_payload.hpp
@@ -141,7 +144,9 @@ target_sources(scimon_message PUBLIC
     ${SOURCE_DIR}/Devices/is_configuration.cpp
     ${SOURCE_DIR}/Devices/id_payload.cpp
     ${SOURCE_DIR}/Devices/read_payload.cpp
+    ${SOURCE_DIR}/Devices/generic_read_payload.cpp
     ${SOURCE_DIR}/Devices/configuration_payload.cpp
+    ${SOURCE_DIR}/Devices/builtin_payload_decoder.cpp
     ${SOURCE_DIR}/Workers/worker.cpp
     ${SOURCE_DIR}/Workers/network_worker/network_worker.cpp
     ${SOURCE_DIR}/Workers/network_worker/network_worker_init_payload.cpp
@@ -169,13 +174,6 @@ target_sources(scimon_message PUBLIC
 add_dependencies(scimon_message scimon_message_lib_fb_headers)
 target_link_libraries(scimon_message
     PRIVATE flatbuffers
-)
-
-# Generated files shall be cleaned properly.
-set_property(
-    TARGET scimon_message
-    APPEND
-    PROPERTY ADDITIONAL_CLEAN_FILES FB_FILES_GENERATED
 )
 
 # Enforce C++20

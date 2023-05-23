@@ -104,7 +104,7 @@ DeviceStatus Worker::getState() const { return this->workerState; }
 shared_ptr<StatusPayload> Worker::constructStatus() {
   return shared_ptr<StatusPayload>(new StatusPayload(
       this->getUserId(), this->workerState, this->getProxyUserIds(),
-      DeviceType::UNSPECIFIED, "Worker"));
+      DeviceType::UNSPECIFIED, this->getWorkerName()));
 }
 
 } // namespace Workers

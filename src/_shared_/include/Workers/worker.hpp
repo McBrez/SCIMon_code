@@ -74,6 +74,12 @@ public:
    */
   virtual shared_ptr<StatusPayload> constructStatus() override;
 
+  /**
+   * @brief Returns the name of the worker.
+   * @return A string that identifies the type of the worker.
+   */
+  virtual string getWorkerName() = 0;
+
 protected:
   /// The id of the worker.
   WorkerId workerId;
