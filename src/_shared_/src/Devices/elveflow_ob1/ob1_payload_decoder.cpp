@@ -3,17 +3,17 @@
 
 using namespace Devices;
 
-shared_ptr<InitPayload>
+InitPayload *
 Ob1PayloadDecoder::decodeInitPayload(const vector<unsigned char> &data) {
-  return shared_ptr<InitPayload>();
+  return nullptr;
 }
 
-shared_ptr<ConfigurationPayload>
+ConfigurationPayload *
 Ob1PayloadDecoder::decodeConfigPayload(const vector<unsigned char> &data) {
-  return shared_ptr<ConfigurationPayload>();
+  return nullptr;
 }
 
-shared_ptr<ReadPayload>
+ReadPayload *
 Ob1PayloadDecoder::decodeReadPayload(const vector<unsigned char> &data) {
-  return shared_ptr<ReadPayload>();
+  return nullptr;
 }

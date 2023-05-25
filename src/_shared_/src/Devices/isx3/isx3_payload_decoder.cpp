@@ -10,21 +10,20 @@
 
 using namespace Devices;
 
-shared_ptr<InitPayload>
+InitPayload *
 Isx3PayloadDecoder::decodeInitPayload(const vector<unsigned char> &data) {
   const Serialization::Isx3InitPayloadT *payload =
       Serialization::GetIsx3InitPayload(data.data())->UnPack();
 
-  return shared_ptr<InitPayload>(
-      new Isx3InitPayload(payload->ipAddress, payload->port));
+  return new Isx3InitPayload(payload->ipAddress, payload->port);
 }
 
-shared_ptr<ConfigurationPayload>
+ConfigurationPayload *
 Isx3PayloadDecoder::decodeConfigPayload(const vector<unsigned char> &data) {
-  return shared_ptr<ConfigurationPayload>();
+  return nullptr;
 }
 
-shared_ptr<ReadPayload>
+ReadPayload *
 Isx3PayloadDecoder::decodeReadPayload(const vector<unsigned char> &data) {
-  return shared_ptr<ReadPayload>();
+  return nullptr;
 }

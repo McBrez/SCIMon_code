@@ -210,41 +210,98 @@ MessageFactory::decodeFrame(vector<unsigned char> *buffer,
       new vector<unsigned char>(++bufferIt, buffer->end() - 1);
 
   // Decode the payload according to the message type.
+  const Serialization::DeviceMessageT *handshakeMsg =
+      Serialization::GetDeviceMessage(flatbufferPayload->data())->UnPack();
   if (MessageType::HANDSHAKE_MESSAGE == messageType) {
-    const Serialization::DeviceMessageT *handshakeMsg =
-        Serialization::GetDeviceMessage(flatbufferPayload->data())->UnPack();
+    return this->translateMessageContent(
+        UserId(static_cast<size_t>(handshakeMsg->sourceId)),
+        UserId(static_cast<size_t>(handshakeMsg->desinationId)),
+        handshakeMsg->content.AsHandshakeMessageContent());
+  }
 
-    return this->translateHandshakeMessageContent(handshakeMsg);
+  else if (MessageType::WRITE_DEVICE_MESSAGE == messageType) {
+    return this->translateMessageContent(
+        UserId(static_cast<size_t>(handshakeMsg->sourceId)),
+        UserId(static_cast<size_t>(handshakeMsg->desinationId)),
+        handshakeMsg->content.AsWriteDeviceMessageContent());
   } else {
     return shared_ptr<DeviceMessage>();
   }
 }
 
-shared_ptr<DeviceMessage> MessageFactory::translateHandshakeMessageContent(
-    const Serialization::DeviceMessageT *msg) {
-  const Serialization::HandshakeMessageContentT *content =
-      msg->content.AsHandshakeMessageContent();
+shared_ptr<DeviceMessage> MessageFactory::translateMessageContent(
+    UserId sourceId, UserId destinationId,
+    const Serialization::HandshakeMessageContentT *handshakeContent) {
 
   list<shared_ptr<StatusPayload>> statusPayloads;
-  for (int i = 0; i < content->statusPayloads.size(); i++) {
+  for (int i = 0; i < handshakeContent->statusPayloads.size(); i++) {
     list<UserId> proxyIds;
 
-    for (auto proxyId : content->statusPayloads[i]->proxyIds) {
+    for (auto proxyId : handshakeContent->statusPayloads[i]->proxyIds) {
       proxyIds.emplace_back(UserId(static_cast<size_t>(proxyId)));
     }
 
     statusPayloads.emplace_back(shared_ptr<StatusPayload>(new StatusPayload(
-        UserId(static_cast<size_t>(content->statusPayloads[i]->deviceId)),
-        static_cast<DeviceStatus>(content->statusPayloads[i]->deviceStatus),
+        UserId(
+            static_cast<size_t>(handshakeContent->statusPayloads[i]->deviceId)),
+        static_cast<DeviceStatus>(
+            handshakeContent->statusPayloads[i]->deviceStatus),
         proxyIds,
-        static_cast<DeviceType>(content->statusPayloads[i]->deviceType),
-        content->statusPayloads[i]->deviceName)));
+        static_cast<DeviceType>(
+            handshakeContent->statusPayloads[i]->deviceType),
+        handshakeContent->statusPayloads[i]->deviceName)));
   }
 
   return shared_ptr<HandshakeMessage>(new HandshakeMessage(
-      UserId(static_cast<size_t>(msg->sourceId)),
-      UserId(static_cast<size_t>(msg->desinationId)), statusPayloads,
-      msg->content.AsHandshakeMessageContent()->version));
+      sourceId, destinationId, statusPayloads, handshakeContent->version));
+}
+
+shared_ptr<DeviceMessage> MessageFactory::translateMessageContent(
+    UserId sourceId, UserId destinationId,
+    const Serialization::WriteDeviceMessageContentT *writeDeviceContent) {
+
+  return shared_ptr<WriteDeviceMessage>(new WriteDeviceMessage(
+      sourceId, destinationId,
+      static_cast<WriteDeviceTopic>(writeDeviceContent->writeDeviceTopic)));
+}
+
+shared_ptr<DeviceMessage> MessageFactory::translateMessageContent(
+    UserId sourceId, UserId destinationId,
+    const Serialization::ReadDeviceMessageContentT *readDeviceContent) {
+
+  // Try to parse the payload.
+  ReadPayload *decodedPayload = nullptr;
+  for (auto payloadDecoder : this->payloadDecoders) {
+    decodedPayload =
+        payloadDecoder->decodeReadPayload(readDeviceContent->readPayload);
+    if (decodedPayload != nullptr) {
+      break;
+    }
+  }
+
+  if (!decodedPayload) {
+    // Was not able to decode a read payload from the buffer.
+    return shared_ptr<DeviceMessage>();
+  }
+
+  return shared_ptr<ReadDeviceMessage>(new ReadDeviceMessage(
+      sourceId, destinationId,
+      static_cast<ReadDeviceTopic>(readDeviceContent->readDeviceTopic),
+      decodedPayload, nullptr));
+}
+
+shared_ptr<DeviceMessage> MessageFactory::translateMessageContent(
+    UserId sourceId, UserId destinationId,
+    const Serialization::InitDeviceMessageContentT *initDeviceContent) {
+
+  return shared_ptr<DeviceMessage>();
+}
+
+shared_ptr<DeviceMessage> MessageFactory::translateMessageContent(
+    UserId sourceId, UserId destinationId,
+    const Serialization::ConfigDeviceMessageContentT *configDeviceContent) {
+
+  return shared_ptr<DeviceMessage>();
 }
 
 MessageFactory *MessageFactory::createInstace(

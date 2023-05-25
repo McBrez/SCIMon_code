@@ -100,8 +100,25 @@ private:
   shared_ptr<DeviceMessage> decodeFrame(vector<unsigned char> *buffer,
                                         MessageType &msgTypeHint);
 
-  shared_ptr<DeviceMessage>
-  translateHandshakeMessageContent(const Serialization::DeviceMessageT *msg);
+  shared_ptr<DeviceMessage> translateMessageContent(
+      UserId sourceId, UserId destinationId,
+      const Serialization::HandshakeMessageContentT *handshakeContent);
+
+  shared_ptr<DeviceMessage> translateMessageContent(
+      UserId sourceId, UserId destinationId,
+      const Serialization::ReadDeviceMessageContentT *readDeviceContent);
+
+  shared_ptr<DeviceMessage> translateMessageContent(
+      UserId sourceId, UserId destinationId,
+      const Serialization::InitDeviceMessageContentT *initDeviceContent);
+
+  shared_ptr<DeviceMessage> translateMessageContent(
+      UserId sourceId, UserId destinationId,
+      const Serialization::ConfigDeviceMessageContentT *configDeviceContent);
+
+  shared_ptr<DeviceMessage> translateMessageContent(
+      UserId sourceId, UserId destinationId,
+      const Serialization::WriteDeviceMessageContentT *writeDeviceContent);
 
   /**
    * @brief Construct a new Message Factory object

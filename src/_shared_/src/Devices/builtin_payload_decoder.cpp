@@ -8,19 +8,19 @@
 
 using namespace Devices;
 
-shared_ptr<InitPayload>
+InitPayload *
 BuiltinPayloadDecoder::decodeInitPayload(const vector<unsigned char> &data) {
   // No init payloads are built-in.
-  return shared_ptr<InitPayload>();
+  return nullptr;
 }
 
-shared_ptr<ConfigurationPayload>
+ConfigurationPayload *
 BuiltinPayloadDecoder::decodeConfigPayload(const vector<unsigned char> &data) {
   // No config payloads are built-in.
-  return shared_ptr<ConfigurationPayload>();
+  return nullptr;
 }
 
-shared_ptr<ReadPayload>
+ReadPayload *
 BuiltinPayloadDecoder::decodeReadPayload(const vector<unsigned char> &data) {
   const unsigned char *buffer = data.data();
 
@@ -28,5 +28,5 @@ BuiltinPayloadDecoder::decodeReadPayload(const vector<unsigned char> &data) {
       Serialization::GetGenericReadPayload(buffer);
   vector<unsigned char> byteVector(genericReadPayload->byteVector()->begin(),
                                    genericReadPayload->byteVector()->end());
-  return shared_ptr<ReadPayload>(new GenericReadPayload(byteVector));
+  return new GenericReadPayload(byteVector);
 }

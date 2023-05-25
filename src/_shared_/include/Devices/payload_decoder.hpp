@@ -19,14 +19,12 @@ class PayloadDecoder {
 public:
   PayloadDecoder() {}
 
-  virtual shared_ptr<InitPayload>
-  decodeInitPayload(const vector<unsigned char> &data) = 0;
+  virtual InitPayload *decodeInitPayload(const vector<unsigned char> &data) = 0;
 
-  virtual shared_ptr<ConfigurationPayload>
+  virtual ConfigurationPayload *
   decodeConfigPayload(const vector<unsigned char> &data) = 0;
 
-  virtual shared_ptr<ReadPayload>
-  decodeReadPayload(const vector<unsigned char> &data) = 0;
+  virtual ReadPayload *decodeReadPayload(const vector<unsigned char> &data) = 0;
 };
 } // namespace Devices
 

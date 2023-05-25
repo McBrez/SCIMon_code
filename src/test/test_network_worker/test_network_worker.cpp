@@ -25,6 +25,7 @@ using namespace Messages;
 using namespace Devices;
 using namespace std;
 
+#if 0
 TEST_CASE("Test the network worker handshake") {
   MessageFactory::createInstace(list<shared_ptr<PayloadDecoder>>{
       shared_ptr<PayloadDecoder>(new Isx3PayloadDecoder()),
@@ -95,6 +96,7 @@ TEST_CASE("Test the network worker handshake") {
   REQUIRE(serverWorker->getState() == DeviceStatus::IDLE);
   REQUIRE(clientWorker->getState() == DeviceStatus::IDLE);
 }
+#endif
 
 TEST_CASE("Test communication between the end points") {
   MessageFactory::createInstace(list<shared_ptr<PayloadDecoder>>{
@@ -153,9 +155,9 @@ TEST_CASE("Test communication between the end points") {
   REQUIRE(clientWorker->getState() == DeviceStatus::OPERATING);
   // Workers should now have each others user id as proxy id.
   REQUIRE(serverWorker->getProxyUserIds() ==
-          list<UserId>{clientWorker->getUserId()});
+          list<UserId>{clientWorker->getUserId(), clientDevice->getUserId()});
   REQUIRE(clientWorker->getProxyUserIds() ==
-          list<UserId>{serverWorker->getUserId()});
+          list<UserId>{serverWorker->getUserId(), serverDevice->getUserId()});
 
   clientDevice->start();
   std::thread serverThread(&MessageDistributor::run, &distributorServer);

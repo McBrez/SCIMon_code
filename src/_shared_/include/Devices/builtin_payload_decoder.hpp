@@ -14,13 +14,13 @@ class BuiltinPayloadDecoder : public PayloadDecoder {
 public:
   BuiltinPayloadDecoder() {}
 
-  virtual shared_ptr<InitPayload>
+  virtual InitPayload *
   decodeInitPayload(const vector<unsigned char> &data) override;
 
-  virtual shared_ptr<ConfigurationPayload>
+  virtual ConfigurationPayload *
   decodeConfigPayload(const vector<unsigned char> &data) override;
 
-  virtual shared_ptr<ReadPayload>
+  virtual ReadPayload *
   decodeReadPayload(const vector<unsigned char> &data) override;
 };
 } // namespace Devices
