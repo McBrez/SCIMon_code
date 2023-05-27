@@ -1,4 +1,4 @@
-namespace Devices.Serialization;
+namespace Serialization.Devices;
 
 struct ChannelFunction {
     channelFunction:int;

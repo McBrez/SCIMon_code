@@ -1,48 +1,8 @@
-namespace Messages.Serialization;
+include "status_payload.fbs";
 
-enum DeviceStatus:ubyte {
-  /// Device status is not known.
-  UNKNOWN_DEVICE_STATUS = 0x00,
-  /// Device is initializing.
-  INITIALIZING = 0x01,
-  /// Device has been successfully initialized.
-  INITIALIZED = 0x02,
-  /// Device is configuring.
-  CONFIGURING = 0x03,
-  /// Device is operating and can accept commands.
-  OPERATING = 0x04,
-  /// Device is initialized, configured, not operating and is waiting for
-  /// commands.
-  IDLE = 0x05,
-  /// Device is operating and can not accept commands.
-  BUSY = 0x06,
-  /// Device ran into an error.
-  ERROR = 0xFF
-}
-
-enum DeviceType:byte {
-  // Invalid device type.
-  INVALID = -1,
-
-  /// Unspecified device type.
-  UNSPECIFIED = 0,
-
-  // A pump controller
-  PUMP_CONTROLLER = 1,
-
-  // An impedance spectrometer.
-  IMPEDANCE_SPECTROMETER = 2
-}
-
-table statusPayload {
-    deviceId:uint64;
-    deviceStatus:DeviceStatus;
-    proxyIds:[uint64];
-    deviceType:DeviceType;
-    deviceName:string;
-}
+namespace Serialization.Messages;
 
 table HandshakeMessageContent {
-    statusPayloads:[statusPayload];
+    statusPayloads:[Serialization.Devices.StatusPayload];
     version:string;
 }

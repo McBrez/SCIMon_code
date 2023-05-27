@@ -1,1 +1,1 @@
-namespace Devices.Serialization;
+namespace Serialization.Devices;

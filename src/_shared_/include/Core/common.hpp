@@ -8,7 +8,6 @@
 #include <string>
 #include <tuple>
 
-
 using namespace std;
 
 namespace Core {
@@ -28,6 +27,11 @@ typedef list<ImpedancePoint> ImpedanceSpectrum;
 using TimePoint = std::chrono::time_point<std::chrono::system_clock>;
 
 const string NETWORK_WORKER_TYPE_NAME = "Network Worker";
+
+// ---------------------------------------------- Magic numbers for payloads --
+#define MAGIC_NUMBER_GENERIC_PAYLOAD
+#define MAGIC_NUMBER_STATUS_PAYLOAD
+
 
 } // namespace Core
 #endif

@@ -5,6 +5,7 @@
 // Generated includes
 #include <generic_read_payload_generated.h>
 #include <is_payload_generated.h>
+#include <status_payload_generated.h>
 
 using namespace Devices;
 
@@ -24,9 +25,12 @@ ReadPayload *
 BuiltinPayloadDecoder::decodeReadPayload(const vector<unsigned char> &data) {
   const unsigned char *buffer = data.data();
 
-  const Serialization::GenericReadPayload *genericReadPayload =
-      Serialization::GetGenericReadPayload(buffer);
+  // Try to parse it as generic payload.
+  const Serialization::Devices::GenericReadPayload *genericReadPayload =
+      Serialization::Devices::GetGenericReadPayload(buffer);
   vector<unsigned char> byteVector(genericReadPayload->byteVector()->begin(),
                                    genericReadPayload->byteVector()->end());
+  // Did it work?
+
   return new GenericReadPayload(byteVector);
 }

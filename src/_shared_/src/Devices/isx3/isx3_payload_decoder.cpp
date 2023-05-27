@@ -12,8 +12,8 @@ using namespace Devices;
 
 InitPayload *
 Isx3PayloadDecoder::decodeInitPayload(const vector<unsigned char> &data) {
-  const Serialization::Isx3InitPayloadT *payload =
-      Serialization::GetIsx3InitPayload(data.data())->UnPack();
+  const Serialization::Devices::Isx3InitPayloadT *payload =
+      Serialization::Devices::GetIsx3InitPayload(data.data())->UnPack();
 
   return new Isx3InitPayload(payload->ipAddress, payload->port);
 }

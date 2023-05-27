@@ -15,12 +15,12 @@ GenericReadPayload::GenericReadPayload(vector<unsigned char> byteVector)
 string GenericReadPayload::serialize() { return ""; }
 
 vector<unsigned char> GenericReadPayload::bytes() {
-  Serialization::GenericReadPayloadT intermediateObject;
+  Serialization::Devices::GenericReadPayloadT intermediateObject;
   intermediateObject.byteVector = this->byteVector;
 
   flatbuffers::FlatBufferBuilder builder;
   builder.Finish(
-      Serialization::GenericReadPayload::Pack(builder, &intermediateObject));
+      Serialization::Devices::GenericReadPayload::Pack(builder, &intermediateObject));
   uint8_t *buffer = builder.GetBufferPointer();
 
   return vector<unsigned char>(buffer, buffer + builder.GetSize());

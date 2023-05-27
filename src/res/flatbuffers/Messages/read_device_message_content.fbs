@@ -1,4 +1,4 @@
-namespace Messages.Serialization;
+namespace Serialization.Messages;
 
 enum ReadDeviceTopic : ubyte {
     /// Invalid topic

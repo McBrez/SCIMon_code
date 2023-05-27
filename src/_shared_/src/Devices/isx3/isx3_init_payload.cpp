@@ -19,13 +19,13 @@ string Isx3InitPayload::getIpAddress() { return this->ipAddress; }
 int Isx3InitPayload::getPort() { return this->port; }
 
 vector<unsigned char> Isx3InitPayload::bytes() {
-  Serialization::Isx3InitPayloadT intermediateObject;
+  Serialization::Devices::Isx3InitPayloadT intermediateObject;
   intermediateObject.ipAddress = this->ipAddress;
   intermediateObject.port = this->port;
 
   flatbuffers::FlatBufferBuilder builder;
   builder.Finish(
-      Serialization::Isx3InitPayload::Pack(builder, &intermediateObject));
+      Serialization::Devices::Isx3InitPayload::Pack(builder, &intermediateObject));
   uint8_t *buffer = builder.GetBufferPointer();
 
   return vector<unsigned char>(buffer, buffer + builder.GetSize());

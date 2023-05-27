@@ -1,4 +1,4 @@
-namespace Devices.Serialization;
+namespace Serialization.Devices;
 
 table Isx3ReadPayload {
     // Intentionally empty.

@@ -1,6 +1,12 @@
 // Project includes
 #include <status_payload.hpp>
 
+// 3rd party includes
+#include <flatbuffers/flatbuffers.h>
+
+// Generated includes
+#include <status_payload_generated.h>
+
 namespace Devices {
 
 StatusPayload::StatusPayload(UserId deviceId, DeviceStatus deviceStatus,
@@ -29,6 +35,31 @@ bool StatusPayload::operator==(const StatusPayload &other) const {
          this->proxyIds == other.proxyIds;
 }
 
-vector<unsigned char> StatusPayload::bytes() { return vector<unsigned char>(); }
+vector<unsigned char> StatusPayload::bytes() {
+  Serialization::Devices::StatusPayloadT intermediateObject;
+
+  intermediateObject.deviceId = this->deviceId;
+  intermediateObject.deviceName = this->deviceName;
+  intermediateObject.deviceStatus =
+      static_cast<Serialization::Devices::DeviceStatus>(this->deviceStatus);
+  intermediateObject.deviceType =
+      static_cast<Serialization::Devices::DeviceType>(this->deviceType);
+  vector<size_t> proxyIds;
+  for(auto proxyId : this->proxyIds) {
+    proxyIds.push_back(proxyId.id());
+  }
+  intermediateObject.proxyIds = proxyIds;
+
+  // Serialize the intermediate object.
+  flatbuffers::FlatBufferBuilder builder;
+  builder.Finish(Serialization::Devices::StatusPayload::Pack(
+      builder, &intermediateObject));
+  uint8_t *buffer = builder.GetBufferPointer();
+  vector<unsigned char> bufferVect =
+      vector<unsigned char>((const unsigned char *)buffer,
+                            (const unsigned char *)buffer + builder.GetSize());
+
+  return bufferVect;
+}
 
 } // namespace Devices

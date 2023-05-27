@@ -161,8 +161,22 @@ bool NetworkWorker::handleResponse(shared_ptr<ReadDeviceMessage> response) {
 
   else if (NetworkWorkerCommState::NETWORK_WOKER_COMM_STATE_WORKING ==
            this->commState) {
-    // Nothing to do while starting connection.
-    return true;
+    // Check if the received response belongs to a device this object is a proxy
+    // of.
+    list<UserId> proxyIds = this->getProxyUserIds();
+    auto it =
+        find(proxyIds.begin(), proxyIds.end(), response->getDestination());
+    if (it != proxyIds.end()) {
+      // This object is a proxy of the destination. push the message to the
+      // outgoing network buffer.
+      this->socketWrapper->write(this->messageFactory->encodeMessage(response));
+    } else {
+      // This is an unsolicited response.
+      LOG(WARNING) << "Network worker received an unsolicited response. The "
+                      "message will be ignored.";
+      return false;
+    }
+
   }
 
   else if (NetworkWorkerCommState::NETWORK_WOKER_COMM_STATE_ERROR ==

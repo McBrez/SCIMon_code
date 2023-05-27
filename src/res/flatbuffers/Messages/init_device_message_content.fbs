@@ -1,4 +1,4 @@
-namespace Messages.Serialization;
+namespace Serialization.Messages;
 
 table InitDeviceMessageContent {
     initPayoad:[uint8];

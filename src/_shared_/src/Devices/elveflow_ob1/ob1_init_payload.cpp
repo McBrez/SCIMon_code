@@ -29,16 +29,16 @@ ChannelConfiguration Ob1InitPayload::getChannelConfig() {
 }
 
 vector<unsigned char> Ob1InitPayload::bytes() {
-  Serialization::Ob1InitPayloadT intermediateObject;
+  Serialization::Devices::Ob1InitPayloadT intermediateObject;
   intermediateObject.channelconfiguration.reset(
-      new Serialization::ChannelConfiguration(
+      new Serialization::Devices::ChannelConfiguration(
           get<0>(this->channelConfig), get<1>(this->channelConfig),
           get<2>(this->channelConfig), get<3>(this->channelConfig)));
   intermediateObject.deviceName = this->deviceName;
 
   flatbuffers::FlatBufferBuilder builder;
   builder.Finish(
-      Serialization::Ob1InitPayload::Pack(builder, &intermediateObject));
+      Serialization::Devices::Ob1InitPayload::Pack(builder, &intermediateObject));
   uint8_t *buffer = builder.GetBufferPointer();
 
   return vector<unsigned char>(buffer, buffer + builder.GetSize());

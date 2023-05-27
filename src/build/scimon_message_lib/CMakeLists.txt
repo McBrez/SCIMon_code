@@ -19,6 +19,7 @@ set(
 
     ${RES_DIR}/flatbuffers/Devices/is_payload.fbs
     ${RES_DIR}/flatbuffers/Devices/generic_read_payload.fbs 
+    ${RES_DIR}/flatbuffers/Devices/status_payload.fbs 
 
     ${RES_DIR}/flatbuffers/Devices/elveflow/ob1/ob1_config_payload.fbs
     ${RES_DIR}/flatbuffers/Devices/elveflow/ob1/ob1_init_payload.fbs
@@ -32,6 +33,7 @@ set(
 set(
     FB_INCLUDE_DIR
     ${RES_DIR}/flatbuffers/Messages
+    ${RES_DIR}/flatbuffers/Devices
     ${RES_DIR}/flatbuffers/Devices/elveflow/ob1
     ${RES_DIR}/flatbuffers/Devices/sciospec/isx3
 )
@@ -46,7 +48,7 @@ set(FLATBUFFERS_FLATC_SCHEMA_EXTRA_ARGS
     # Build the flatbuffer schemas.
 build_flatbuffers(
     "${FB_FILES}"
-    "${RES_DIR}/flatbuffers"
+    "${FB_INCLUDE_DIR}"
     scimon_message_lib_fb_headers
     ""
     "${FB_OUT_DIR}"

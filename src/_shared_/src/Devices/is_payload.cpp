@@ -53,7 +53,7 @@ string IsPayload::serialize() {
 }
 
 vector<unsigned char> IsPayload::bytes() {
-  Serialization::IsPayloadT intermediateObject;
+  Serialization::Devices::IsPayloadT intermediateObject;
   intermediateObject.channelNumber = this->channelNumber;
   intermediateObject.timestamp = this->timestamp;
   vector<double> frequencies;
@@ -63,11 +63,11 @@ vector<unsigned char> IsPayload::bytes() {
   intermediateObject.frequencies = frequencies;
   for (auto impedance : impedances) {
     intermediateObject.impedances.emplace_back(
-        Serialization::complex(impedance.real(), impedance.imag()));
+        Serialization::Devices::complex(impedance.real(), impedance.imag()));
   }
 
   flatbuffers::FlatBufferBuilder builder;
-  builder.Finish(Serialization::IsPayload::Pack(builder, &intermediateObject));
+  builder.Finish(Serialization::Devices::IsPayload::Pack(builder, &intermediateObject));
   uint8_t *buffer = builder.GetBufferPointer();
 
   return vector<unsigned char>(buffer, buffer + builder.GetSize());
