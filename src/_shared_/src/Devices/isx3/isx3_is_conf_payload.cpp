@@ -1,4 +1,5 @@
 // Project includes
+#include <common.hpp>
 #include <isx3_is_conf_payload.hpp>
 
 namespace Devices {
@@ -22,6 +23,10 @@ Isx3IsConfPayload::~Isx3IsConfPayload() {}
 
 vector<unsigned char> Isx3IsConfPayload::bytes() {
   return vector<unsigned char>();
+}
+
+int Isx3IsConfPayload::getMagicNumber() {
+  return MAGIC_NUMBER_ISX3_IS_CONF_PAYLOAD;
 }
 
 } // namespace Devices

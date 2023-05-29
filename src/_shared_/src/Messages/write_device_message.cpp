@@ -17,6 +17,6 @@ AdditionalData WriteDeviceMessage::getAdditionalData() {
 }
 WriteDeviceTopic WriteDeviceMessage::getTopic() { return this->topic; }
 
-string WriteDeviceMessage::serialize() { return ""; }
+string WriteDeviceMessage::serialize() { return "Write Message"; }
 
 } // namespace Messages

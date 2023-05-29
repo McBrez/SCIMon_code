@@ -3,7 +3,6 @@
 
 // Project includes
 #include <device.hpp>
-#include <device_status_message.hpp>
 #include <dummy_message.hpp>
 #include <status_payload.hpp>
 
@@ -46,13 +45,13 @@ bool Device::write(shared_ptr<WriteDeviceMessage> writeMsg) {
 
   else if (WriteDeviceTopic::WRITE_TOPIC_QUERY_STATE == writeMsg->getTopic()) {
     // Put the device state into the message queue.
-    this->messageOut.push(shared_ptr<DeviceMessage>(new DeviceStatusMessage(
+    this->messageOut.push(shared_ptr<DeviceMessage>(new ReadDeviceMessage(
         this->self->getUserId(), writeMsg->getSource(),
         READ_TOPIC_DEVICE_STATUS,
         new StatusPayload(this->getUserId(), this->getDeviceStatus(),
                           this->getProxyUserIds(), this->getDeviceType(),
                           this->getDeviceTypeName()),
-        writeMsg, this->getDeviceStatus())));
+        writeMsg)));
     return true;
   }
 
@@ -80,7 +79,6 @@ list<shared_ptr<DeviceMessage>> Device::read(TimePoint timestamp) {
   } else {
     // Pop the queue to a list and return it.
     list<shared_ptr<DeviceMessage>> retVal;
-
     while (!this->messageOut.empty()) {
       retVal.push_back(this->messageOut.front());
       this->messageOut.pop();

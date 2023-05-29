@@ -1,4 +1,5 @@
 // Project includes
+#include <common.hpp>
 #include <isx3_init_payload.hpp>
 
 // 3rd party includes
@@ -24,11 +25,13 @@ vector<unsigned char> Isx3InitPayload::bytes() {
   intermediateObject.port = this->port;
 
   flatbuffers::FlatBufferBuilder builder;
-  builder.Finish(
-      Serialization::Devices::Isx3InitPayload::Pack(builder, &intermediateObject));
+  builder.Finish(Serialization::Devices::Isx3InitPayload::Pack(
+      builder, &intermediateObject));
   uint8_t *buffer = builder.GetBufferPointer();
 
   return vector<unsigned char>(buffer, buffer + builder.GetSize());
 }
+
+int Isx3InitPayload::getMagicNumber() { return MAGIC_NUMBER_ISX3_INIT_PAYLOAD; }
 
 } // namespace Devices

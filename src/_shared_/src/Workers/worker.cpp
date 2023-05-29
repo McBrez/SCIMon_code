@@ -2,7 +2,6 @@
 #include <easylogging++.h>
 
 // Project includes
-#include <device_status_message.hpp>
 #include <worker.hpp>
 
 namespace Workers {
@@ -38,13 +37,13 @@ bool Worker::write(shared_ptr<WriteDeviceMessage> writeMsg) {
 
   else if (WriteDeviceTopic::WRITE_TOPIC_QUERY_STATE == writeMsg->getTopic()) {
     // Put the worker state into the message queue.
-    this->messageOut.push(shared_ptr<DeviceMessage>(new DeviceStatusMessage(
+    this->messageOut.push(shared_ptr<DeviceMessage>(new ReadDeviceMessage(
         this->self->getUserId(), writeMsg->getSource(),
         READ_TOPIC_DEVICE_STATUS,
         new StatusPayload(this->getUserId(), this->getState(),
                           this->getProxyUserIds(), DeviceType::UNSPECIFIED,
                           "Worker"),
-        writeMsg, this->getState())));
+        writeMsg)));
     return true;
   }
 

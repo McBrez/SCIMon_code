@@ -74,6 +74,7 @@ bool MessageInterface::addProxyId(UserId proxyId) {
   if (this->proxyIds.empty()) {
     // Always add the given id if the list is empty.
     this->proxyIds.push_back(proxyId);
+    return true;
   } else {
     // If the list is not empty, check if the id is already in there.
     auto it = std::find(this->proxyIds.begin(), this->proxyIds.end(), proxyId);

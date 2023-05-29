@@ -13,5 +13,6 @@ enum ReadDeviceTopic : ubyte {
 
 table ReadDeviceMessageContent {
     readDeviceTopic:ReadDeviceTopic;
+    magicNumber:uint;
     readPayload:[uint8];
 }

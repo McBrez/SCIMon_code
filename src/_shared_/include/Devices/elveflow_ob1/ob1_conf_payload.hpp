@@ -18,6 +18,13 @@ public:
    * @brief Destroy the Ob 1 Conf Payload object
    */
   virtual ~Ob1ConfPayload() override;
+
+  /**
+   * @brief Returns the magic number of the payload. This number is used to
+   * identify the payload type when encoding and decoding payload. This number
+   * has to be unique among all payload types.
+   */
+  virtual int getMagicNumber() override;
 };
 } // namespace Devices
 

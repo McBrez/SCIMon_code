@@ -93,6 +93,10 @@ bool WinSocket::listenConnection(std::shared_ptr<bool> doListen, int port) {
     return false;
   }
 
+  DWORD recvTimeout = WIN_SOCKET_DEFAULT_RECV_TIMEOUT;
+  setsockopt(this->connectSocket, SOL_SOCKET, SO_RCVTIMEO, (char *)&recvTimeout,
+             sizeof(DWORD));
+
   closesocket(ListenSocket);
   this->isConnected = true;
   return true;
@@ -161,6 +165,7 @@ bool WinSocket::open(std::string ip, int port) {
   DWORD recvTimeout = WIN_SOCKET_DEFAULT_RECV_TIMEOUT;
   setsockopt(this->connectSocket, SOL_SOCKET, SO_RCVTIMEO, (char *)&recvTimeout,
              sizeof(DWORD));
+
   if (this->connectSocket == INVALID_SOCKET) {
     LOG(ERROR) << "Unable to connect to server!";
     WSACleanup();
@@ -212,8 +217,9 @@ int WinSocket::read(std::vector<unsigned char> &bytes) {
   int iResult = recv(this->connectSocket, recvbuf, this->getBufferLength(), 0);
   if (iResult > 0) {
     LOG(DEBUG) << "Bytes received: " << std::to_string(iResult);
-    bytes = std::vector((unsigned char *)recvbuf,
-                        (unsigned char *)recvbuf + iResult);
+    // Append received bytes to the bytes vector.
+    bytes.insert(bytes.end(), (unsigned char *)recvbuf,
+                 (unsigned char *)recvbuf + iResult);
     return iResult;
 
   } else if (iResult == 0) {

@@ -1,4 +1,5 @@
 // Project includes
+#include <common.hpp>
 #include <isx3_ack_payload.hpp>
 
 namespace Devices {
@@ -15,5 +16,7 @@ Isx3CmdTag Isx3AckPayload::getCmdTag() { return this->cmdTag; }
 vector<unsigned char> Isx3AckPayload::bytes() {
   return vector<unsigned char>();
 }
+
+int Isx3AckPayload::getMagicNumber() { return MAGIC_NUMBER_ISX3_ACK_PAYLOAD; }
 
 } // namespace Devices

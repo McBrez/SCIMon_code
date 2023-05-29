@@ -19,12 +19,15 @@ class PayloadDecoder {
 public:
   PayloadDecoder() {}
 
-  virtual InitPayload *decodeInitPayload(const vector<unsigned char> &data) = 0;
+  virtual InitPayload *decodeInitPayload(const vector<unsigned char> &data,
+                                         int magicNumber = 0) = 0;
 
   virtual ConfigurationPayload *
-  decodeConfigPayload(const vector<unsigned char> &data) = 0;
+  decodeConfigPayload(const vector<unsigned char> &data,
+                      int magicNumber = 0) = 0;
 
-  virtual ReadPayload *decodeReadPayload(const vector<unsigned char> &data) = 0;
+  virtual ReadPayload *decodeReadPayload(const vector<unsigned char> &data,
+                                         int magicNumber = 0) = 0;
 };
 } // namespace Devices
 

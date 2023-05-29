@@ -162,7 +162,7 @@ TEST_CASE("Test communication between the end points") {
   clientDevice->start();
   std::thread serverThread(&MessageDistributor::run, &distributorServer);
   std::thread clientThread(&MessageDistributor::run, &distributorClient);
-  this_thread::sleep_for(chrono::milliseconds(20000));
+  this_thread::sleep_for(chrono::milliseconds(1000));
 
   REQUIRE(clientDevice->returnReceivedVector() ==
           vector<unsigned char>{1, 2, 3});

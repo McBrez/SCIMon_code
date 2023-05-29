@@ -1,4 +1,7 @@
+// Project include
+#include <common.hpp>
 #include <is_configuration.hpp>
+
 
 namespace Devices {
 
@@ -13,5 +16,7 @@ IsConfiguration::~IsConfiguration() {}
 vector<unsigned char> IsConfiguration::bytes() {
   return vector<unsigned char>();
 }
+
+int IsConfiguration::getMagicNumber() { return MAGIC_NUMBER_IS_CONFIGURATION; }
 
 } // namespace Devices

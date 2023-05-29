@@ -6,7 +6,6 @@
 
 // Project includes
 #include <device_isx3.hpp>
-#include <device_status_message.hpp>
 #include <is_configuration.hpp>
 #include <isx3_ack_payload.hpp>
 #include <utilities.hpp>

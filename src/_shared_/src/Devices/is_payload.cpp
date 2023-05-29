@@ -67,10 +67,13 @@ vector<unsigned char> IsPayload::bytes() {
   }
 
   flatbuffers::FlatBufferBuilder builder;
-  builder.Finish(Serialization::Devices::IsPayload::Pack(builder, &intermediateObject));
+  builder.Finish(
+      Serialization::Devices::IsPayload::Pack(builder, &intermediateObject));
   uint8_t *buffer = builder.GetBufferPointer();
 
   return vector<unsigned char>(buffer, buffer + builder.GetSize());
 }
+
+int IsPayload::getMagicNumber() { return MAGIC_NUMBER_IS_PAYLOAD; }
 
 } // namespace Devices

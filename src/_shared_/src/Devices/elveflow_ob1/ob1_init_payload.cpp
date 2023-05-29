@@ -1,5 +1,7 @@
 // Project includes
+#include <common.hpp>
 #include <ob1_init_payload.hpp>
+
 
 // 3rd party includes
 #include <flatbuffers/flatbuffers.h>
@@ -37,11 +39,13 @@ vector<unsigned char> Ob1InitPayload::bytes() {
   intermediateObject.deviceName = this->deviceName;
 
   flatbuffers::FlatBufferBuilder builder;
-  builder.Finish(
-      Serialization::Devices::Ob1InitPayload::Pack(builder, &intermediateObject));
+  builder.Finish(Serialization::Devices::Ob1InitPayload::Pack(
+      builder, &intermediateObject));
   uint8_t *buffer = builder.GetBufferPointer();
 
   return vector<unsigned char>(buffer, buffer + builder.GetSize());
 }
+
+int Ob1InitPayload::getMagicNumber() { return MAGIC_NUMBER_OB1_INIT_PAYLOAD; }
 
 } // namespace Devices

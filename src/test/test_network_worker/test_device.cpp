@@ -27,7 +27,7 @@ bool TestDevice::specificWrite(shared_ptr<WriteDeviceMessage> writeMsg) {
       ReadDeviceTopic::READ_TOPIC_DEVICE_SPECIFIC_MSG,
       new GenericReadPayload(vector<unsigned char>{1, 2, 3}), writeMsg)));
 
-  return false;
+  return true;
 }
 
 list<shared_ptr<DeviceMessage>> TestDevice::specificRead(TimePoint timestamp) {
@@ -43,7 +43,7 @@ bool TestDevice::handleResponse(shared_ptr<ReadDeviceMessage> response) {
       if (statusPayload->getDeviceName() == TestDevice::TEST_DEVICE_TYPE_NAME) {
         LOG(INFO) << "Found the remote test device!";
         this->deviceState = DeviceStatus::OPERATING;
-        this->remoteTestDeviceId = statusPayload->getDeviceId();
+        this->remoteTestDeviceId = response->getSource();
         this->messageOut.push(shared_ptr<DeviceMessage>(new WriteDeviceMessage(
             this->getUserId(), this->remoteTestDeviceId,
             WriteDeviceTopic::WRITE_TOPIC_DEVICE_SPECIFIC)));

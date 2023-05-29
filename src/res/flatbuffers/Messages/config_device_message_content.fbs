@@ -62,5 +62,6 @@ union ConfigurationPayload {
 }
 
 table ConfigDeviceMessageContent {
-    configurationPayload:ConfigurationPayload;
+    magicNumber:uint;
+    configurationPayload:[uint8];
 }

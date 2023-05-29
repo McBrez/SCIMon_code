@@ -169,11 +169,16 @@ bool NetworkWorker::handleResponse(shared_ptr<ReadDeviceMessage> response) {
     if (it != proxyIds.end()) {
       // This object is a proxy of the destination. push the message to the
       // outgoing network buffer.
-      this->socketWrapper->write(this->messageFactory->encodeMessage(response));
+      this->outgoingNetworkMessagesMutex.lock();
+      this->outgoingNetworkMessages.push(response);
+      this->outgoingNetworkMessagesMutex.unlock();
+
+      return true;
     } else {
       // This is an unsolicited response.
       LOG(WARNING) << "Network worker received an unsolicited response. The "
                       "message will be ignored.";
+
       return false;
     }
 
@@ -181,6 +186,7 @@ bool NetworkWorker::handleResponse(shared_ptr<ReadDeviceMessage> response) {
 
   else if (NetworkWorkerCommState::NETWORK_WOKER_COMM_STATE_ERROR ==
            this->commState) {
+
     // Nothing to do while in error state.
     return false;
   }
@@ -385,16 +391,16 @@ void NetworkWorker::commWorker() {
       int readSuccess = this->socketWrapper->read(this->readBuffer);
       if (readSuccess <= 0) {
         // Connection seems to be closed. Set the worker in an invalid state.
-        LOG(INFO) << "Other end point seems to have closed the connection. "
-                     "Closing down socket.";
+        // LOG(INFO) << "Other end point seems to have closed the connection. "
+        //             "Closing down socket.";
         // this->doComm = false;
       }
       shared_ptr<DeviceMessage> msg =
           this->messageFactory->decodeMessage(this->readBuffer);
       // If a message could be decoded, push it to the queue.
       if (msg) {
-        LOG(DEBUG) << "Network worker decoded a message from "
-                   << msg->getSource().id() << ".";
+        LOG(DEBUG) << "Network worker decoded a " << msg->serialize()
+                   << " from " << msg->getSource().id() << ".";
         this->messageOut.push(msg);
       }
 
@@ -406,11 +412,6 @@ void NetworkWorker::commWorker() {
         this->outgoingNetworkMessages.pop();
         int sendSuccess = this->socketWrapper->write(
             this->messageFactory->encodeMessage(message));
-        if (sendSuccess == 0) {
-          LOG(INFO) << "Other end point seems to have closed the connection. "
-                       "Closing down socket.";
-          this->doComm = false;
-        }
       }
       this->outgoingNetworkMessagesMutex.unlock();
     }

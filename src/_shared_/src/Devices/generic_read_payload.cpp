@@ -1,4 +1,5 @@
 // Project includes
+#include <common.hpp>
 #include <generic_read_payload.hpp>
 
 // 3rd party includes
@@ -19,8 +20,8 @@ vector<unsigned char> GenericReadPayload::bytes() {
   intermediateObject.byteVector = this->byteVector;
 
   flatbuffers::FlatBufferBuilder builder;
-  builder.Finish(
-      Serialization::Devices::GenericReadPayload::Pack(builder, &intermediateObject));
+  builder.Finish(Serialization::Devices::GenericReadPayload::Pack(
+      builder, &intermediateObject));
   uint8_t *buffer = builder.GetBufferPointer();
 
   return vector<unsigned char>(buffer, buffer + builder.GetSize());
@@ -28,4 +29,8 @@ vector<unsigned char> GenericReadPayload::bytes() {
 
 vector<unsigned char> GenericReadPayload::getByteVector() {
   return this->byteVector;
+}
+
+int GenericReadPayload::getMagicNumber() {
+  return MAGIC_NUMBER_GENERIC_READ_PAYLOAD;
 }

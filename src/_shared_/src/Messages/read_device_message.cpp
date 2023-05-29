@@ -10,7 +10,7 @@ ReadDeviceMessage::ReadDeviceMessage(
     : DeviceMessage(source, destination), topic(topic),
       readPayload(readPayloadData), originalMessage(originalMessage) {}
 
-string ReadDeviceMessage::serialize() { return ""; }
+string ReadDeviceMessage::serialize() { return "Read Device Message"; }
 
 shared_ptr<ReadPayload> ReadDeviceMessage::getReadPaylod() {
   return this->readPayload;

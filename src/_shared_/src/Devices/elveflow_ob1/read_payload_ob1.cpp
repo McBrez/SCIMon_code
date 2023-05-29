@@ -1,4 +1,5 @@
 // Project includes
+#include <common.hpp>
 #include <read_payload_ob1.hpp>
 
 namespace Devices {
@@ -29,5 +30,7 @@ string ReadPayloadOb1::serialize() {
 vector<unsigned char> ReadPayloadOb1::bytes() {
   return vector<unsigned char>();
 }
+
+int ReadPayloadOb1::getMagicNumber() { return MAGIC_NUMBER_OB1_READ_PAYLOAD; }
 
 } // namespace Devices

@@ -1,4 +1,5 @@
 // Project includes
+#include <common.hpp>
 #include <id_payload.hpp>
 
 namespace Devices {
@@ -11,5 +12,7 @@ IdPayload::IdPayload(string manufacturer, DeviceType deviceType,
 string IdPayload::serialize() { return ""; }
 
 vector<unsigned char> IdPayload::bytes() { return vector<unsigned char>(); }
+
+int IdPayload::getMagicNumber() { return MAGIC_NUMBER_ID_PAYLOAD; }
 
 } // namespace Devices

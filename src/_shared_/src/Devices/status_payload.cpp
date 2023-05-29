@@ -1,4 +1,5 @@
 // Project includes
+#include <common.hpp>
 #include <status_payload.hpp>
 
 // 3rd party includes
@@ -45,7 +46,7 @@ vector<unsigned char> StatusPayload::bytes() {
   intermediateObject.deviceType =
       static_cast<Serialization::Devices::DeviceType>(this->deviceType);
   vector<size_t> proxyIds;
-  for(auto proxyId : this->proxyIds) {
+  for (auto proxyId : this->proxyIds) {
     proxyIds.push_back(proxyId.id());
   }
   intermediateObject.proxyIds = proxyIds;
@@ -61,5 +62,7 @@ vector<unsigned char> StatusPayload::bytes() {
 
   return bufferVect;
 }
+
+int StatusPayload::getMagicNumber() { return MAGIC_NUMBER_STATUS_PAYLOAD; }
 
 } // namespace Devices

@@ -18,6 +18,13 @@ public:
    * @return Byte vector, that depicts the payload.
    */
   virtual vector<unsigned char> bytes() = 0;
+
+  /**
+   * @brief Returns the magic number of the payload. This number is used to
+   * identify the payload type when encoding and decoding payload. This number
+   * has to be unique among all payload types.
+   */
+  virtual int getMagicNumber() = 0;
 };
 } // namespace Devices
 

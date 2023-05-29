@@ -1,5 +1,6 @@
 namespace Serialization.Messages;
 
 table InitDeviceMessageContent {
+    magicNumber:uint;
     initPayoad:[uint8];
 }

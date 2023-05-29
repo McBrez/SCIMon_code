@@ -33,11 +33,20 @@ MessageFactory::MessageFactory(list<shared_ptr<PayloadDecoder>> payloadDecoders)
 shared_ptr<DeviceMessage>
 MessageFactory::decodeMessage(vector<unsigned char> &buffer) {
 
+  // Transform the vector to a list.
   list<unsigned char> bufferList(buffer.begin(), buffer.end());
+
+  // Try to extract a frame.
   vector<unsigned char> *frame = this->extractFrame(bufferList);
+
+  // Has a frame been extracted?
   if (frame == nullptr) {
+    // No frame has been extracted. Return nullptr.
     return shared_ptr<DeviceMessage>();
   }
+
+  // A frame has been extracted. Remove the frame from the original buffer.
+  buffer.erase(buffer.begin(), buffer.begin() + frame->size());
 
   MessageType msgTypeHint;
   return this->decodeFrame(frame, msgTypeHint);
@@ -57,7 +66,8 @@ MessageFactory::encodeMessage(shared_ptr<DeviceMessage> msg) {
   auto writeMsg = dynamic_pointer_cast<WriteDeviceMessage>(msg);
   if (writeMsg) {
     messageType = MessageType::WRITE_DEVICE_MESSAGE;
-    Serialization::Messages::WriteDeviceMessageContentT writeDeviceMessageContent;
+    Serialization::Messages::WriteDeviceMessageContentT
+        writeDeviceMessageContent;
     writeDeviceMessageContent.writeDeviceTopic =
         static_cast<Serialization::Messages::WriteDeviceTopic>(
             writeMsg->getTopic());
@@ -86,7 +96,8 @@ MessageFactory::encodeMessage(shared_ptr<DeviceMessage> msg) {
           intermediatePayload->proxyIds.push_back(proxyId.id());
         }
         handshakeMessageContent.statusPayloads.emplace_back(
-            unique_ptr<Serialization::Devices::StatusPayloadT>(intermediatePayload));
+            unique_ptr<Serialization::Devices::StatusPayloadT>(
+                intermediatePayload));
       }
       intermediateObject.content.Set(handshakeMessageContent);
     }
@@ -95,11 +106,14 @@ MessageFactory::encodeMessage(shared_ptr<DeviceMessage> msg) {
     auto readMsg = dynamic_pointer_cast<ReadDeviceMessage>(msg);
     if (readMsg) {
       messageType = MessageType::READ_DEVICE_MESSAGE;
-      Serialization::Messages::ReadDeviceMessageContentT readDeviceMessageContent;
+      Serialization::Messages::ReadDeviceMessageContentT
+          readDeviceMessageContent;
       readDeviceMessageContent.readDeviceTopic =
-          static_cast<Serialization::Messages::ReadDeviceTopic>(readMsg->getTopic());
+          static_cast<Serialization::Messages::ReadDeviceTopic>(
+              readMsg->getTopic());
+      readDeviceMessageContent.magicNumber =
+          readMsg->getReadPaylod()->getMagicNumber();
       readDeviceMessageContent.readPayload = readMsg->getReadPaylod()->bytes();
-
       intermediateObject.content.Set(readDeviceMessageContent);
     }
 
@@ -107,9 +121,11 @@ MessageFactory::encodeMessage(shared_ptr<DeviceMessage> msg) {
       // ------------------------------------------------ Init device message --
       auto initMsg = dynamic_pointer_cast<InitDeviceMessage>(msg);
       if (initMsg) {
-        Serialization::Messages::InitDeviceMessageContentT initDeviceMessageContent;
+        Serialization::Messages::InitDeviceMessageContentT
+            initDeviceMessageContent;
         initDeviceMessageContent.initPayoad = initMsg->returnPayload()->bytes();
-
+        initDeviceMessageContent.magicNumber =
+            initMsg->returnPayload()->getMagicNumber();
         intermediateObject.content.Set(initDeviceMessageContent);
       }
 
@@ -117,6 +133,13 @@ MessageFactory::encodeMessage(shared_ptr<DeviceMessage> msg) {
         // -------------------------------------------- Config device message --
         auto configMsg = dynamic_pointer_cast<ConfigDeviceMessage>(msg);
         if (configMsg) {
+          Serialization::Messages::ConfigDeviceMessageContentT
+              configDeviceMessageContent;
+          configDeviceMessageContent.configurationPayload =
+              configMsg->getConfiguration()->bytes();
+          configDeviceMessageContent.magicNumber =
+              configMsg->getConfiguration()->getMagicNumber();
+          intermediateObject.content.Set(configDeviceMessageContent);
         }
       }
     }
@@ -124,8 +147,8 @@ MessageFactory::encodeMessage(shared_ptr<DeviceMessage> msg) {
 
   // Serialize the intermediate object.
   flatbuffers::FlatBufferBuilder builder;
-  builder.Finish(
-      Serialization::Messages::DeviceMessage::Pack(builder, &intermediateObject));
+  builder.Finish(Serialization::Messages::DeviceMessage::Pack(
+      builder, &intermediateObject));
   uint8_t *buffer = builder.GetBufferPointer();
 
   // Wrap the buffer with two length bytes an the message type.
@@ -207,36 +230,38 @@ MessageFactory::decodeFrame(vector<unsigned char> *buffer,
   // Get the frame length from the next two bytes.
   short msgLen = *(++bufferIt) + (*(++bufferIt) << 8);
 
-  // Create a new vector that only containt the flatbuffer payload. flatbuffer
+  // Create a new vector that only contains the flatbuffer payload. flatbuffer
   // will take ownership of this pointer.
   vector<unsigned char> *flatbufferPayload =
       new vector<unsigned char>(++bufferIt, buffer->end() - 1);
 
   // Decode the payload according to the message type.
-  const Serialization::Messages::DeviceMessageT *handshakeMsg =
-      Serialization::Messages::GetDeviceMessage(flatbufferPayload->data())->UnPack();
+  const Serialization::Messages::DeviceMessageT *deviceMsg =
+      Serialization::Messages::GetDeviceMessage(flatbufferPayload->data())
+          ->UnPack();
   // ------------------------------------------------------ Handshake message --
   if (MessageType::HANDSHAKE_MESSAGE == messageType) {
     return this->translateMessageContent(
-        UserId(static_cast<size_t>(handshakeMsg->sourceId)),
-        UserId(static_cast<size_t>(handshakeMsg->desinationId)),
-        handshakeMsg->content.AsHandshakeMessageContent());
+        UserId(static_cast<size_t>(deviceMsg->sourceId)),
+        UserId(static_cast<size_t>(deviceMsg->desinationId)),
+        deviceMsg->content.AsHandshakeMessageContent());
   }
   // --------------------------------------------------- Write device message --
   else if (MessageType::WRITE_DEVICE_MESSAGE == messageType) {
     return this->translateMessageContent(
-        UserId(static_cast<size_t>(handshakeMsg->sourceId)),
-        UserId(static_cast<size_t>(handshakeMsg->desinationId)),
-        handshakeMsg->content.AsWriteDeviceMessageContent());
-  } 
-  
+        UserId(static_cast<size_t>(deviceMsg->sourceId)),
+        UserId(static_cast<size_t>(deviceMsg->desinationId)),
+        deviceMsg->content.AsWriteDeviceMessageContent(),
+        deviceMsg->content.AsWriteDeviceMessageContent()->magicNumber);
+  }
+
   // ---------------------------------------------------- Read Device message --
-  else if (MessageType::READ_DEVICE_MESSAGE == messageType)
-  {
+  else if (MessageType::READ_DEVICE_MESSAGE == messageType) {
     return this->translateMessageContent(
-        UserId(static_cast<size_t>(handshakeMsg->sourceId)),
-        UserId(static_cast<size_t>(handshakeMsg->desinationId)),
-        handshakeMsg->content.AsReadDeviceMessageContent());
+        UserId(static_cast<size_t>(deviceMsg->sourceId)),
+        UserId(static_cast<size_t>(deviceMsg->desinationId)),
+        deviceMsg->content.AsReadDeviceMessageContent(),
+        deviceMsg->content.AsReadDeviceMessageContent()->magicNumber);
   }
 
   else {
@@ -273,7 +298,9 @@ shared_ptr<DeviceMessage> MessageFactory::translateMessageContent(
 
 shared_ptr<DeviceMessage> MessageFactory::translateMessageContent(
     UserId sourceId, UserId destinationId,
-    const Serialization::Messages::WriteDeviceMessageContentT *writeDeviceContent) {
+    const Serialization::Messages::WriteDeviceMessageContentT
+        *writeDeviceContent,
+    int magicNumber) {
 
   return shared_ptr<WriteDeviceMessage>(new WriteDeviceMessage(
       sourceId, destinationId,
@@ -282,13 +309,14 @@ shared_ptr<DeviceMessage> MessageFactory::translateMessageContent(
 
 shared_ptr<DeviceMessage> MessageFactory::translateMessageContent(
     UserId sourceId, UserId destinationId,
-    const Serialization::Messages::ReadDeviceMessageContentT *readDeviceContent) {
+    const Serialization::Messages::ReadDeviceMessageContentT *readDeviceContent,
+    int magicNumber) {
 
   // Try to parse the payload.
   ReadPayload *decodedPayload = nullptr;
   for (auto payloadDecoder : this->payloadDecoders) {
-    decodedPayload =
-        payloadDecoder->decodeReadPayload(readDeviceContent->readPayload);
+    decodedPayload = payloadDecoder->decodeReadPayload(
+        readDeviceContent->readPayload, magicNumber);
     if (decodedPayload != nullptr) {
       break;
     }
@@ -307,14 +335,17 @@ shared_ptr<DeviceMessage> MessageFactory::translateMessageContent(
 
 shared_ptr<DeviceMessage> MessageFactory::translateMessageContent(
     UserId sourceId, UserId destinationId,
-    const Serialization::Messages::InitDeviceMessageContentT *initDeviceContent) {
+    const Serialization::Messages::InitDeviceMessageContentT *initDeviceContent,
+    int magicNumber) {
 
   return shared_ptr<DeviceMessage>();
 }
 
 shared_ptr<DeviceMessage> MessageFactory::translateMessageContent(
     UserId sourceId, UserId destinationId,
-    const Serialization::Messages::ConfigDeviceMessageContentT *configDeviceContent) {
+    const Serialization::Messages::ConfigDeviceMessageContentT
+        *configDeviceContent,
+    int magicNumber) {
 
   return shared_ptr<DeviceMessage>();
 }
