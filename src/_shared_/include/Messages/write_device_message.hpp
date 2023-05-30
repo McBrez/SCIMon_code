@@ -6,8 +6,10 @@
 
 // Project includes
 #include <device_message.hpp>
+#include <payload.hpp>
 
 using namespace std;
+using namespace Devices;
 using AdditionalData = variant<bool, int, float, string>;
 
 namespace Messages {
@@ -71,11 +73,19 @@ public:
    */
   virtual string serialize() override;
 
+  /**
+   * @brief Returns the payload held by this object.
+   * @return Pointer to the payload held by this object. (May be nullptr).
+   */
+  shared_ptr<Payload> getPayload();
+
 private:
   /// The additional data.
   AdditionalData additionalData;
   /// The topic of the message.
   WriteDeviceTopic topic;
+  /// May hold a payload.
+  shared_ptr<Payload> payload;
 };
 } // namespace Messages
 

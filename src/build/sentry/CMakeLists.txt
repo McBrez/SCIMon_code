@@ -2,25 +2,6 @@ set(SOURCE_DIR ../../_shared_/src)
 set(INCLUDE_DIR ../../_shared_/include)
 set(3RDPARTY_DIR ../../3rd_party)
 
-include_directories(
-    .
-    ${INCLUDE_DIR}
-    ${INCLUDE_DIR}/Core
-    ${INCLUDE_DIR}/Devices
-    ${INCLUDE_DIR}/Devices/isx3
-    ${INCLUDE_DIR}/Devices/elveflow_ob1
-    ${INCLUDE_DIR}/Messages
-    ${INCLUDE_DIR}/Messages/elveflow_ob1
-    ${INCLUDE_DIR}/Utilities
-    ${INCLUDE_DIR}/Workers
-    ${INCLUDE_DIR}/Workers/sentry_worker
-    ${INCLUDE_DIR}/Workers/network_worker
-
-    ${3RDPARTY_DIR}/easyloggingpp/src
-    ${3RDPARTY_DIR}/catch2/single_include
-    ${3RDPARTY_DIR}/argparse/include/argparse
-    ${3RDPARTY_DIR}/elveflow/x64
-)
 add_executable(sentry
 
     sentry.cpp
@@ -35,7 +16,6 @@ add_executable(sentry
     ${SOURCE_DIR}/Workers/network_worker/network_worker.cpp
     ${SOURCE_DIR}/Workers/network_worker/network_worker_init_payload.cpp
 
-    ${3RDPARTY_DIR}/catch2/single_include/catch2/catch.hpp
     ${3RDPARTY_DIR}/easyloggingpp/src/easylogging++.cc
 
     ${3RDPARTY_DIR}/easyloggingpp/src/easylogging++.h
@@ -43,7 +23,28 @@ add_executable(sentry
     ${3RDPARTY_DIR}/argparse/include/argparse/argparse.hpp
 )
 
-target_link_libraries(sentry scimon_message_lib)
+target_link_libraries(sentry
+    PUBLIC scimon_message
+)
+
+target_include_directories(sentry PUBLIC
+    .
+    ${INCLUDE_DIR}/Workers/sentry_worker
+
+    ${3RDPARTY_DIR}/easyloggingpp/src
+    ${3RDPARTY_DIR}/argparse/include/argparse
+    ${3RDPARTY_DIR}/flatbuffers/include
+)
+
+# Add some defines
+target_compile_definitions(sentry
+    # Undefine a WIN function, that would otherwise clash with flatbuffers.
+    PUBLIC NOMINMAX=1  
+    # Make easylogging++ thread safe
+    PUBLIC ELPP_THREAD_SAFE  
+    PUBLIC ELPP_FORCE_USE_STD_THREAD
+)
+
 
 # Enforce C++20
 set_property(TARGET sentry PROPERTY CXX_STANDARD 20)
@@ -52,14 +53,6 @@ if (WIN32)
     # Disable the "byte" type, introduced by MSVC in newer versions. Otherwise, 
     # it would clash with the std::byte type. 
     add_compile_definitions(_HAS_STD_BYTE=0)
-
-    # Find libraries
-    find_library(LIB_ELVEFLOW Elveflow64 ${3RDPARTY_DIR}/elveflow/x64)
-
-    target_link_libraries(sentry
-        Ws2_32
-        ${LIB_ELVEFLOW}
-    )
 
     # Copy the DLLs to the output directory
     find_library(DLL_ELVEFLOW Elveflow64.dll ${3RDPARTY_DIR}/elveflow/x64)

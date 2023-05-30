@@ -2,12 +2,14 @@
 #include <builtin_payload_decoder.hpp>
 #include <common.hpp>
 #include <generic_read_payload.hpp>
+#include <set_pressure_payload.hpp>
 #include <status_payload.hpp>
 #include <user_id.hpp>
 
 // Generated includes
 #include <generic_read_payload_generated.h>
 #include <is_payload_generated.h>
+#include <set_pressure_payload_generated.h>
 #include <status_payload_generated.h>
 
 using namespace Devices;
@@ -58,6 +60,26 @@ BuiltinPayloadDecoder::decodeReadPayload(const vector<unsigned char> &data,
     return new StatusPayload(deviceId, deviceStatus, proxyIds, deviceType,
                              deviceName);
   } else {
+    return nullptr;
+  }
+}
+
+WritePayload *
+BuiltinPayloadDecoder::decodeWritePayload(const vector<unsigned char> &data,
+                                          int magicNumber) {
+
+  const unsigned char *buffer = data.data();
+
+  if (MAGIC_NUMBER_SET_PRESSURE_PAYLOAD == magicNumber) {
+    const Serialization::Devices::SetPressurePayloadT *setPressurePayload =
+        Serialization::Devices::GetSetPressurePayload(buffer)->UnPack();
+
+    return new SetPressurePayload(
+        setPressurePayload->pressures,
+        static_cast<PressureUnit>(setPressurePayload->pressureUnit));
+  }
+
+  else {
     return nullptr;
   }
 }

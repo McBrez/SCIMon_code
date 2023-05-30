@@ -3,7 +3,6 @@
 
 // Project includes
 #include <device.hpp>
-#include <device_status_message.hpp>
 #include <isx3_init_payload.hpp>
 #include <message_distributor.hpp>
 #include <ob1_init_payload.hpp>
@@ -98,18 +97,17 @@ bool SentryWorker::handleResponse(shared_ptr<ReadDeviceMessage> response) {
     if (ConfigureSubState::CONF_SUB_STATE_INIT == this->configureSubState) {
       // Wait until both devices finished initializing.
       // Check the current response.
-      auto deviceStatusMessage =
-          dynamic_pointer_cast<DeviceStatusMessage>(response);
-      if (!deviceStatusMessage) {
+      auto statusPayload =
+          dynamic_pointer_cast<StatusPayload>(response->getReadPaylod());
+      if (!statusPayload) {
         // Only device status messages are expected right now. Return here.
         return false;
       }
 
       // Is this message from the spectrometer?;
-      if (deviceStatusMessage->getSource() == this->spectrometer) {
+      if (response->getSource() == this->spectrometer) {
         // It is. Check if it finished initializing.
-        if (deviceStatusMessage->getDeviceStatus() ==
-            DeviceStatus::INITIALIZED) {
+        if (statusPayload->getDeviceStatus() == DeviceStatus::INITIALIZED) {
           this->spectrometerState = DeviceStatus::INITIALIZED;
         } else {
           // Device is not yet ready. Resend the query state message.
@@ -121,10 +119,9 @@ bool SentryWorker::handleResponse(shared_ptr<ReadDeviceMessage> response) {
       }
 
       // Message is not from the spectrometer. Is it from the pump controller?
-      else if (deviceStatusMessage->getSource() == this->pumpController) {
+      else if (response->getSource() == this->pumpController) {
         // It is. Check if it finished initializing.
-        if (deviceStatusMessage->getDeviceStatus() ==
-            DeviceStatus::INITIALIZED) {
+        if (statusPayload->getDeviceStatus() == DeviceStatus::INITIALIZED) {
           this->pumpControllerState = DeviceStatus::INITIALIZED;
         } else {
           // Device is not yet ready. Resend the query state message.
@@ -167,17 +164,17 @@ bool SentryWorker::handleResponse(shared_ptr<ReadDeviceMessage> response) {
              this->configureSubState) {
       // Wait until both devices finished configuring.
       // Check the current response.
-      auto deviceStatusMessage =
-          dynamic_pointer_cast<DeviceStatusMessage>(response);
-      if (!deviceStatusMessage) {
+      auto statusPayload =
+          dynamic_pointer_cast<StatusPayload>(response->getReadPaylod());
+      if (!statusPayload) {
         // Only device status messages are expected right now. Return here.
         return false;
       }
 
       // Is this message from the spectrometer?;
-      if (deviceStatusMessage->getSource() == this->spectrometer) {
+      if (response->getSource() == this->spectrometer) {
         // It is. Check if it finished initializing.
-        if (deviceStatusMessage->getDeviceStatus() == DeviceStatus::IDLE) {
+        if (statusPayload->getDeviceStatus() == DeviceStatus::IDLE) {
           this->spectrometerState = DeviceStatus::IDLE;
         } else {
           // Device is not yet ready. Resend the query state message.
@@ -189,9 +186,9 @@ bool SentryWorker::handleResponse(shared_ptr<ReadDeviceMessage> response) {
       }
 
       // Message is not from the spectrometer. Is it from the pump controller?
-      else if (deviceStatusMessage->getSource() == this->pumpController) {
+      else if (response->getSource() == this->pumpController) {
         // It is. Check if it finished initializing.
-        if (deviceStatusMessage->getDeviceStatus() == DeviceStatus::IDLE) {
+        if (statusPayload->getDeviceStatus() == DeviceStatus::IDLE) {
           this->pumpControllerState = DeviceStatus::IDLE;
         } else {
           // Device is not yet ready. Resend the query state message.

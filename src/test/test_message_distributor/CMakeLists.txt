@@ -40,7 +40,6 @@ add_executable(test_message_distributor
     ${INCLUDE_DIR}/Messages/write_device_message.hpp
     ${INCLUDE_DIR}/Messages/config_device_message.hpp
     ${INCLUDE_DIR}/Messages/init_device_message.hpp
-    ${INCLUDE_DIR}/Messages/elveflow_ob1/write_message_ob1.hpp
     ${INCLUDE_DIR}/Workers/worker.hpp
     ${INCLUDE_DIR}/Control/main_control.hpp
     ${INCLUDE_DIR}/Utilities/utilities.hpp
@@ -60,7 +59,6 @@ add_executable(test_message_distributor
     ${SOURCE_DIR}/Messages/write_device_message.cpp
     ${SOURCE_DIR}/Messages/config_device_message.cpp
     ${SOURCE_DIR}/Messages/message_distributor.cpp
-    ${SOURCE_DIR}/Messages/elveflow_ob1/write_message_ob1.cpp
     ${SOURCE_DIR}/Workers/worker.cpp
     ${SOURCE_DIR}/Control/main_control.cpp
     ${SOURCE_DIR}/Utilities/utilities.cpp

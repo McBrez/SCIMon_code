@@ -13,7 +13,6 @@
 #include <ob1_init_payload_generated.h>
 #include <ob1_read_payload_generated.h>
 
-
 using namespace Devices;
 
 InitPayload *
@@ -59,13 +58,24 @@ Ob1PayloadDecoder::decodeReadPayload(const vector<unsigned char> &data,
   const unsigned char *buffer = data.data();
 
   if (MAGIC_NUMBER_OB1_READ_PAYLOAD == magicNumber) {
-    const Serialization::Devices::Ob1ConfPayloadT *ob1Payload =
-        Serialization::Devices::GetOb1ConfPayload(buffer)->UnPack();
+    const Serialization::Devices::Ob1ReadPayloadT *ob1Payload =
+        Serialization::Devices::GetOb1ReadPayload(buffer)->UnPack();
 
-    return new Ob1ConfPayload();
+    Ob1ChannelPressures channelPressures(ob1Payload->ob1Pressures->channel1(),
+                                         ob1Payload->ob1Pressures->channel2(),
+                                         ob1Payload->ob1Pressures->channel3(),
+                                         ob1Payload->ob1Pressures->channel4());
+
+    return new ReadPayloadOb1(channelPressures);
   } else {
     return nullptr;
   }
 
+  return nullptr;
+}
+
+WritePayload *
+Ob1PayloadDecoder::decodeWritePayload(const vector<unsigned char> &data,
+                                      int magicNumber) {
   return nullptr;
 }

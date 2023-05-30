@@ -19,4 +19,6 @@ WriteDeviceTopic WriteDeviceMessage::getTopic() { return this->topic; }
 
 string WriteDeviceMessage::serialize() { return "Write Message"; }
 
+shared_ptr<Payload> WriteDeviceMessage::getPayload() { return this->payload; }
+
 } // namespace Messages

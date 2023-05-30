@@ -7,7 +7,7 @@
 #include <ob1_constants.hpp>
 #include <ob1_init_payload.hpp>
 #include <read_payload_ob1.hpp>
-#include <write_message_ob1.hpp>
+#include <set_pressure_payload.hpp>
 
 namespace Devices {
 
@@ -171,35 +171,26 @@ DeviceOb1Win::specificRead(TimePoint timestamp) {
 
 bool DeviceOb1Win::specificWrite(shared_ptr<WriteDeviceMessage> writeMsg) {
   LOG(DEBUG) << "OB1 received a device specific message.";
-  // Try to cast the message to an OB1 specific message.
-  auto ob1Msg = dynamic_pointer_cast<WriteMessageOb1SetPressure>(writeMsg);
-  if (!ob1Msg) {
-    LOG(ERROR) << "Could not cast message for OB1.";
-    return false;
-  }
 
-  if (Ob1Topic::OB1_TOPIC_SET_PRESSURE == ob1Msg->getOb1Topic()) {
-    // Check if device is in correct state.
-    if (this->deviceState != DeviceStatus::IDLE &&
-        this->deviceState != DeviceStatus::OPERATING) {
-
-      LOG(WARNING) << "Can not set pressure of OB1 in its current state";
-      return false;
-    }
-    map<int, double> pressures = ob1Msg->getSetPressure();
-    for (auto it : pressures) {
+  // Try to cast down the payload.
+  // Is it a set pressure payload?
+  auto setPressurePayload =
+      dynamic_pointer_cast<SetPressurePayload>(writeMsg->getPayload());
+  if (setPressurePayload) {
+    // It is a set pressure message. Set them now.
+    vector<double> setPressures = setPressurePayload->getPressures();
+    for (int i = 0; i > setPressures.size(); i++) {
       int retVal =
-          OB1_Set_Press(this->ob1Id, it.first, it.second, this->calibration,
+          OB1_Set_Press(this->ob1Id, i + 1, setPressures[i], this->calibration,
                         Constants::Ob1CalibrationArrayLen);
-      this->cachedPressures[it.first] = it.second;
-      LOG(DEBUG) << "Set pressure " << it.second << " on channel " << it.first
-                 << ", with return value " << retVal;
+      this->cachedPressures[i + 1] = setPressures[i];
+      LOG(DEBUG) << "Set pressure " << setPressures[i] << " on channel "
+                 << i + 1 << ", with return value " << retVal;
     }
-    return true;
-  }
 
-  else {
-    LOG(ERROR) << "Got invalid OB1 topic.";
+    return true;
+  } else {
+    // Unsupported write message received.
     return false;
   }
 }

@@ -7,6 +7,8 @@ struct Ob1Pressures {
     channel4:double;
 }
 
-table Ob1Payload {
+table Ob1ReadPayload {
     ob1Pressures:Ob1Pressures;
 }
+
+root_type Ob1ReadPayload;

@@ -18,4 +18,5 @@ enum WriteDeviceTopic:byte {
 table WriteDeviceMessageContent {
     magicNumber:uint;
     writeDeviceTopic:WriteDeviceTopic;
+    payload:[uint8];
 }

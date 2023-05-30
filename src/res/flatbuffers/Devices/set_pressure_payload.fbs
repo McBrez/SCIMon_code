@@ -1,0 +1,13 @@
+namespace Serialization.Devices;
+
+enum PressureUnit : byte{
+    PSI = 0,
+    BAR = 1
+}
+
+table SetPressurePayload {
+    pressures:[double];
+    pressureUnit:PressureUnit;
+}
+
+root_type SetPressurePayload;

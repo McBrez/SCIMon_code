@@ -20,6 +20,7 @@ set(
     ${RES_DIR}/flatbuffers/Devices/is_payload.fbs
     ${RES_DIR}/flatbuffers/Devices/generic_read_payload.fbs 
     ${RES_DIR}/flatbuffers/Devices/status_payload.fbs 
+    ${RES_DIR}/flatbuffers/Devices/set_pressure_payload.fbs 
 
     ${RES_DIR}/flatbuffers/Devices/elveflow/ob1/ob1_config_payload.fbs
     ${RES_DIR}/flatbuffers/Devices/elveflow/ob1/ob1_init_payload.fbs
@@ -45,7 +46,7 @@ set(FB_OUT_DIR ${RES_DIR}/flatbuffers)
 # Instruct flatbuffers to generate object oriented API.
 set(FLATBUFFERS_FLATC_SCHEMA_EXTRA_ARGS 
     ${FLATBUFFERS_FLATC_SCHEMA_EXTRA_ARGS} --gen-object-api)
-    # Build the flatbuffer schemas.
+# Build the flatbuffer schemas.
 build_flatbuffers(
     "${FB_FILES}"
     "${FB_INCLUDE_DIR}"
@@ -89,7 +90,6 @@ target_sources(scimon_message PUBLIC
     ${INCLUDE_DIR}/Messages/user_id.hpp
     ${INCLUDE_DIR}/Messages/dummy_message.hpp
     ${INCLUDE_DIR}/Messages/message_distributor.hpp
-    ${INCLUDE_DIR}/Messages/elveflow_ob1/write_message_ob1.hpp
     ${INCLUDE_DIR}/Devices/device.hpp
     ${INCLUDE_DIR}/Devices/dummy_device.hpp
     ${INCLUDE_DIR}/Devices/payload.hpp
@@ -101,6 +101,8 @@ target_sources(scimon_message PUBLIC
     ${INCLUDE_DIR}/Devices/is_configuration.hpp
     ${INCLUDE_DIR}/Devices/is_payload.hpp
     ${INCLUDE_DIR}/Devices/id_payload.hpp
+    ${INCLUDE_DIR}/Devices/write_payload.hpp
+    ${INCLUDE_DIR}/Devices/set_pressure_payload.hpp
     ${INCLUDE_DIR}/Devices/payload_decoder.hpp
     ${INCLUDE_DIR}/Devices/builtin_payload_decoder.hpp
     ${INCLUDE_DIR}/Workers/worker.hpp
@@ -136,7 +138,6 @@ target_sources(scimon_message PUBLIC
     ${SOURCE_DIR}/Messages/init_device_message.cpp
     ${SOURCE_DIR}/Messages/user_id.cpp
     ${SOURCE_DIR}/Messages/dummy_message.cpp
-    ${SOURCE_DIR}/Messages/elveflow_ob1/write_message_ob1.cpp
     ${SOURCE_DIR}/Devices/device.cpp
     ${SOURCE_DIR}/Devices/dummy_device.cpp
     ${SOURCE_DIR}/Devices/status_payload.cpp
@@ -146,6 +147,8 @@ target_sources(scimon_message PUBLIC
     ${SOURCE_DIR}/Devices/read_payload.cpp
     ${SOURCE_DIR}/Devices/generic_read_payload.cpp
     ${SOURCE_DIR}/Devices/configuration_payload.cpp
+    ${SOURCE_DIR}/Devices/write_payload.cpp
+    ${SOURCE_DIR}/Devices/set_pressure_payload.cpp
     ${SOURCE_DIR}/Devices/builtin_payload_decoder.cpp
     ${SOURCE_DIR}/Workers/worker.cpp
     ${SOURCE_DIR}/Workers/network_worker/network_worker.cpp

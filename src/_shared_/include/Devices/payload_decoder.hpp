@@ -9,6 +9,7 @@
 #include <configuration_payload.hpp>
 #include <init_payload.hpp>
 #include <read_payload.hpp>
+#include <write_payload.hpp>
 
 namespace Devices {
 /**
@@ -28,6 +29,9 @@ public:
 
   virtual ReadPayload *decodeReadPayload(const vector<unsigned char> &data,
                                          int magicNumber = 0) = 0;
+
+  virtual WritePayload *decodeWritePayload(const vector<unsigned char> &data,
+                                           int magicNumber = 0) = 0;
 };
 } // namespace Devices
 

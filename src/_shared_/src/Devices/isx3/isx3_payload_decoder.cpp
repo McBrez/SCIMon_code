@@ -30,3 +30,9 @@ Isx3PayloadDecoder::decodeReadPayload(const vector<unsigned char> &data,
                                       int magicNumber) {
   return nullptr;
 }
+
+WritePayload *
+Isx3PayloadDecoder::decodeWritePayload(const vector<unsigned char> &data,
+                                       int magicNumber) {
+  return nullptr;
+}
