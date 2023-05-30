@@ -23,7 +23,6 @@ add_executable(test_message_factory
     ${INCLUDE_DIR}/Messages/write_device_message.hpp
     ${INCLUDE_DIR}/Messages/config_device_message.hpp
     ${INCLUDE_DIR}/Messages/init_device_message.hpp
-    ${INCLUDE_DIR}/Messages/device_status_message.hpp
     ${INCLUDE_DIR}/Messages/read_device_message.hpp
     ${INCLUDE_DIR}/Messages/user_id.hpp
     ${INCLUDE_DIR}/Messages/dummy_message.hpp
@@ -43,7 +42,6 @@ add_executable(test_message_factory
     ${SOURCE_DIR}/Messages/read_device_message.cpp
     ${SOURCE_DIR}/Messages/config_device_message.cpp
     ${SOURCE_DIR}/Messages/init_device_message.cpp
-    ${SOURCE_DIR}/Messages/device_status_message.cpp
     ${SOURCE_DIR}/Messages/user_id.cpp
     ${SOURCE_DIR}/Messages/dummy_message.cpp
     ${SOURCE_DIR}/Devices/device.cpp

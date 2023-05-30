@@ -3,12 +3,16 @@
 #include <ob1_conf_payload.hpp>
 #include <ob1_init_payload.hpp>
 #include <ob1_payload_decoder.hpp>
+#include <read_payload_ob1.hpp>
 
 // 3rd party includes
 #include <flatbuffers/flatbuffers.h>
 
 // Generated includes
+#include <ob1_config_payload_generated.h>
 #include <ob1_init_payload_generated.h>
+#include <ob1_read_payload_generated.h>
+
 
 using namespace Devices;
 
@@ -37,11 +41,31 @@ Ob1PayloadDecoder::decodeInitPayload(const vector<unsigned char> &data,
 ConfigurationPayload *
 Ob1PayloadDecoder::decodeConfigPayload(const vector<unsigned char> &data,
                                        int magicNumber) {
-  return nullptr;
+  const unsigned char *buffer = data.data();
+
+  if (MAGIC_NUMBER_OB1_CONF_PAYLOAD == magicNumber) {
+    const Serialization::Devices::Ob1ConfPayloadT *ob1Payload =
+        Serialization::Devices::GetOb1ConfPayload(buffer)->UnPack();
+
+    return new Ob1ConfPayload();
+  } else {
+    return nullptr;
+  }
 }
 
 ReadPayload *
 Ob1PayloadDecoder::decodeReadPayload(const vector<unsigned char> &data,
                                      int magicNumber) {
+  const unsigned char *buffer = data.data();
+
+  if (MAGIC_NUMBER_OB1_READ_PAYLOAD == magicNumber) {
+    const Serialization::Devices::Ob1ConfPayloadT *ob1Payload =
+        Serialization::Devices::GetOb1ConfPayload(buffer)->UnPack();
+
+    return new Ob1ConfPayload();
+  } else {
+    return nullptr;
+  }
+
   return nullptr;
 }

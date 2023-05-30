@@ -23,7 +23,6 @@ add_executable(test_epix
     ${INCLUDE_DIR}/Messages/write_device_message.hpp
     ${INCLUDE_DIR}/Messages/config_device_message.hpp
     ${INCLUDE_DIR}/Messages/init_device_message.hpp   
-    ${INCLUDE_DIR}/Messages/device_status_message.hpp
     ${INCLUDE_DIR}/Messages/dummy_message.hpp
     ${INCLUDE_DIR}/Messages/message_interface.hpp
     ${INCLUDE_DIR}/Messages/user_id.hpp
@@ -50,7 +49,6 @@ add_executable(test_epix
     ${SOURCE_DIR}/Messages/device_message.cpp
     ${SOURCE_DIR}/Messages/config_device_message.cpp
     ${SOURCE_DIR}/Messages/read_device_message.cpp
-    ${SOURCE_DIR}/Messages/device_status_message.cpp
     ${SOURCE_DIR}/Messages/init_device_message.cpp
     ${SOURCE_DIR}/Messages/write_device_message.cpp
     ${SOURCE_DIR}/Messages/dummy_message.cpp

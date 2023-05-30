@@ -1,1 +1,6 @@
 namespace Serialization.Devices;
+
+table Ob1ConfPayload {
+}
+
+root_type Ob1ConfPayload;

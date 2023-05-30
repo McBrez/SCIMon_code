@@ -1,1 +1,12 @@
 namespace Serialization.Devices;
+
+struct Ob1Pressures {
+    channel1:double;
+    channel2:double;
+    channel3:double;
+    channel4:double;
+}
+
+table Ob1Payload {
+    ob1Pressures:Ob1Pressures;
+}
