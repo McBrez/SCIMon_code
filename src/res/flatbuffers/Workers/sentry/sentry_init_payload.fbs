@@ -1,0 +1,15 @@
+namespace Serialization.Workers;
+
+table NestedPayload {
+    magicNumber:uint;
+    payload:[uint8];
+}
+
+table SentryInitPayload {
+    pumpControllerInitPayload:NestedPayload;
+    pumpControllerConfPayload:NestedPayload;
+    impedanceSpectrometerInitPayload:NestedPayload;
+    impedanceSpectrometerConfPayload:NestedPayload;
+}
+
+root_type SentryInitPayload;

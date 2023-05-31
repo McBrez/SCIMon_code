@@ -68,7 +68,7 @@ add_executable(test_message_distributor
 
     ${3RDPARTY_DIR}/easyloggingpp/src/easylogging++.h
     ${3RDPARTY_DIR}/ftd2xx/include/ftd2xx.h
-    ${3RDPARTY_DIR}/elveflow/x64/Elveflow64.h
+    ${3RDPARTY_DIR}/elveflow/x64/Elveflow64_shim.h
 )
 
 # Enforce C++20

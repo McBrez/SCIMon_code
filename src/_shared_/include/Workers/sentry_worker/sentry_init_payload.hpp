@@ -6,10 +6,8 @@
 #include <string>
 
 // Project includes
+#include <configuration_payload.hpp>
 #include <init_payload.hpp>
-#include <isx3_init_payload.hpp>
-#include <isx3_is_conf_payload.hpp>
-#include <ob1_init_payload.hpp>
 #include <utilities.hpp>
 
 using namespace std;
@@ -19,10 +17,10 @@ using namespace Utilities;
 namespace Workers {
 class SentryInitPayload : public InitPayload {
 public:
-  SentryInitPayload(Isx3InitPayload *isx3InitPayload,
-                    Isx3IsConfPayload *isx3IsConfigPayload,
-                    Ob1InitPayload *ob1InitPayload, bool autoStart,
-                    Duration onTime, Duration offTime);
+  SentryInitPayload(InitPayload *isInitPayload,
+                    ConfigurationPayload *isConfigPayload,
+                    InitPayload *pumpControllerInitPayload,
+                    ConfigurationPayload *pumpControllerConfigPayload);
 
   /**
    * @brief Serializes the payload into a human readable string.
@@ -43,19 +41,15 @@ public:
    */
   virtual int getMagicNumber() override;
 
-  // ISX3 Init data
-  const shared_ptr<Isx3InitPayload> isx3InitPayload;
+  // Impedance spectrometer init data
+  const shared_ptr<InitPayload> isSpecInitPayload;
+  // Impedance spectrometer config data
+  const shared_ptr<ConfigurationPayload> isSpecConfPayload;
 
-  // ISX3 Config data
-  const shared_ptr<Isx3IsConfPayload> isx3IsConfigPayload;
-
-  // OB1 Init data
-  const shared_ptr<Ob1InitPayload> ob1InitPayload;
-
-  // etc
-  const bool autoStart;
-  Duration onTime;
-  Duration offTime;
+  // Pump controller init data.
+  const shared_ptr<InitPayload> pumpControllerInitPayload;
+  // Pump controller config data
+  const shared_ptr<ConfigurationPayload> pumpControllerConfigPayload;
 };
 } // namespace Workers
 

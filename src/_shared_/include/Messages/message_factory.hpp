@@ -87,6 +87,15 @@ public:
    */
   string getVersion() const;
 
+  ReadPayload *decodeReadPayload(vector<unsigned char> payload,
+                                 int magicNumber);
+  WritePayload *decodeWritePayload(vector<unsigned char> payload,
+                                   int magicNumber);
+  InitPayload *decodeInitPayload(vector<unsigned char> payload,
+                                 int magicNumber);
+  ConfigurationPayload *
+  decodeConfigurationPayload(vector<unsigned char> payload, int magicNumber);
+
 private:
   /**
    * @brief Checks if the given byte is an message type tag.

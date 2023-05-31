@@ -1,6 +1,6 @@
 // 3rd party includes
 #define CATCH_CONFIG_MAIN
-#include <Elveflow64.h>
+#include <Elveflow64_shim.h>
 #include <catch2/catch.hpp>
 #include <easylogging++.h>
 
@@ -10,7 +10,6 @@
 #include <ob1_init_payload.hpp>
 #include <read_payload_ob1.hpp>
 #include <status_payload.hpp>
-#include <write_message_ob1.hpp>
 
 using namespace Devices;
 using namespace Messages;
@@ -85,8 +84,7 @@ TEST_CASE("Testing the implementation of the ElveFlow OB1 device",
     }
     if (true) {
       bool startMessageSuccess = dut->write(shared_ptr<WriteDeviceMessage>(
-          new WriteDeviceMessage(dut, dut,
-                                 WriteDeviceTopic::WRITE_TOPIC_RUN)));
+          new WriteDeviceMessage(dut, dut, WriteDeviceTopic::WRITE_TOPIC_RUN)));
       REQUIRE(startMessageSuccess);
       shared_ptr<WriteDeviceMessage> setPressureMsg(
           new WriteMessageOb1SetPressure(

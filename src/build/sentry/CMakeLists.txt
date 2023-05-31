@@ -6,13 +6,7 @@ add_executable(sentry
 
     sentry.cpp
     
-    ${INCLUDE_DIR}/Workers/sentry_worker/sentry_worker.hpp
-    ${INCLUDE_DIR}/Workers/sentry_worker/sentry_init_payload.hpp
-
-    ${SOURCE_DIR}/Workers/sentry_worker/sentry_worker.cpp
-    ${SOURCE_DIR}/Workers/sentry_worker/sentry_init_payload.cpp
-
- #   ${3RDPARTY_DIR}/argparse/include/argparse/argparse.hpp
+    ${3RDPARTY_DIR}/argparse/include/argparse/argparse.hpp
 )
 
 target_link_libraries(sentry
@@ -23,7 +17,7 @@ target_include_directories(sentry PUBLIC
     .
     ${INCLUDE_DIR}/Workers/sentry_worker
 
-#    ${3RDPARTY_DIR}/argparse/include/argparse
+    ${3RDPARTY_DIR}/argparse/include/argparse
 )
 
 # Add some defines

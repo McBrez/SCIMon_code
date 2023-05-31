@@ -1,0 +1,6 @@
+namespace Serialization.Workers;
+
+table SentryConfigPayload {
+}
+
+root_type SentryConfigPayload;

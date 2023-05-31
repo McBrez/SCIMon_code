@@ -313,15 +313,8 @@ shared_ptr<DeviceMessage> MessageFactory::translateMessageContent(
     int magicNumber) {
 
   // Try to parse the payload.
-  ReadPayload *decodedPayload = nullptr;
-  for (auto payloadDecoder : this->payloadDecoders) {
-    decodedPayload = payloadDecoder->decodeReadPayload(
-        readDeviceContent->readPayload, magicNumber);
-    if (decodedPayload != nullptr) {
-      break;
-    }
-  }
-
+  ReadPayload *decodedPayload =
+      this->decodeReadPayload(readDeviceContent->readPayload, magicNumber);
   if (!decodedPayload) {
     // Was not able to decode a read payload from the buffer.
     return shared_ptr<DeviceMessage>();
@@ -333,12 +326,76 @@ shared_ptr<DeviceMessage> MessageFactory::translateMessageContent(
       decodedPayload, nullptr));
 }
 
+ReadPayload *MessageFactory::decodeReadPayload(vector<unsigned char> payload,
+                                               int magicNumber) {
+  ReadPayload *decodedPayload = nullptr;
+  for (auto payloadDecoder : this->payloadDecoders) {
+    decodedPayload = payloadDecoder->decodeReadPayload(payload, magicNumber);
+    if (decodedPayload != nullptr) {
+      break;
+    }
+  }
+
+  return decodedPayload;
+}
+
+WritePayload *MessageFactory::decodeWritePayload(vector<unsigned char> payload,
+                                                 int magicNumber) {
+
+  WritePayload *decodedPayload = nullptr;
+  for (auto payloadDecoder : this->payloadDecoders) {
+    decodedPayload = payloadDecoder->decodeWritePayload(payload, magicNumber);
+    if (decodedPayload != nullptr) {
+      break;
+    }
+  }
+
+  return decodedPayload;
+}
+
+InitPayload *MessageFactory::decodeInitPayload(vector<unsigned char> payload,
+                                               int magicNumber) {
+
+  InitPayload *decodedPayload = nullptr;
+  for (auto payloadDecoder : this->payloadDecoders) {
+    decodedPayload = payloadDecoder->decodeInitPayload(payload, magicNumber);
+    if (decodedPayload != nullptr) {
+      break;
+    }
+  }
+
+  return decodedPayload;
+}
+ConfigurationPayload *
+MessageFactory::decodeConfigurationPayload(vector<unsigned char> payload,
+                                           int magicNumber) {
+
+  ConfigurationPayload *decodedPayload = nullptr;
+  for (auto payloadDecoder : this->payloadDecoders) {
+    decodedPayload = payloadDecoder->decodeConfigPayload(payload, magicNumber);
+    if (decodedPayload != nullptr) {
+      break;
+    }
+  }
+
+  return decodedPayload;
+}
+
 shared_ptr<DeviceMessage> MessageFactory::translateMessageContent(
     UserId sourceId, UserId destinationId,
     const Serialization::Messages::InitDeviceMessageContentT *initDeviceContent,
     int magicNumber) {
 
-  return shared_ptr<DeviceMessage>();
+  // Try to parse the payload.
+  InitPayload *decodedPayload =
+      this->decodeInitPayload(initDeviceContent->initPayoad, magicNumber);
+  if (!decodedPayload) {
+    // Was not able to decode a read payload from the buffer.
+    return shared_ptr<DeviceMessage>();
+  }
+
+  return shared_ptr<InitDeviceMessage>(
+      new InitDeviceMessage(sourceId, destinationId, decodedPayload));
 }
 
 shared_ptr<DeviceMessage> MessageFactory::translateMessageContent(

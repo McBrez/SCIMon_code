@@ -2,12 +2,12 @@
 #include <easylogging++.h>
 
 // Project includes
+#include <common.hpp>
 #include <device.hpp>
 #include <isx3_init_payload.hpp>
 #include <message_distributor.hpp>
 #include <ob1_init_payload.hpp>
 #include <sentry_worker.hpp>
-#include <common.hpp>
 
 namespace Workers {
 SentryWorker::SentryWorker()
@@ -42,8 +42,8 @@ void SentryWorker::work(TimePoint timestamp) {
                                  WriteDeviceTopic::WRITE_TOPIC_STOP)));
 
       // ... and wait for a specified period.
-      this_thread::sleep_until(chrono::system_clock::now() +
-                               this->initPayload->offTime);
+      // this_thread::sleep_until(chrono::system_clock::now()
+      // +this->initPayload->offTime);
       this->threadWaiting = false;
     } else {
       LOG(INFO) << "Disabling pump and activating impedance measurement.";
@@ -60,7 +60,7 @@ void SentryWorker::work(TimePoint timestamp) {
 
       // Print out measurement results until on time passes.
       TimePoint now = chrono::system_clock::now();
-      TimePoint until = now + this->initPayload->onTime;
+      TimePoint until;
       while (now < until) {
 
         this->isPayloadCacheMutex.lock();
@@ -141,11 +141,13 @@ bool SentryWorker::handleResponse(shared_ptr<ReadDeviceMessage> response) {
       // Check if both devices are now initialized.
       if (this->spectrometerState == DeviceStatus::INITIALIZED &&
           this->pumpControllerState == DeviceStatus::INITIALIZED) {
-        // Both devices are initialized. Send the configuration message to both
-        // and transition to configure state.
+// Both devices are initialized. Send the configuration message to both
+// and transition to configure state.
+#if 0
         this->messageOut.push(shared_ptr<DeviceMessage>(
             new ConfigDeviceMessage(this->self->getUserId(), this->spectrometer,
                                     this->initPayload->isx3IsConfigPayload)));
+#endif
         this->messageOut.push(shared_ptr<DeviceMessage>(new ConfigDeviceMessage(
             this->self->getUserId(), this->pumpController, nullptr)));
         // Also send them state query messages. So that this method keeps
@@ -218,14 +220,11 @@ bool SentryWorker::handleResponse(shared_ptr<ReadDeviceMessage> response) {
             WriteDeviceTopic::WRITE_TOPIC_RUN)));
 
         this->configureSubState = ConfigureSubState::CONF_SUB_STATE_STARTED;
-        if (this->initPayload->autoStart) {
-          this->workerState = DeviceStatus::OPERATING;
-          this->runThread = true;
-          this->workerThread.reset(new thread(&SentryWorker::work, this,
-                                              chrono::system_clock::now()));
-        } else {
-          this->workerState = DeviceStatus::IDLE;
-        }
+
+        this->workerState = DeviceStatus::OPERATING;
+        this->runThread = true;
+        this->workerThread.reset(
+            new thread(&SentryWorker::work, this, chrono::system_clock::now()));
       }
     }
 
@@ -314,14 +313,15 @@ bool SentryWorker::configure(shared_ptr<ConfigurationPayload> configPayload) {
   this->spectrometer = spectrometerTemp;
   this->pumpController = pumpControllerTemp;
 
-  // Send an init message to them.
+// Send an init message to them.
+#if 0
   this->messageOut.push(shared_ptr<DeviceMessage>(
       new InitDeviceMessage(this->self->getUserId(), spectrometer,
-                            this->initPayload->isx3InitPayload)));
+                            this->initPayload)));
   this->messageOut.push(shared_ptr<DeviceMessage>(
       new InitDeviceMessage(this->self->getUserId(), pumpController,
                             this->initPayload->ob1InitPayload)));
-
+#endif
   // Immediatelly send a state query message to the devices.
   this->messageOut.push(shared_ptr<DeviceMessage>(
       new WriteDeviceMessage(this->self->getUserId(), spectrometer,
@@ -344,6 +344,6 @@ bool SentryWorker::write(shared_ptr<HandshakeMessage> writeMsg) {
   return false;
 }
 
-  string SentryWorker::getWorkerName() {return SENTRY_WORKER_TYPE_NAME;}
+string SentryWorker::getWorkerName() { return SENTRY_WORKER_TYPE_NAME; }
 
 } // namespace Workers

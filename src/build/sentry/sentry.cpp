@@ -1,14 +1,20 @@
 // 3rd party includes
-//#include <argparse.hpp>
+#include <Elveflow64_shim.h>
+#include <argparse.hpp>
 #include <easylogging++.h>
 
 // Project includes
+#include <common.hpp>
 #include <device_isx3.hpp>
 #include <device_ob1_win.hpp>
+#include <isx3_payload_decoder.hpp>
 #include <message_distributor.hpp>
 #include <network_worker.hpp>
+#include <ob1_payload_decoder.hpp>
 #include <sentry_init_payload.hpp>
+#include <sentry_payload_decoder.hpp>
 #include <sentry_worker.hpp>
+
 
 INITIALIZE_EASYLOGGINGPP
 
@@ -20,13 +26,16 @@ using namespace Workers;
 
 int main(int argc, char *argv[]) {
   LOG(INFO) << "Starting up sentry.";
-/*
   // Set up the command line parser.
   argparse::ArgumentParser program("SCIMon Sentry");
-  program.add_argument("--is_config")
-      .default_value(std::string{""})
-      .help("Path to the impedance spectrum configuration file.");
+  program.add_argument("--port")
+      .default_value(NetworkWorkerDefaultPort)
+      .help("The port to which the network worker listens for connections.");
+  program.add_argument("--interval")
+      .default_value(DEFAULT_MESSAGE_DISTRIBUTOR_LOOP_INTERVAL)
+      .help("The message distributor interval.");
 
+  // Try to parse the command line.
   try {
     program.parse_args(argc, argv);
   } catch (const std::runtime_error &err) {
@@ -34,49 +43,37 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  // Parse the commandline.
-  LOG(INFO) << program.get<string>("--is_config");
-*/
   // Create the distributor.
-  MessageDistributor messageDistributor(
-      DEFAULT_MESSAGE_DISTRIBUTOR_LOOP_INTERVAL);
+  MessageDistributor messageDistributor(program.get<int>("--interval"));
+  // Initialize the message factory.
+  MessageFactory::createInstace(
+      {shared_ptr<PayloadDecoder>(new Ob1PayloadDecoder()),
+       shared_ptr<PayloadDecoder>(new Isx3PayloadDecoder()),
+       shared_ptr<PayloadDecoder>(new SentryPayloadDecoder())});
 
   // Create Devices and add them to the distributor immediatelly.
   messageDistributor.addParticipant(
       shared_ptr<MessageInterface>(new DeviceIsx3()));
   messageDistributor.addParticipant(
       shared_ptr<MessageInterface>(new DeviceOb1Win()));
-  messageDistributor.addParticipant(
-      shared_ptr<MessageInterface>(new NetworkWorker()));
+  shared_ptr<MessageInterface> networkWorker(new NetworkWorker());
+  messageDistributor.addParticipant(networkWorker);
 
-  // Create the worker and add it to the distributor.
+  // Create the master worker and add it to the distributor.
   shared_ptr<MessageInterface> sentryWorker(new SentryWorker());
   messageDistributor.addParticipant(sentryWorker);
-  // Queue up messages for the worker, so that it starts interacting with the
-  // devices immediatelly.
+
+  // Immediatelly queue up messages for the network worker, so that it starts
+  // listening.
   messageDistributor.takeMessage(
       shared_ptr<DeviceMessage>(new InitDeviceMessage(
-          UserId(), sentryWorker->getUserId(),
-          new SentryInitPayload(
-              new Isx3InitPayload("128.131.197.41", 8888),
-              new Isx3IsConfPayload(
-                  10.0, 1000.0, 10, 0,
-                  map<ChannelFunction, int>({{CHAN_FUNC_CP, 10},
-                                             {CHAN_FUNC_RP, 10},
-                                             {CHAN_FUNC_WS, 11},
-                                             {CHAN_FUNC_WP, 11}}),
-                  IsScale::LINEAR_SCALE, MEAS_CONFIG_RANGE_10MA,
-                  MEAS_CONFIG_CHANNEL_EXT_PORT_2, MEAS_CONFIG_4_POINT, 1.0,
-                  1.0),
-              new Ob1InitPayload("01FB0FA3",
-                                 make_tuple(Z_regulator_type__0_2000_mbar,
-                                            Z_regulator_type_none,
-                                            Z_regulator_type_none,
-                                            Z_regulator_type_none)),
-
-              true, chrono::seconds(5), chrono::seconds(10)))));
+          UserId(), networkWorker->getUserId(),
+          new NetworkWorkerInitPayload(
+              NetworkWorkerOperationMode::NETWORK_WORKER_OP_MODE_SERVER, "",
+              program.get<int>("--port")))));
   messageDistributor.takeMessage(shared_ptr<DeviceMessage>(
-      new ConfigDeviceMessage(UserId(), sentryWorker->getUserId(), nullptr)));
+      new WriteDeviceMessage(UserId(), networkWorker->getUserId(),
+                             WriteDeviceTopic::WRITE_TOPIC_RUN)));
 
   // Start the message distribution.
   messageDistributor.run();

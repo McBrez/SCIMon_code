@@ -29,6 +29,9 @@ set(
     ${RES_DIR}/flatbuffers/Devices/sciospec/isx3/isx3_config_payload.fbs
     ${RES_DIR}/flatbuffers/Devices/sciospec/isx3/isx3_init_payload.fbs
     ${RES_DIR}/flatbuffers/Devices/sciospec/isx3/isx3_read_payload.fbs
+
+    ${RES_DIR}/flatbuffers/Workers/sentry/sentry_init_payload.fbs
+    ${RES_DIR}/flatbuffers/Workers/sentry/sentry_config_payload.fbs
 )
 # Set include directories for the schema compiler.
 set(
@@ -37,6 +40,7 @@ set(
     ${RES_DIR}/flatbuffers/Devices
     ${RES_DIR}/flatbuffers/Devices/elveflow/ob1
     ${RES_DIR}/flatbuffers/Devices/sciospec/isx3
+    ${RES_DIR}/flatbuffers/Workers/sentry
 )
 # Construct path to the flatbuffer output files.
 list(
@@ -68,6 +72,7 @@ target_include_directories(scimon_message PUBLIC
     ${INCLUDE_DIR}/Messages/elveflow_ob1
     ${INCLUDE_DIR}/Workers
     ${INCLUDE_DIR}/Workers/network_worker
+    ${INCLUDE_DIR}/Workers/sentry_worker
 
     ${3RDPARTY_DIR}/easyloggingpp/src
     ${3RDPARTY_DIR}/flatbuffers/include
@@ -108,6 +113,9 @@ target_sources(scimon_message PUBLIC
     ${INCLUDE_DIR}/Workers/worker.hpp
     ${INCLUDE_DIR}/Workers/network_worker/network_worker.hpp
     ${INCLUDE_DIR}/Workers/network_worker/network_worker_init_payload.hpp
+    ${INCLUDE_DIR}/Workers/sentry_worker/sentry_worker.hpp
+    ${INCLUDE_DIR}/Workers/sentry_worker/sentry_payload_decoder.hpp
+    ${INCLUDE_DIR}/Workers/sentry_worker/sentry_init_payload.hpp
     ${INCLUDE_DIR}/Devices/isx3/com_interface_codec.hpp
     ${INCLUDE_DIR}/Devices/isx3/device_isx3.hpp
     ${INCLUDE_DIR}/Devices/isx3/isx3_ack_payload.hpp
@@ -153,6 +161,9 @@ target_sources(scimon_message PUBLIC
     ${SOURCE_DIR}/Workers/worker.cpp
     ${SOURCE_DIR}/Workers/network_worker/network_worker.cpp
     ${SOURCE_DIR}/Workers/network_worker/network_worker_init_payload.cpp
+    ${SOURCE_DIR}/Workers/sentry_worker/sentry_worker.cpp
+    ${SOURCE_DIR}/Workers/sentry_worker/sentry_payload_decoder.cpp
+    ${SOURCE_DIR}/Workers/sentry_worker/sentry_init_payload.cpp
     ${SOURCE_DIR}/Devices/isx3/com_interface_codec.cpp
     ${SOURCE_DIR}/Devices/isx3/device_isx3.cpp
     ${SOURCE_DIR}/Devices/isx3/isx3_ack_payload.cpp
@@ -204,14 +215,14 @@ if (WIN32)
       PRIVATE Ws2_32
       PRIVATE ${LIB_ELVEFLOW}
     )
-    target_sources(scimon_message
-        PUBLIC ${INCLUDE_DIR}/Utilities/win_socket.hpp
-        PUBLIC ${INCLUDE_DIR}/Devices/elveflow_ob1/device_ob1_win.hpp
+    target_sources(scimon_message PUBLIC
+        ${INCLUDE_DIR}/Utilities/win_socket.hpp
+        ${INCLUDE_DIR}/Devices/elveflow_ob1/device_ob1_win.hpp
 
-        PRIVATE ${3RDPARTY_DIR}/elveflow/x64/Elveflow64.h
+        ${3RDPARTY_DIR}/elveflow/x64/Elveflow64_shim.h
 
-        PUBLIC ${SOURCE_DIR}/Utilities/win_socket.cpp
-        PUBLIC ${SOURCE_DIR}/Devices/elveflow_ob1/device_ob1_win.cpp
+        ${SOURCE_DIR}/Utilities/win_socket.cpp
+        ${SOURCE_DIR}/Devices/elveflow_ob1/device_ob1_win.cpp
     )
 endif (WIN32)
 if (UNIX)
