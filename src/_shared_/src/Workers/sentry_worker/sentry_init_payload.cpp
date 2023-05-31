@@ -13,4 +13,11 @@ SentryInitPayload::SentryInitPayload(Isx3InitPayload *isx3InitPayload,
       autoStart(autoStart), onTime(onTime), offTime(offTime) {}
 
 string SentryInitPayload::serialize() { return ""; }
+
+vector<unsigned char> SentryInitPayload::bytes() {
+  return vector<unsigned char>();
+}
+
+int SentryInitPayload::getMagicNumber() { return 0; }
+
 } // namespace Workers

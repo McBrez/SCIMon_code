@@ -1,6 +1,5 @@
 // 3rd party includes
-#include <Elveflow64.h>
-#include <argparse.hpp>
+//#include <argparse.hpp>
 #include <easylogging++.h>
 
 // Project includes
@@ -21,7 +20,7 @@ using namespace Workers;
 
 int main(int argc, char *argv[]) {
   LOG(INFO) << "Starting up sentry.";
-
+/*
   // Set up the command line parser.
   argparse::ArgumentParser program("SCIMon Sentry");
   program.add_argument("--is_config")
@@ -37,7 +36,7 @@ int main(int argc, char *argv[]) {
 
   // Parse the commandline.
   LOG(INFO) << program.get<string>("--is_config");
-
+*/
   // Create the distributor.
   MessageDistributor messageDistributor(
       DEFAULT_MESSAGE_DISTRIBUTOR_LOOP_INTERVAL);

@@ -28,6 +28,8 @@ using TimePoint = std::chrono::time_point<std::chrono::system_clock>;
 
 const string NETWORK_WORKER_TYPE_NAME = "Network Worker";
 
+const string SENTRY_WORKER_TYPE_NAME = "Sentry Worker";
+
 // ----------------------------------------------- Magic numbers for payloads --
 #define MAGIC_NUMBER_GENERIC_PAYLOAD 0x0001
 #define MAGIC_NUMBER_STATUS_PAYLOAD 0x0002

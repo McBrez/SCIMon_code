@@ -7,6 +7,7 @@
 #include <message_distributor.hpp>
 #include <ob1_init_payload.hpp>
 #include <sentry_worker.hpp>
+#include <common.hpp>
 
 namespace Workers {
 SentryWorker::SentryWorker()
@@ -342,5 +343,7 @@ bool SentryWorker::write(shared_ptr<HandshakeMessage> writeMsg) {
                   "ignored.";
   return false;
 }
+
+  string SentryWorker::getWorkerName() {return SENTRY_WORKER_TYPE_NAME;}
 
 } // namespace Workers

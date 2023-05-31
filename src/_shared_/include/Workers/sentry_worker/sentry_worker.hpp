@@ -68,6 +68,12 @@ public:
    */
   virtual bool handleResponse(shared_ptr<ReadDeviceMessage> response) override;
 
+  /**
+   * @brief Returns the name of the worker.
+   * @return A string that identifies the type of the worker.
+   */
+  virtual string getWorkerName() override;
+
 private:
   /// The payload with which this object has been initialized.
   shared_ptr<SentryInitPayload> initPayload;

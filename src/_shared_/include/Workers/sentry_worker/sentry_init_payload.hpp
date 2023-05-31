@@ -17,7 +17,7 @@ using namespace Devices;
 using namespace Utilities;
 
 namespace Workers {
-class SentryInitPayload : public Devices::InitPayload {
+class SentryInitPayload : public InitPayload {
 public:
   SentryInitPayload(Isx3InitPayload *isx3InitPayload,
                     Isx3IsConfPayload *isx3IsConfigPayload,
@@ -29,6 +29,19 @@ public:
    * @return The payload in string representation.
    */
   virtual string serialize() override;
+
+  /**
+   * @brief Serializes the payload into bytes.
+   * @return Byte vector, that depicts the payload.
+   */
+  virtual vector<unsigned char> bytes() override;
+
+  /**
+   * @brief Returns the magic number of the payload. This number is used to
+   * identify the payload type when encoding and decoding payload. This number
+   * has to be unique among all payload types.
+   */
+  virtual int getMagicNumber() override;
 
   // ISX3 Init data
   const shared_ptr<Isx3InitPayload> isx3InitPayload;

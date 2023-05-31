@@ -176,7 +176,7 @@ target_sources(scimon_message PUBLIC
 # flatbuffers library.
 add_dependencies(scimon_message scimon_message_lib_fb_headers)
 target_link_libraries(scimon_message
-    PRIVATE flatbuffers
+    PUBLIC flatbuffers
 )
 
 # Enforce C++20
@@ -202,16 +202,16 @@ if (WIN32)
 
     target_link_libraries(scimon_message
       PRIVATE Ws2_32
-      PUBLIC ${LIB_ELVEFLOW}
+      PRIVATE ${LIB_ELVEFLOW}
     )
-    target_sources(scimon_message PUBLIC
-        ${INCLUDE_DIR}/Utilities/win_socket.hpp
-        ${INCLUDE_DIR}/Devices/elveflow_ob1/device_ob1_win.hpp
+    target_sources(scimon_message
+        PUBLIC ${INCLUDE_DIR}/Utilities/win_socket.hpp
+        PUBLIC ${INCLUDE_DIR}/Devices/elveflow_ob1/device_ob1_win.hpp
 
-        ${3RDPARTY_DIR}/elveflow/x64/Elveflow64.h
+        PRIVATE ${3RDPARTY_DIR}/elveflow/x64/Elveflow64.h
 
-        ${SOURCE_DIR}/Utilities/win_socket.cpp
-        ${SOURCE_DIR}/Devices/elveflow_ob1/device_ob1_win.cpp
+        PUBLIC ${SOURCE_DIR}/Utilities/win_socket.cpp
+        PUBLIC ${SOURCE_DIR}/Devices/elveflow_ob1/device_ob1_win.cpp
     )
 endif (WIN32)
 if (UNIX)
