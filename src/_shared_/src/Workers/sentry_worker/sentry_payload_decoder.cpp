@@ -1,6 +1,7 @@
 // Project includes
 #include <common.hpp>
 #include <message_factory.hpp>
+#include <sentry_config_payload.hpp>
 #include <sentry_init_payload.hpp>
 #include <sentry_payload_decoder.hpp>
 
@@ -54,8 +55,22 @@ SentryPayloadDecoder::decodeInitPayload(const vector<unsigned char> &data,
 ConfigurationPayload *
 SentryPayloadDecoder::decodeConfigPayload(const vector<unsigned char> &data,
                                           int magicNumber) {
-  // No config payloads are built-in.
-  return nullptr;
+  if (MAGIC_NUMBER_SENTRY_CONF_PAYLOAD == magicNumber) {
+    const unsigned char *buffer = data.data();
+
+    const Serialization::Workers::SentryConfigPayloadT *sentryConfigPayload =
+        Serialization::Workers::GetSentryConfigPayload(buffer)->UnPack();
+
+    Duration offTime = sentryConfigPayload->offTime;
+    Duration onTime = sentryConfigPayload->onTime;
+    SentryWorkerMode sentryWorkerMode =
+        static_cast<SentryWorkerMode>(sentryConfigPayload->sentryWorkerMode);
+
+    return new SentryConfigPayload();
+
+  } else {
+    return nullptr;
+  }
 }
 
 ReadPayload *

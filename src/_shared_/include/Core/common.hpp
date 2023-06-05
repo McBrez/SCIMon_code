@@ -54,5 +54,6 @@ const int NetworkWorkerDefaultPort = 4545;
 #define MAGIC_NUMBER_OB1_WRITE_PAYLOAD 0x0204
 // Sentry payloads
 #define MAGIC_NUMBER_SENTRY_INIT_PAYLOAD 0x0301
+#define MAGIC_NUMBER_SENTRY_CONF_PAYLOAD 0x0302
 } // namespace Core
 #endif

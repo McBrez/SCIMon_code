@@ -24,7 +24,6 @@ public:
    */
   InitDeviceMessage(UserId source, UserId destination,
                     InitPayload *initPayload);
-
   InitDeviceMessage(UserId source, UserId destination,
                     shared_ptr<InitPayload> initPayload);
 

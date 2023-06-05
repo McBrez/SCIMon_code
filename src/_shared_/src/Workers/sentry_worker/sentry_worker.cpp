@@ -11,10 +11,12 @@
 
 namespace Workers {
 SentryWorker::SentryWorker()
-    : configureSubState(ConfigureSubState::CONF_SUB_STATE_INVALID),
+    : initSubState(InitSubState::INIT_SUB_STATE_INVALID),
       pumpControllerState(DeviceStatus::UNKNOWN_DEVICE_STATUS),
       spectrometerState(DeviceStatus::UNKNOWN_DEVICE_STATUS),
-      threadWaiting(true), runThread(false) {}
+      threadWaiting(true), runThread(false) {
+  this->workerState = DeviceStatus::UNKNOWN_DEVICE_STATUS;
+}
 
 SentryWorker::~SentryWorker() {}
 
@@ -91,17 +93,20 @@ SentryWorker::specificRead(TimePoint timestamp) {
 
 bool SentryWorker::handleResponse(shared_ptr<ReadDeviceMessage> response) {
 
-  if (DeviceStatus::CONFIGURING == this->getState()) {
-    // During CONFIGURING, it is waited until the governed devices become
+  if (DeviceStatus::INITIALIZING == this->getState()) {
+    // During INITIALIZING, it is waited until the governed devices become
     // operational. This happens in three configuration sub states: INIT ->
     // CONFIGURE -> OPERATING
-    if (ConfigureSubState::CONF_SUB_STATE_INIT == this->configureSubState) {
+    if (InitSubState::INIT_SUB_STATE_INIT == this->initSubState) {
       // Wait until both devices finished initializing.
       // Check the current response.
       auto statusPayload =
           dynamic_pointer_cast<StatusPayload>(response->getReadPaylod());
       if (!statusPayload) {
         // Only device status messages are expected right now. Return here.
+        LOG(WARNING) << "SentryWorker got an unexpected message while in state "
+                     << this->getState();
+
         return false;
       }
 
@@ -116,9 +121,10 @@ bool SentryWorker::handleResponse(shared_ptr<ReadDeviceMessage> response) {
               shared_ptr<DeviceMessage>(new WriteDeviceMessage(
                   this->self->getUserId(), response->getSource(),
                   WriteDeviceTopic::WRITE_TOPIC_QUERY_STATE)));
+
+          return true;
         }
       }
-
       // Message is not from the spectrometer. Is it from the pump controller?
       else if (response->getSource() == this->pumpController) {
         // It is. Check if it finished initializing.
@@ -130,10 +136,10 @@ bool SentryWorker::handleResponse(shared_ptr<ReadDeviceMessage> response) {
               shared_ptr<DeviceMessage>(new WriteDeviceMessage(
                   this->self->getUserId(), response->getSource(),
                   WriteDeviceTopic::WRITE_TOPIC_QUERY_STATE)));
-        }
-      }
 
-      else {
+          return true;
+        }
+      } else {
         // Unknown device. Ignore it.
         return false;
       }
@@ -141,15 +147,14 @@ bool SentryWorker::handleResponse(shared_ptr<ReadDeviceMessage> response) {
       // Check if both devices are now initialized.
       if (this->spectrometerState == DeviceStatus::INITIALIZED &&
           this->pumpControllerState == DeviceStatus::INITIALIZED) {
-// Both devices are initialized. Send the configuration message to both
-// and transition to configure state.
-#if 0
+        // Both devices are initialized. Send the configuration message to both
+        // and transition to configure state.
         this->messageOut.push(shared_ptr<DeviceMessage>(
             new ConfigDeviceMessage(this->self->getUserId(), this->spectrometer,
-                                    this->initPayload->isx3IsConfigPayload)));
-#endif
+                                    this->initPayload->isSpecConfPayload)));
         this->messageOut.push(shared_ptr<DeviceMessage>(new ConfigDeviceMessage(
-            this->self->getUserId(), this->pumpController, nullptr)));
+            this->self->getUserId(), this->pumpController,
+            this->initPayload->pumpControllerConfigPayload)));
         // Also send them state query messages. So that this method keeps
         // getting called.
         this->messageOut.push(shared_ptr<DeviceMessage>(
@@ -159,12 +164,11 @@ bool SentryWorker::handleResponse(shared_ptr<ReadDeviceMessage> response) {
             new WriteDeviceMessage(this->self->getUserId(), pumpController,
                                    WriteDeviceTopic::WRITE_TOPIC_QUERY_STATE)));
 
-        this->configureSubState = ConfigureSubState::CONF_SUB_STATE_CONFIGURE;
+        this->initSubState = InitSubState::INIT_SUB_STATE_CONFIGURE;
       }
     }
 
-    else if (ConfigureSubState::CONF_SUB_STATE_CONFIGURE ==
-             this->configureSubState) {
+    else if (InitSubState::INIT_SUB_STATE_CONFIGURE == this->initSubState) {
       // Wait until both devices finished configuring.
       // Check the current response.
       auto statusPayload =
@@ -179,12 +183,16 @@ bool SentryWorker::handleResponse(shared_ptr<ReadDeviceMessage> response) {
         // It is. Check if it finished initializing.
         if (statusPayload->getDeviceStatus() == DeviceStatus::IDLE) {
           this->spectrometerState = DeviceStatus::IDLE;
+
+          return true;
         } else {
           // Device is not yet ready. Resend the query state message.
           this->messageOut.push(
               shared_ptr<DeviceMessage>(new WriteDeviceMessage(
                   this->self->getUserId(), response->getSource(),
                   WriteDeviceTopic::WRITE_TOPIC_QUERY_STATE)));
+
+          return true;
         }
       }
 
@@ -193,12 +201,16 @@ bool SentryWorker::handleResponse(shared_ptr<ReadDeviceMessage> response) {
         // It is. Check if it finished initializing.
         if (statusPayload->getDeviceStatus() == DeviceStatus::IDLE) {
           this->pumpControllerState = DeviceStatus::IDLE;
+
+          return true;
         } else {
           // Device is not yet ready. Resend the query state message.
           this->messageOut.push(
               shared_ptr<DeviceMessage>(new WriteDeviceMessage(
                   this->self->getUserId(), response->getSource(),
                   WriteDeviceTopic::WRITE_TOPIC_QUERY_STATE)));
+
+          return true;
         }
       }
 
@@ -210,31 +222,18 @@ bool SentryWorker::handleResponse(shared_ptr<ReadDeviceMessage> response) {
       // Check if both devices are now finished configuring
       if (this->spectrometerState == DeviceStatus::IDLE &&
           this->pumpControllerState == DeviceStatus::IDLE) {
-        // Both devices have been configured successfully. Send the
-        // start message to both and transition to started state.
-        this->messageOut.push(shared_ptr<DeviceMessage>(
-            new WriteDeviceMessage(this->self->getUserId(), this->spectrometer,
-                                   WriteDeviceTopic::WRITE_TOPIC_RUN)));
-        this->messageOut.push(shared_ptr<DeviceMessage>(new WriteDeviceMessage(
-            this->self->getUserId(), this->pumpController,
-            WriteDeviceTopic::WRITE_TOPIC_RUN)));
+        // Both devices have been configured successfully. Set the state
+        // accordingly.
+        this->initSubState = InitSubState::INIT_SUB_STATE_READY;
+        this->workerState = DeviceStatus::INITIALIZED;
 
-        this->configureSubState = ConfigureSubState::CONF_SUB_STATE_STARTED;
-
-        this->workerState = DeviceStatus::OPERATING;
-        this->runThread = true;
-        this->workerThread.reset(
-            new thread(&SentryWorker::work, this, chrono::system_clock::now()));
+        return true;
       }
-    }
 
-    else if (ConfigureSubState::CONF_SUB_STATE_STARTING ==
-             this->configureSubState) {
-    }
-
-    else {
-      // Responses are not expected in all other states. Just return true.
-      return true;
+      else {
+        // Responses are not expected in all other states. Just return true.
+        return true;
+      }
     }
   }
 
@@ -268,30 +267,20 @@ bool SentryWorker::stop() { return false; }
 
 bool SentryWorker::initialize(shared_ptr<InitPayload> initPayload) {
 
-  this->workerState = DeviceStatus::UNKNOWN_DEVICE_STATUS;
-
   // Check if this is the correct payload type.
   auto sentryInitPayload = dynamic_pointer_cast<SentryInitPayload>(initPayload);
   if (!sentryInitPayload) {
+    LOG(WARNING) << "SentryWorker received malformed init payload. This will "
+                    "be ignored.";
+
     return false;
   }
 
+  // Reset worker state.
+  this->workerState = DeviceStatus::UNKNOWN_DEVICE_STATUS;
   this->pumpController = nullptr;
   this->spectrometer = nullptr;
 
-  this->initPayload = sentryInitPayload;
-  this->workerState = DeviceStatus::INITIALIZED;
-  return true;
-}
-
-bool SentryWorker::configure(shared_ptr<ConfigurationPayload> configPayload) {
-  // Check if the worker is in the correct state. Configuration is only
-  // possible, when in INIT.
-  if (this->getState() != DeviceStatus::INITIALIZED) {
-    return false;
-  }
-
-  this->workerState = DeviceStatus::CONFIGURING;
   // Check if an pump controller and a impedance spectrometer are present.
   list<shared_ptr<StatusPayload>> participants =
       this->messageDistributor->getStatus();
@@ -306,32 +295,49 @@ bool SentryWorker::configure(shared_ptr<ConfigurationPayload> configPayload) {
     }
   }
   if (!spectrometerTemp || !pumpControllerTemp) {
+    LOG(ERROR) << "SentryWorker did not find a spectrometer and a pump "
+                  "controller. Can not continue.";
+
     return false;
   }
-
-  // Remember the both devices.
+  // Remember the both devices and the sentry init payload.
   this->spectrometer = spectrometerTemp;
   this->pumpController = pumpControllerTemp;
+  this->initPayload = sentryInitPayload;
 
-// Send an init message to them.
-#if 0
+  // Set the worker state to INITIALIZING and forward the init messages to the
+  // corresponding devices.
+  this->workerState = DeviceStatus::INITIALIZING;
   this->messageOut.push(shared_ptr<DeviceMessage>(
       new InitDeviceMessage(this->self->getUserId(), spectrometer,
-                            this->initPayload)));
+                            this->initPayload->isSpecInitPayload)));
   this->messageOut.push(shared_ptr<DeviceMessage>(
       new InitDeviceMessage(this->self->getUserId(), pumpController,
-                            this->initPayload->ob1InitPayload)));
-#endif
+                            this->initPayload->pumpControllerInitPayload)));
   // Immediatelly send a state query message to the devices.
   this->messageOut.push(shared_ptr<DeviceMessage>(
-      new WriteDeviceMessage(this->self->getUserId(), spectrometer,
+      new WriteDeviceMessage(this->self->getUserId(), this->spectrometer,
                              WriteDeviceTopic::WRITE_TOPIC_QUERY_STATE)));
   this->messageOut.push(shared_ptr<DeviceMessage>(
-      new WriteDeviceMessage(this->self->getUserId(), pumpController,
+      new WriteDeviceMessage(this->self->getUserId(), this->pumpController,
                              WriteDeviceTopic::WRITE_TOPIC_QUERY_STATE)));
 
   // Set the configure sub state.
-  this->configureSubState = ConfigureSubState::CONF_SUB_STATE_INIT;
+  this->initSubState = InitSubState::INIT_SUB_STATE_INIT;
+
+  // The init message have now been sent. The logic continues in
+  // handleResponse().
+  return true;
+}
+
+bool SentryWorker::configure(shared_ptr<ConfigurationPayload> configPayload) {
+  // Check if the worker is in the correct state. Configuration is only
+  // possible, when in INIT.
+  if (this->getState() != DeviceStatus::INITIALIZED) {
+    return false;
+  }
+
+  this->workerState = DeviceStatus::CONFIGURING;
 
   // Configuration logic continues in handleResponse().
   return true;

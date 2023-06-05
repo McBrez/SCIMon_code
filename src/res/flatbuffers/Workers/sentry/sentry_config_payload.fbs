@@ -1,6 +1,18 @@
 namespace Serialization.Workers;
 
+enum SentryWorkerMode : byte {
+  /// @brief Invalid worker mode.
+  SENTRY_WORKER_MODE_INVALID = 0,
+  /// @brief Worker is controlled manually via write messages.
+  SENTRY_WORKER_MODE_MANUAL = 1,
+  /// @brief Worker is running automatically on a timer.
+  SENTRY_WORKER_MODE_TIMER = 2
+}
+
 table SentryConfigPayload {
+    sentryWorkerMode:SentryWorkerMode;
+    onTime:uint;
+    offTime:uint;
 }
 
 root_type SentryConfigPayload;

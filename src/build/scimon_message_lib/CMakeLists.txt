@@ -116,6 +116,7 @@ target_sources(scimon_message PUBLIC
     ${INCLUDE_DIR}/Workers/sentry_worker/sentry_worker.hpp
     ${INCLUDE_DIR}/Workers/sentry_worker/sentry_payload_decoder.hpp
     ${INCLUDE_DIR}/Workers/sentry_worker/sentry_init_payload.hpp
+    ${INCLUDE_DIR}/Workers/sentry_worker/sentry_config_payload.hpp
     ${INCLUDE_DIR}/Devices/isx3/com_interface_codec.hpp
     ${INCLUDE_DIR}/Devices/isx3/device_isx3.hpp
     ${INCLUDE_DIR}/Devices/isx3/isx3_ack_payload.hpp
@@ -164,6 +165,7 @@ target_sources(scimon_message PUBLIC
     ${SOURCE_DIR}/Workers/sentry_worker/sentry_worker.cpp
     ${SOURCE_DIR}/Workers/sentry_worker/sentry_payload_decoder.cpp
     ${SOURCE_DIR}/Workers/sentry_worker/sentry_init_payload.cpp
+    ${SOURCE_DIR}/Workers/sentry_worker/sentry_config_payload.cpp
     ${SOURCE_DIR}/Devices/isx3/com_interface_codec.cpp
     ${SOURCE_DIR}/Devices/isx3/device_isx3.cpp
     ${SOURCE_DIR}/Devices/isx3/isx3_ack_payload.cpp

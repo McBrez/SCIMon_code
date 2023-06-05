@@ -10,12 +10,18 @@ using namespace Devices;
 
 namespace Workers {
 
-enum ConfigureSubState {
-  CONF_SUB_STATE_INVALID,
-  CONF_SUB_STATE_INIT,
-  CONF_SUB_STATE_CONFIGURE,
-  CONF_SUB_STATE_STARTING,
-  CONF_SUB_STATE_STARTED
+enum InitSubState {
+  /// @brief Invalid state.
+  INIT_SUB_STATE_INVALID,
+  /// @brief Init messages have been sent to the devices. It is waited for them
+  /// to finish initializing.
+  INIT_SUB_STATE_INIT,
+  /// @brief Config message have been sent to the devices. It is waited for them
+  /// to finish configuring.
+  INIT_SUB_STATE_CONFIGURE,
+  /// @brief All devices have been initialized and have been confiured. They are
+  /// ready.
+  INIT_SUB_STATE_READY
 };
 
 class SentryWorker : public Worker {
@@ -79,7 +85,7 @@ private:
   shared_ptr<SentryInitPayload> initPayload;
 
   /// The current sub state of the configure logic.
-  ConfigureSubState configureSubState;
+  InitSubState initSubState;
 
   UserId pumpController;
   DeviceStatus pumpControllerState;

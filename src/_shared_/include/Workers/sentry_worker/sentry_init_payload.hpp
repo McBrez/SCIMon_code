@@ -1,5 +1,5 @@
-#ifndef SENTRY_WORKER_PAYLOAD
-#define SENTRY_WORKER_PAYLOAD
+#ifndef SENTRY_WORKER_INIT_PAYLOAD
+#define SENTRY_WORKER_INIT_PAYLOAD
 
 // Standard includes
 #include <memory>
