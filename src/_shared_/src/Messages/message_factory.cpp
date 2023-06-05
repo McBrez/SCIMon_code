@@ -135,6 +135,8 @@ MessageFactory::encodeMessage(shared_ptr<DeviceMessage> msg) {
         if (configMsg) {
           Serialization::Messages::ConfigDeviceMessageContentT
               configDeviceMessageContent;
+          configDeviceMessageContent.responseId =
+              configMsg->getResponseId().id();
           configDeviceMessageContent.configurationPayload =
               configMsg->getConfiguration()->bytes();
           configDeviceMessageContent.magicNumber =
@@ -262,6 +264,15 @@ MessageFactory::decodeFrame(vector<unsigned char> *buffer,
         UserId(static_cast<size_t>(deviceMsg->desinationId)),
         deviceMsg->content.AsReadDeviceMessageContent(),
         deviceMsg->content.AsReadDeviceMessageContent()->magicNumber);
+  }
+
+  // -------------------------------------------------- Config Device message --
+  else if (MessageType::CONFIG_DEVICE_MESSAGE == messageType) {
+    return this->translateMessageContent(
+        UserId(static_cast<size_t>(deviceMsg->sourceId)),
+        UserId(static_cast<size_t>(deviceMsg->desinationId)),
+        deviceMsg->content.AsConfigDeviceMessageContent(),
+        deviceMsg->content.AsConfigDeviceMessageContent()->magicNumber);
   }
 
   else {
@@ -404,7 +415,17 @@ shared_ptr<DeviceMessage> MessageFactory::translateMessageContent(
         *configDeviceContent,
     int magicNumber) {
 
-  return shared_ptr<DeviceMessage>();
+  // Try to parse the payload.
+  ConfigurationPayload *decodedPayload = this->decodeConfigurationPayload(
+      configDeviceContent->configurationPayload, magicNumber);
+  if (!decodedPayload) {
+    // Was not able to decode a read payload from the buffer.
+    return shared_ptr<DeviceMessage>();
+  }
+
+  return shared_ptr<DeviceMessage>(
+      new ConfigDeviceMessage(sourceId, destinationId, decodedPayload,
+                              UserId(configDeviceContent->responseId)));
 }
 
 MessageFactory *MessageFactory::createInstace(

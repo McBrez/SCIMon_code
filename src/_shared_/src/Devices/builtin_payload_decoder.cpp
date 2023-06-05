@@ -2,6 +2,7 @@
 #include <builtin_payload_decoder.hpp>
 #include <common.hpp>
 #include <generic_read_payload.hpp>
+#include <request_data_payload.hpp>
 #include <set_pressure_payload.hpp>
 #include <status_payload.hpp>
 #include <user_id.hpp>
@@ -9,11 +10,13 @@
 // Generated includes
 #include <generic_read_payload_generated.h>
 #include <is_payload_generated.h>
+#include <request_data_payload_generated.h>
 #include <set_pressure_payload_generated.h>
 #include <status_payload_generated.h>
 
 using namespace Devices;
 using namespace Messages;
+using namespace std;
 
 InitPayload *
 BuiltinPayloadDecoder::decodeInitPayload(const vector<unsigned char> &data,
@@ -77,6 +80,16 @@ BuiltinPayloadDecoder::decodeWritePayload(const vector<unsigned char> &data,
     return new SetPressurePayload(
         setPressurePayload->pressures,
         static_cast<PressureUnit>(setPressurePayload->pressureUnit));
+  }
+
+  else if (MAGIC_NUMBER_REQUEST_DATA_PAYLOAD == magicNumber) {
+    const Serialization::Devices::RequestDataPayloadT *requestDataPayload =
+        Serialization::Devices::GetRequestDataPayload(buffer)->UnPack();
+
+    return new RequestDataPayload(
+        static_cast<DeviceType>(requestDataPayload->deviceType),
+        TimePoint(chrono::milliseconds(requestDataPayload->from)),
+        TimePoint(chrono::milliseconds(requestDataPayload->to)));
   }
 
   else {

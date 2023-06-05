@@ -3,6 +3,8 @@
 
 #include <configuration_payload.hpp>
 
+using namespace Messages;
+
 namespace Devices {
 /**
  * @brief Encapsulates the configuration data of an OB1 device.

@@ -3,6 +3,7 @@
 
 // Project includes
 #include <is_payload.hpp>
+#include <sentry_config_payload.hpp>
 #include <sentry_init_payload.hpp>
 #include <worker.hpp>
 
@@ -84,6 +85,9 @@ private:
   /// The payload with which this object has been initialized.
   shared_ptr<SentryInitPayload> initPayload;
 
+  /// The payload with which this object has been configured.
+  shared_ptr<SentryConfigPayload> configPayload;
+
   /// The current sub state of the configure logic.
   InitSubState initSubState;
 
@@ -96,9 +100,13 @@ private:
   unique_ptr<thread> workerThread;
   bool runThread;
   bool threadWaiting;
+  /// @brief In case timer mode is configured, the worker thread will do nothing
+  /// until this timepoint.
+  TimePoint waitUntil;
 
   list<shared_ptr<IsPayload>> isPayloadCache;
   mutex isPayloadCacheMutex;
+  Duration workerThreadInterval;
 };
 } // namespace Workers
 

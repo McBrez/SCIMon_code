@@ -1,0 +1,11 @@
+include "status_payload.fbs";
+
+namespace Serialization.Devices;
+
+table RequestDataPayload {
+    deviceType:DeviceType;
+    from:int64;
+    to:int64;
+}
+
+root_type RequestDataPayload;

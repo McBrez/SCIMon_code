@@ -14,13 +14,16 @@ SentryWorker::SentryWorker()
     : initSubState(InitSubState::INIT_SUB_STATE_INVALID),
       pumpControllerState(DeviceStatus::UNKNOWN_DEVICE_STATUS),
       spectrometerState(DeviceStatus::UNKNOWN_DEVICE_STATUS),
-      threadWaiting(true), runThread(false) {
+      threadWaiting(true), runThread(false),
+      workerThreadInterval(chrono::milliseconds(100)) {
   this->workerState = DeviceStatus::UNKNOWN_DEVICE_STATUS;
 }
 
 SentryWorker::~SentryWorker() {}
 
 void SentryWorker::work(TimePoint timestamp) {
+  LOG(INFO) << "SentryWorker starting up.";
+
   // Ensure the devices are in a defined state. Turn them both off.
   this->messageOut.push(shared_ptr<DeviceMessage>(
       new WriteDeviceMessage(this->self->getUserId(), this->spectrometer,
@@ -30,55 +33,72 @@ void SentryWorker::work(TimePoint timestamp) {
                              WriteDeviceTopic::WRITE_TOPIC_STOP)));
 
   while (this->runThread) {
-    if (this->threadWaiting) {
-      LOG(INFO) << "Enabling pump and deactivating impedance measurement.";
 
-      // Enable the pump ...
-      this->messageOut.push(shared_ptr<DeviceMessage>(
-          new WriteDeviceMessage(this->self->getUserId(), this->pumpController,
-                                 WriteDeviceTopic::WRITE_TOPIC_RUN)));
+    // Decide what to do, according to the configured state.
+    if (SentryWorkerMode::SENTRY_WORKER_MODE_MANUAL ==
+        this->configPayload->sentryWorkerMode) {
 
-      // ... disable the spectrometer ...
-      this->messageOut.push(shared_ptr<DeviceMessage>(
-          new WriteDeviceMessage(this->self->getUserId(), this->spectrometer,
-                                 WriteDeviceTopic::WRITE_TOPIC_STOP)));
+      // Nothing to do.
+    }
 
-      // ... and wait for a specified period.
-      // this_thread::sleep_until(chrono::system_clock::now()
-      // +this->initPayload->offTime);
-      this->threadWaiting = false;
-    } else {
-      LOG(INFO) << "Disabling pump and activating impedance measurement.";
+    else if (SentryWorkerMode::SENTRY_WORKER_MODE_TIMER ==
+             this->configPayload->sentryWorkerMode) {
+      if (this->threadWaiting) {
+        if (chrono::system_clock::now() > waitUntil) {
+          LOG(INFO) << "Enabling pump and deactivating impedance measurement.";
 
-      // Disable the pump ...
-      this->messageOut.push(shared_ptr<DeviceMessage>(
-          new WriteDeviceMessage(this->self->getUserId(), this->pumpController,
-                                 WriteDeviceTopic::WRITE_TOPIC_STOP)));
+          // Enable the pump ...
+          this->messageOut.push(shared_ptr<DeviceMessage>(
+              new WriteDeviceMessage(this->self->getUserId(),
+                                     this->pumpController,
+                                     WriteDeviceTopic::WRITE_TOPIC_RUN)));
 
-      // ... enable the spectrometer ...
-      this->messageOut.push(shared_ptr<DeviceMessage>(
-          new WriteDeviceMessage(this->self->getUserId(), this->spectrometer,
-                                 WriteDeviceTopic::WRITE_TOPIC_RUN)));
+          // ... disable the spectrometer ...
+          this->messageOut.push(shared_ptr<DeviceMessage>(
+              new WriteDeviceMessage(this->self->getUserId(),
+                                     this->spectrometer,
+                                     WriteDeviceTopic::WRITE_TOPIC_STOP)));
 
-      // Print out measurement results until on time passes.
-      TimePoint now = chrono::system_clock::now();
-      TimePoint until;
-      while (now < until) {
+          this->threadWaiting = false;
+        }
+      } else {
+        LOG(INFO) << "Disabling pump and activating impedance measurement.";
 
-        this->isPayloadCacheMutex.lock();
-        while (!this->isPayloadCache.empty()) {
-          LOG(INFO) << this->isPayloadCache.front()->serialize();
-          this->isPayloadCache.pop_front();
+        // Disable the pump ...
+        this->messageOut.push(shared_ptr<DeviceMessage>(new WriteDeviceMessage(
+            this->self->getUserId(), this->pumpController,
+            WriteDeviceTopic::WRITE_TOPIC_STOP)));
+
+        // ... enable the spectrometer ...
+        this->messageOut.push(shared_ptr<DeviceMessage>(
+            new WriteDeviceMessage(this->self->getUserId(), this->spectrometer,
+                                   WriteDeviceTopic::WRITE_TOPIC_RUN)));
+
+        // Print out measurement results until on time passes.
+        TimePoint now = chrono::system_clock::now();
+        TimePoint until = now + this->configPayload->offTime;
+        while (now < until) {
+
+          this->isPayloadCacheMutex.lock();
+          while (!this->isPayloadCache.empty()) {
+            LOG(INFO) << this->isPayloadCache.front()->serialize();
+            this->isPayloadCache.pop_front();
+          }
+
+          this->isPayloadCacheMutex.unlock();
+
+          this_thread::sleep_for(chrono::milliseconds(100));
+          now = chrono::system_clock::now();
         }
 
-        this->isPayloadCacheMutex.unlock();
-
-        this_thread::sleep_for(chrono::milliseconds(100));
-        now = chrono::system_clock::now();
+        this->threadWaiting = true;
       }
-
-      this->threadWaiting = true;
     }
+
+    else {
+    }
+
+    this_thread::sleep_for(this->workerThreadInterval);
   }
 }
 
@@ -147,8 +167,8 @@ bool SentryWorker::handleResponse(shared_ptr<ReadDeviceMessage> response) {
       // Check if both devices are now initialized.
       if (this->spectrometerState == DeviceStatus::INITIALIZED &&
           this->pumpControllerState == DeviceStatus::INITIALIZED) {
-        // Both devices are initialized. Send the configuration message to both
-        // and transition to configure state.
+        // Both devices are initialized. Send the configuration message to
+        // both and transition to configure state.
         this->messageOut.push(shared_ptr<DeviceMessage>(
             new ConfigDeviceMessage(this->self->getUserId(), this->spectrometer,
                                     this->initPayload->isSpecConfPayload)));
@@ -238,7 +258,8 @@ bool SentryWorker::handleResponse(shared_ptr<ReadDeviceMessage> response) {
   }
 
   else if (DeviceStatus::OPERATING == this->getState()) {
-    // During messages received data is forwarded to the worker thread.
+    // During OPERATING, received messages from the devices are written to
+    // cache.
     if (!response->getReadPaylod()) {
       return false;
     }
@@ -261,9 +282,40 @@ bool SentryWorker::handleResponse(shared_ptr<ReadDeviceMessage> response) {
   }
 }
 
-bool SentryWorker::start() { return true; }
+bool SentryWorker::start() {
+  // Check if worker is in the correct state.
+  if (DeviceStatus::IDLE != this->workerState) {
+    LOG(WARNING) << "SentryWorker received start message in state "
+                 << this->workerState;
 
-bool SentryWorker::stop() { return false; }
+    return false;
+  }
+
+  // Start the worker.
+  this->runThread = true;
+  this->workerThread.reset(
+      new thread(&SentryWorker::work, this, chrono::system_clock::now()));
+  this->workerState = DeviceStatus::OPERATING;
+
+  return true;
+}
+
+bool SentryWorker::stop() {
+  // Check if worker is in the correct state.
+  if (DeviceStatus::OPERATING != this->workerState) {
+    LOG(WARNING) << "SentryWorker received stop message in state "
+                 << this->workerState;
+
+    return false;
+  }
+
+  // Stop the worker.
+  this->runThread = false;
+  this->workerThread->join();
+  this->workerState = DeviceStatus::IDLE;
+
+  return true;
+}
 
 bool SentryWorker::initialize(shared_ptr<InitPayload> initPayload) {
 
@@ -334,12 +386,25 @@ bool SentryWorker::configure(shared_ptr<ConfigurationPayload> configPayload) {
   // Check if the worker is in the correct state. Configuration is only
   // possible, when in INIT.
   if (this->getState() != DeviceStatus::INITIALIZED) {
+    LOG(WARNING) << "SentryWorker received a configuration message, while it "
+                    "was in state "
+                 << this->workerState;
+
     return false;
   }
 
-  this->workerState = DeviceStatus::CONFIGURING;
+  // Try to downcast the payload.
+  auto sentryConfigPayload =
+      dynamic_pointer_cast<SentryConfigPayload>(configPayload);
+  if (!sentryConfigPayload) {
+    LOG(WARNING) << "SentryWorker received a malformed configuration message.";
 
-  // Configuration logic continues in handleResponse().
+    return false;
+  }
+
+  this->configPayload = sentryConfigPayload;
+  this->workerState = DeviceStatus::IDLE;
+
   return true;
 }
 

@@ -3,6 +3,9 @@
 
 // Project includes
 #include <payload.hpp>
+#include <user_id.hpp>
+
+using namespace Messages;
 
 namespace Devices {
 /**
@@ -31,6 +34,9 @@ public:
    * @brief Construct a new Device Configuration object
    *
    * @param deviceType The device type this configuration is targeting.
+   * @param targetId The id of the target message interface. This is the message
+   * interface the configured device shall sent messages to, when the device is
+   * started.
    */
   ConfigurationPayload(DeviceType deviceType);
 

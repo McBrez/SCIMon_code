@@ -15,6 +15,7 @@
 using namespace Devices;
 using namespace Messages;
 using namespace Workers;
+using namespace Utilities;
 
 InitPayload *
 SentryPayloadDecoder::decodeInitPayload(const vector<unsigned char> &data,
@@ -61,12 +62,12 @@ SentryPayloadDecoder::decodeConfigPayload(const vector<unsigned char> &data,
     const Serialization::Workers::SentryConfigPayloadT *sentryConfigPayload =
         Serialization::Workers::GetSentryConfigPayload(buffer)->UnPack();
 
-    Duration offTime = sentryConfigPayload->offTime;
-    Duration onTime = sentryConfigPayload->onTime;
+    Duration offTime(sentryConfigPayload->offTime);
+    Duration onTime(sentryConfigPayload->onTime);
     SentryWorkerMode sentryWorkerMode =
         static_cast<SentryWorkerMode>(sentryConfigPayload->sentryWorkerMode);
 
-    return new SentryConfigPayload();
+    return new SentryConfigPayload(sentryWorkerMode, onTime, offTime);
 
   } else {
     return nullptr;

@@ -21,6 +21,7 @@ set(
     ${RES_DIR}/flatbuffers/Devices/generic_read_payload.fbs 
     ${RES_DIR}/flatbuffers/Devices/status_payload.fbs 
     ${RES_DIR}/flatbuffers/Devices/set_pressure_payload.fbs 
+    ${RES_DIR}/flatbuffers/Devices/request_data_payload.fbs 
 
     ${RES_DIR}/flatbuffers/Devices/elveflow/ob1/ob1_config_payload.fbs
     ${RES_DIR}/flatbuffers/Devices/elveflow/ob1/ob1_init_payload.fbs
@@ -108,6 +109,7 @@ target_sources(scimon_message PUBLIC
     ${INCLUDE_DIR}/Devices/id_payload.hpp
     ${INCLUDE_DIR}/Devices/write_payload.hpp
     ${INCLUDE_DIR}/Devices/set_pressure_payload.hpp
+    ${INCLUDE_DIR}/Devices/request_data_payload.hpp
     ${INCLUDE_DIR}/Devices/payload_decoder.hpp
     ${INCLUDE_DIR}/Devices/builtin_payload_decoder.hpp
     ${INCLUDE_DIR}/Workers/worker.hpp
@@ -158,6 +160,7 @@ target_sources(scimon_message PUBLIC
     ${SOURCE_DIR}/Devices/configuration_payload.cpp
     ${SOURCE_DIR}/Devices/write_payload.cpp
     ${SOURCE_DIR}/Devices/set_pressure_payload.cpp
+    ${SOURCE_DIR}/Devices/request_data_payload.cpp
     ${SOURCE_DIR}/Devices/builtin_payload_decoder.cpp
     ${SOURCE_DIR}/Workers/worker.cpp
     ${SOURCE_DIR}/Workers/network_worker/network_worker.cpp

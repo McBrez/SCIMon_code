@@ -120,6 +120,7 @@ bool Device::write(shared_ptr<InitDeviceMessage> initMsg) {
 
 bool Device::write(shared_ptr<ConfigDeviceMessage> configMsg) {
 
+  this->responseId = configMsg->getResponseId();
   return this->configure(configMsg->getConfiguration());
 }
 

@@ -19,9 +19,11 @@ vector<unsigned char> SentryConfigPayload::bytes() {
 
   Serialization::Workers::SentryConfigPayloadT intermediateObject;
 
-  intermediateObject.offTime = this->offTime;
-  intermediateObject.onTime = this->onTime;
-  intermediateObject.sentryWorkerMode = this->sentryWorkerMode;
+  intermediateObject.offTime = this->offTime.count();
+  intermediateObject.onTime = this->onTime.count();
+  intermediateObject.sentryWorkerMode =
+      static_cast<Serialization::Workers::SentryWorkerMode>(
+          this->sentryWorkerMode);
 
   flatbuffers::FlatBufferBuilder builder;
   builder.Finish(Serialization::Workers::SentryConfigPayload::Pack(
