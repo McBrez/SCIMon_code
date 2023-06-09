@@ -104,7 +104,6 @@ void DeviceIsx3::commThreadWorker() {
 
         this->isx3CommThreadState = ISX3_COMM_THREAD_STATE_WAITING_FOR_ACK;
       }
-
     }
 
     else if (ISX3_COMM_THREAD_STATE_WAITING_FOR_ACK ==
@@ -361,8 +360,18 @@ bool DeviceIsx3::handleReadPayload(shared_ptr<ReadPayload> readPayload) {
       IsPayload copyIsPayload = *isPayload;
       this->impedanceSpectrumBuffer.push_back(copyIsPayload);
       if (coalescedIsPayload != nullptr) {
+        // Determine the destination. If responseId is set, send the messages to
+        // the response id. If not, set it to the interface that sent the start
+        // message.
+        UserId destinationId;
+        if (this->responseId.isValid()) {
+          destinationId = this->responseId;
+        } else {
+          destinationId = this->startMessageCache->getSource();
+        }
+
         this->messageOut.push(shared_ptr<DeviceMessage>(new ReadDeviceMessage(
-            this->self->getUserId(), this->startMessageCache->getSource(),
+            this->self->getUserId(), destinationId,
             ReadDeviceTopic::READ_TOPIC_DEVICE_SPECIFIC_MSG, coalescedIsPayload,
             this->startMessageCache)));
       } else {

@@ -7,6 +7,7 @@
 #include <isx3_init_payload.hpp>
 #include <message_distributor.hpp>
 #include <ob1_init_payload.hpp>
+#include <request_data_payload.hpp>
 #include <sentry_worker.hpp>
 
 namespace Workers {
@@ -103,6 +104,16 @@ void SentryWorker::work(TimePoint timestamp) {
 }
 
 bool SentryWorker::specificWrite(shared_ptr<WriteDeviceMessage> writeMsg) {
+
+  // Get the payload and cast it down.
+  shared_ptr<RequestDataPayload> requestDataPayload =
+      dynamic_pointer_cast<RequestDataPayload>(writeMsg->getPayload());
+  if (requestDataPayload) {
+    
+
+    return true;
+  }
+
   return false;
 }
 

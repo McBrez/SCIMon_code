@@ -32,7 +32,7 @@ public:
    * @param onTime In case timer mode is selected by sentryWorkerMode, this
    * contains the time the sentry shall turn on the pump.
    * @param offTime In case timer mode is selected by sentryWorkerMode, this
-   * contains the time the sentry shall turn off the pump.  
+   * contains the time the sentry shall turn off the pump.
    */
   SentryConfigPayload(SentryWorkerMode sentryWorkerMode, Duration onTime,
                       Duration offTime);
