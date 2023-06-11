@@ -7,8 +7,6 @@
 // Project includes
 #include <configuration_payload.hpp>
 
-using namespace std;
-
 namespace Devices {
 
 enum IsScale { LINEAR_SCALE = 0x00, LOGARITHMIC_SCALE = 0x01 };
@@ -37,7 +35,7 @@ public:
    * @brief Serializes the payload into bytes.
    * @return Byte vector, that depicts the payload.
    */
-  virtual vector<unsigned char> bytes() override;
+  virtual std::vector<unsigned char> bytes() override;
 
   /**
    * @brief Returns the magic number of the payload. This number is used to

@@ -10,16 +10,16 @@
 
 namespace Devices {
 
-Isx3InitPayload::Isx3InitPayload(string ipAddress, int port)
+Isx3InitPayload::Isx3InitPayload(std::string ipAddress, int port)
     : ipAddress(ipAddress), port(port) {}
 
-string Isx3InitPayload::serialize() { return ""; }
+std::string Isx3InitPayload::serialize() { return ""; }
 
-string Isx3InitPayload::getIpAddress() { return this->ipAddress; }
+std::string Isx3InitPayload::getIpAddress() { return this->ipAddress; }
 
 int Isx3InitPayload::getPort() { return this->port; }
 
-vector<unsigned char> Isx3InitPayload::bytes() {
+std::vector<unsigned char> Isx3InitPayload::bytes() {
   Serialization::Devices::Isx3InitPayloadT intermediateObject;
   intermediateObject.ipAddress = this->ipAddress;
   intermediateObject.port = this->port;
@@ -29,7 +29,7 @@ vector<unsigned char> Isx3InitPayload::bytes() {
       builder, &intermediateObject));
   uint8_t *buffer = builder.GetBufferPointer();
 
-  return vector<unsigned char>(buffer, buffer + builder.GetSize());
+  return std::vector<unsigned char>(buffer, buffer + builder.GetSize());
 }
 
 int Isx3InitPayload::getMagicNumber() { return MAGIC_NUMBER_ISX3_INIT_PAYLOAD; }

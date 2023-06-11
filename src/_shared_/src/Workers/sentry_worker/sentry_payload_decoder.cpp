@@ -18,7 +18,7 @@ using namespace Workers;
 using namespace Utilities;
 
 InitPayload *
-SentryPayloadDecoder::decodeInitPayload(const vector<unsigned char> &data,
+SentryPayloadDecoder::decodeInitPayload(const std::vector<unsigned char> &data,
                                         int magicNumber) {
 
   const unsigned char *buffer = data.data();
@@ -53,9 +53,8 @@ SentryPayloadDecoder::decodeInitPayload(const vector<unsigned char> &data,
   }
 }
 
-ConfigurationPayload *
-SentryPayloadDecoder::decodeConfigPayload(const vector<unsigned char> &data,
-                                          int magicNumber) {
+ConfigurationPayload *SentryPayloadDecoder::decodeConfigPayload(
+    const std::vector<unsigned char> &data, int magicNumber) {
   if (MAGIC_NUMBER_SENTRY_CONF_PAYLOAD == magicNumber) {
     const unsigned char *buffer = data.data();
 
@@ -75,14 +74,14 @@ SentryPayloadDecoder::decodeConfigPayload(const vector<unsigned char> &data,
 }
 
 ReadPayload *
-SentryPayloadDecoder::decodeReadPayload(const vector<unsigned char> &data,
+SentryPayloadDecoder::decodeReadPayload(const std::vector<unsigned char> &data,
                                         int magicNumber) {
 
   return nullptr;
 }
 
 WritePayload *
-SentryPayloadDecoder::decodeWritePayload(const vector<unsigned char> &data,
+SentryPayloadDecoder::decodeWritePayload(const std::vector<unsigned char> &data,
                                          int magicNumber) {
 
   return nullptr;

@@ -9,11 +9,12 @@ namespace Messages {
 MessageDistributor::MessageDistributor(int loopInterval)
     : loopInterval(Duration(loopInterval)) {}
 
-void MessageDistributor::takeMessage(shared_ptr<DeviceMessage> message) {
+void MessageDistributor::takeMessage(std::shared_ptr<DeviceMessage> message) {
   this->messageCache.push_back(message);
 }
 
-void MessageDistributor::takeMessage(list<shared_ptr<DeviceMessage>> messages) {
+void MessageDistributor::takeMessage(
+    std::list<std::shared_ptr<DeviceMessage>> messages) {
   for (auto message : messages) {
     this->takeMessage(message);
   }
@@ -31,7 +32,7 @@ int MessageDistributor::deliverMessages() {
 }
 
 bool MessageDistributor::addParticipant(
-    shared_ptr<MessageInterface> participant) {
+    std::shared_ptr<MessageInterface> participant) {
   // Check if the given participant is already known.
   auto it = std::find(this->participants.begin(), this->participants.end(),
                       participant);
@@ -46,8 +47,8 @@ bool MessageDistributor::addParticipant(
   return true;
 }
 
-list<UserId> MessageDistributor::getParticipants() {
-  list<UserId> retVal;
+std::list<UserId> MessageDistributor::getParticipants() {
+  std::list<UserId> retVal;
   for (auto participant : this->participants) {
     retVal.push_back(participant->getUserId());
   }
@@ -55,8 +56,8 @@ list<UserId> MessageDistributor::getParticipants() {
   return retVal;
 }
 
-list<shared_ptr<StatusPayload>> MessageDistributor::getStatus() {
-  list<shared_ptr<StatusPayload>> retVal;
+std::list<std::shared_ptr<StatusPayload>> MessageDistributor::getStatus() {
+  std::list<std::shared_ptr<StatusPayload>> retVal;
 
   for (auto participant : this->participants) {
 
@@ -69,11 +70,12 @@ list<shared_ptr<StatusPayload>> MessageDistributor::getStatus() {
 void MessageDistributor::run() {
   while (this->doRun) {
     // Get the current time.
-    TimePoint now(chrono::system_clock::now());
+    TimePoint now(std::chrono::system_clock::now());
 
     // Get all messages from the participants.
     for (auto participant : this->participants) {
-      list<shared_ptr<DeviceMessage>> gatheredMessages = participant->read(now);
+      std::list<std::shared_ptr<DeviceMessage>> gatheredMessages =
+          participant->read(now);
       this->messageCache.splice(this->messageCache.end(), gatheredMessages);
     }
 
@@ -83,7 +85,7 @@ void MessageDistributor::run() {
       UserId destination = message->getDestination();
       auto targetParticipant =
           find_if(this->participants.begin(), this->participants.end(),
-                  [destination](shared_ptr<MessageInterface> value) {
+                  [destination](std::shared_ptr<MessageInterface> value) {
                     return value->isTarget(destination);
                   });
 
@@ -92,11 +94,11 @@ void MessageDistributor::run() {
         // message to the cache.
         LOG(WARNING) << "Message from " << message->getSource().id()
                      << " could not be delivered. Destination does not exist.";
-        this->failedResponseCache.push_back(shared_ptr<DeviceMessage>(
-            new ReadDeviceMessage(message->getDestination(),
-                                  message->getSource(),
-                                  ReadDeviceTopic::READ_TOPIC_FAILED_RESPONSE,
-                                  nullptr, shared_ptr<WriteDeviceMessage>())));
+        this->failedResponseCache.push_back(
+            std::shared_ptr<DeviceMessage>(new ReadDeviceMessage(
+                message->getDestination(), message->getSource(),
+                ReadDeviceTopic::READ_TOPIC_FAILED_RESPONSE, nullptr,
+                std::shared_ptr<WriteDeviceMessage>())));
 
       } else {
         // Destination found. Let the object take the message.
@@ -117,17 +119,21 @@ void MessageDistributor::run() {
     this->messageCache.splice(messageCache.end(), this->failedResponseCache);
 
     TimePoint nextTimepoint = now + this->loopInterval;
-    TimePoint newNow = chrono::system_clock::now();
+    TimePoint newNow = std::chrono::system_clock::now();
     if (nextTimepoint < newNow) {
       LOG(WARNING) << "Can not keep up. Next loop iteration is scheduled at "
                    << nextTimepoint << " but the current time is " << newNow
                    << ".";
     }
 
-    this_thread::sleep_until(nextTimepoint);
+    std::this_thread::sleep_until(nextTimepoint);
   }
 }
 
 void MessageDistributor::stop() { this->doRun = false; }
+
+bool MessageDistributor::isRunning() const {
+  return this->doRun;
+}
 
 } // namespace Messages

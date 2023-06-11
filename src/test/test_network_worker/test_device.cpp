@@ -21,8 +21,8 @@ string TestDevice::getDeviceTypeName() {
   return TestDevice::TEST_DEVICE_TYPE_NAME;
 }
 
-bool TestDevice::specificWrite(shared_ptr<WriteDeviceMessage> writeMsg) {
-  this->messageOut.push(shared_ptr<DeviceMessage>(new ReadDeviceMessage(
+bool TestDevice::specificWrite std::shared_ptr<WriteDeviceMessage> writeMsg) {
+  this->messageOut.push std::shared_ptr<DeviceMessage>(new ReadDeviceMessage(
       this->getUserId(), writeMsg->getSource(),
       ReadDeviceTopic::READ_TOPIC_DEVICE_SPECIFIC_MSG,
       new GenericReadPayload(vector<unsigned char>{1, 2, 3}), writeMsg)));
@@ -30,11 +30,12 @@ bool TestDevice::specificWrite(shared_ptr<WriteDeviceMessage> writeMsg) {
   return true;
 }
 
-list<shared_ptr<DeviceMessage>> TestDevice::specificRead(TimePoint timestamp) {
-  return list<shared_ptr<DeviceMessage>>();
+list std::shared_ptr < DeviceMessage >>
+    TestDevice::specificRead(TimePoint timestamp) {
+  return list std::shared_ptr < DeviceMessage >> ();
 }
 
-bool TestDevice::handleResponse(shared_ptr<ReadDeviceMessage> response) {
+bool TestDevice::handleResponse std::shared_ptr<ReadDeviceMessage> response) {
 
   if (DeviceStatus::BUSY == this->deviceState) {
     auto statusPayload =
@@ -44,7 +45,7 @@ bool TestDevice::handleResponse(shared_ptr<ReadDeviceMessage> response) {
         LOG(INFO) << "Found the remote test device!";
         this->deviceState = DeviceStatus::OPERATING;
         this->remoteTestDeviceId = response->getSource();
-        this->messageOut.push(shared_ptr<DeviceMessage>(new WriteDeviceMessage(
+        this->messageOut.push std::shared_ptr<DeviceMessage>(new WriteDeviceMessage(
             this->getUserId(), this->remoteTestDeviceId,
             WriteDeviceTopic::WRITE_TOPIC_DEVICE_SPECIFIC)));
       } else {
@@ -71,17 +72,17 @@ bool TestDevice::handleResponse(shared_ptr<ReadDeviceMessage> response) {
 }
 
 bool TestDevice::configure(
-    shared_ptr<ConfigurationPayload> deviceConfiguration) {
+    std::shared_ptr<ConfigurationPayload> deviceConfiguration) {
   return true;
 }
 
-bool TestDevice::initialize(shared_ptr<InitPayload> initPayload) {
+bool TestDevice::initialize std::shared_ptr<InitPayload> initPayload) {
   return true;
 }
 
 bool TestDevice::start() {
   // Find the local network worker.
-  list<shared_ptr<StatusPayload>> statusPayloads =
+  list std::shared_ptr < StatusPayload >> statusPayloads =
       this->messageDistributor->getStatus();
   bool proxyIdsFound = false;
   list<UserId> remoteIds;
@@ -98,7 +99,7 @@ bool TestDevice::start() {
   }
   // Send status request to the remote ids.
   for (auto remoteId : remoteIds) {
-    this->messageOut.push(shared_ptr<DeviceMessage>(
+    this->messageOut.push std::shared_ptr<DeviceMessage>(
         new WriteDeviceMessage(this->getUserId(), remoteId,
                                WriteDeviceTopic::WRITE_TOPIC_QUERY_STATE)));
   }

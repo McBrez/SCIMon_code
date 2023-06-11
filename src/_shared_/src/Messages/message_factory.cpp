@@ -24,25 +24,26 @@ namespace Messages {
 
 MessageFactory *MessageFactory::instance = nullptr;
 
-MessageFactory::MessageFactory(list<shared_ptr<PayloadDecoder>> payloadDecoders)
+MessageFactory::MessageFactory(
+    std::list<std::shared_ptr<PayloadDecoder>> payloadDecoders)
     : payloadDecoders(payloadDecoders) {
   this->payloadDecoders.push_back(
-      shared_ptr<PayloadDecoder>(new BuiltinPayloadDecoder()));
+      std::shared_ptr<PayloadDecoder>(new BuiltinPayloadDecoder()));
 }
 
-shared_ptr<DeviceMessage>
-MessageFactory::decodeMessage(vector<unsigned char> &buffer) {
+std::shared_ptr<DeviceMessage>
+MessageFactory::decodeMessage(std::vector<unsigned char> &buffer) {
 
-  // Transform the vector to a list.
-  list<unsigned char> bufferList(buffer.begin(), buffer.end());
+  // Transform the vector to a std::list.
+  std::list<unsigned char> bufferList(buffer.begin(), buffer.end());
 
   // Try to extract a frame.
-  vector<unsigned char> *frame = this->extractFrame(bufferList);
+  std::vector<unsigned char> *frame = this->extractFrame(bufferList);
 
   // Has a frame been extracted?
   if (frame == nullptr) {
     // No frame has been extracted. Return nullptr.
-    return shared_ptr<DeviceMessage>();
+    return std::shared_ptr<DeviceMessage>();
   }
 
   // A frame has been extracted. Remove the frame from the original buffer.
@@ -52,8 +53,8 @@ MessageFactory::decodeMessage(vector<unsigned char> &buffer) {
   return this->decodeFrame(frame, msgTypeHint);
 }
 
-vector<unsigned char>
-MessageFactory::encodeMessage(shared_ptr<DeviceMessage> msg) {
+std::vector<unsigned char>
+MessageFactory::encodeMessage(std::shared_ptr<DeviceMessage> msg) {
   Serialization::Messages::DeviceMessageT intermediateObject;
 
   intermediateObject.sourceId = msg->getSource().id();
@@ -96,7 +97,7 @@ MessageFactory::encodeMessage(shared_ptr<DeviceMessage> msg) {
           intermediatePayload->proxyIds.push_back(proxyId.id());
         }
         handshakeMessageContent.statusPayloads.emplace_back(
-            unique_ptr<Serialization::Devices::StatusPayloadT>(
+            std::unique_ptr<Serialization::Devices::StatusPayloadT>(
                 intermediatePayload));
       }
       intermediateObject.content.Set(handshakeMessageContent);
@@ -155,9 +156,9 @@ MessageFactory::encodeMessage(shared_ptr<DeviceMessage> msg) {
 
   // Wrap the buffer with two length bytes an the message type.
   int msgLen = builder.GetSize() & 0xFFFF;
-  vector<unsigned char> bufferVect =
-      vector<unsigned char>((const unsigned char *)buffer,
-                            (const unsigned char *)buffer + builder.GetSize());
+  std::vector<unsigned char> bufferVect = std::vector<unsigned char>(
+      (const unsigned char *)buffer,
+      (const unsigned char *)buffer + builder.GetSize());
 
   bufferVect.insert(bufferVect.begin(), (msgLen & 0xFF00) >> 8);
   bufferVect.insert(bufferVect.begin(), (msgLen & 0x00FF));
@@ -175,8 +176,8 @@ bool MessageFactory::isMessageTypeTag(char byte) const {
          MessageType::CONFIG_DEVICE_MESSAGE == byte;
 }
 
-vector<unsigned char> *
-MessageFactory::extractFrame(list<unsigned char> &buffer) {
+std::vector<unsigned char> *
+MessageFactory::extractFrame(std::list<unsigned char> &buffer) {
   while (true) {
     // Search for the next message type tag.
     unsigned char msgTypeTag = 0x00;
@@ -221,8 +222,8 @@ MessageFactory::extractFrame(list<unsigned char> &buffer) {
   }
 }
 
-shared_ptr<DeviceMessage>
-MessageFactory::decodeFrame(vector<unsigned char> *buffer,
+std::shared_ptr<DeviceMessage>
+MessageFactory::decodeFrame(std::vector<unsigned char> *buffer,
                             MessageType &msgTypeHint) {
   auto bufferIt = buffer->begin();
 
@@ -234,8 +235,8 @@ MessageFactory::decodeFrame(vector<unsigned char> *buffer,
 
   // Create a new vector that only contains the flatbuffer payload. flatbuffer
   // will take ownership of this pointer.
-  vector<unsigned char> *flatbufferPayload =
-      new vector<unsigned char>(++bufferIt, buffer->end() - 1);
+  std::vector<unsigned char> *flatbufferPayload =
+      new std::vector<unsigned char>(++bufferIt, buffer->end() - 1);
 
   // Decode the payload according to the message type.
   const Serialization::Messages::DeviceMessageT *deviceMsg =
@@ -276,49 +277,50 @@ MessageFactory::decodeFrame(vector<unsigned char> *buffer,
   }
 
   else {
-    return shared_ptr<DeviceMessage>();
+    return std::shared_ptr<DeviceMessage>();
   }
 }
 
-shared_ptr<DeviceMessage> MessageFactory::translateMessageContent(
+std::shared_ptr<DeviceMessage> MessageFactory::translateMessageContent(
     UserId sourceId, UserId destinationId,
     const Serialization::Messages::HandshakeMessageContentT *handshakeContent) {
 
-  list<shared_ptr<StatusPayload>> statusPayloads;
+  std::list<std::shared_ptr<StatusPayload>> statusPayloads;
   for (int i = 0; i < handshakeContent->statusPayloads.size(); i++) {
-    list<UserId> proxyIds;
+    std::list<UserId> proxyIds;
 
     for (auto proxyId : handshakeContent->statusPayloads[i]->proxyIds) {
       proxyIds.emplace_back(UserId(static_cast<size_t>(proxyId)));
     }
 
-    statusPayloads.emplace_back(shared_ptr<StatusPayload>(new StatusPayload(
-        UserId(
-            static_cast<size_t>(handshakeContent->statusPayloads[i]->deviceId)),
-        static_cast<DeviceStatus>(
-            handshakeContent->statusPayloads[i]->deviceStatus),
-        proxyIds,
-        static_cast<DeviceType>(
-            handshakeContent->statusPayloads[i]->deviceType),
-        handshakeContent->statusPayloads[i]->deviceName)));
+    statusPayloads.emplace_back(
+        std::shared_ptr<StatusPayload>(new StatusPayload(
+            UserId(static_cast<size_t>(
+                handshakeContent->statusPayloads[i]->deviceId)),
+            static_cast<DeviceStatus>(
+                handshakeContent->statusPayloads[i]->deviceStatus),
+            proxyIds,
+            static_cast<DeviceType>(
+                handshakeContent->statusPayloads[i]->deviceType),
+            handshakeContent->statusPayloads[i]->deviceName)));
   }
 
-  return shared_ptr<HandshakeMessage>(new HandshakeMessage(
+  return std::shared_ptr<HandshakeMessage>(new HandshakeMessage(
       sourceId, destinationId, statusPayloads, handshakeContent->version));
 }
 
-shared_ptr<DeviceMessage> MessageFactory::translateMessageContent(
+std::shared_ptr<DeviceMessage> MessageFactory::translateMessageContent(
     UserId sourceId, UserId destinationId,
     const Serialization::Messages::WriteDeviceMessageContentT
         *writeDeviceContent,
     int magicNumber) {
 
-  return shared_ptr<WriteDeviceMessage>(new WriteDeviceMessage(
+  return std::shared_ptr<WriteDeviceMessage>(new WriteDeviceMessage(
       sourceId, destinationId,
       static_cast<WriteDeviceTopic>(writeDeviceContent->writeDeviceTopic)));
 }
 
-shared_ptr<DeviceMessage> MessageFactory::translateMessageContent(
+std::shared_ptr<DeviceMessage> MessageFactory::translateMessageContent(
     UserId sourceId, UserId destinationId,
     const Serialization::Messages::ReadDeviceMessageContentT *readDeviceContent,
     int magicNumber) {
@@ -328,17 +330,18 @@ shared_ptr<DeviceMessage> MessageFactory::translateMessageContent(
       this->decodeReadPayload(readDeviceContent->readPayload, magicNumber);
   if (!decodedPayload) {
     // Was not able to decode a read payload from the buffer.
-    return shared_ptr<DeviceMessage>();
+    return std::shared_ptr<DeviceMessage>();
   }
 
-  return shared_ptr<ReadDeviceMessage>(new ReadDeviceMessage(
+  return std::shared_ptr<ReadDeviceMessage>(new ReadDeviceMessage(
       sourceId, destinationId,
       static_cast<ReadDeviceTopic>(readDeviceContent->readDeviceTopic),
       decodedPayload, nullptr));
 }
 
-ReadPayload *MessageFactory::decodeReadPayload(vector<unsigned char> payload,
-                                               int magicNumber) {
+ReadPayload *
+MessageFactory::decodeReadPayload(std::vector<unsigned char> payload,
+                                  int magicNumber) {
   ReadPayload *decodedPayload = nullptr;
   for (auto payloadDecoder : this->payloadDecoders) {
     decodedPayload = payloadDecoder->decodeReadPayload(payload, magicNumber);
@@ -350,8 +353,9 @@ ReadPayload *MessageFactory::decodeReadPayload(vector<unsigned char> payload,
   return decodedPayload;
 }
 
-WritePayload *MessageFactory::decodeWritePayload(vector<unsigned char> payload,
-                                                 int magicNumber) {
+WritePayload *
+MessageFactory::decodeWritePayload(std::vector<unsigned char> payload,
+                                   int magicNumber) {
 
   WritePayload *decodedPayload = nullptr;
   for (auto payloadDecoder : this->payloadDecoders) {
@@ -364,8 +368,9 @@ WritePayload *MessageFactory::decodeWritePayload(vector<unsigned char> payload,
   return decodedPayload;
 }
 
-InitPayload *MessageFactory::decodeInitPayload(vector<unsigned char> payload,
-                                               int magicNumber) {
+InitPayload *
+MessageFactory::decodeInitPayload(std::vector<unsigned char> payload,
+                                  int magicNumber) {
 
   InitPayload *decodedPayload = nullptr;
   for (auto payloadDecoder : this->payloadDecoders) {
@@ -378,7 +383,7 @@ InitPayload *MessageFactory::decodeInitPayload(vector<unsigned char> payload,
   return decodedPayload;
 }
 ConfigurationPayload *
-MessageFactory::decodeConfigurationPayload(vector<unsigned char> payload,
+MessageFactory::decodeConfigurationPayload(std::vector<unsigned char> payload,
                                            int magicNumber) {
 
   ConfigurationPayload *decodedPayload = nullptr;
@@ -392,7 +397,7 @@ MessageFactory::decodeConfigurationPayload(vector<unsigned char> payload,
   return decodedPayload;
 }
 
-shared_ptr<DeviceMessage> MessageFactory::translateMessageContent(
+std::shared_ptr<DeviceMessage> MessageFactory::translateMessageContent(
     UserId sourceId, UserId destinationId,
     const Serialization::Messages::InitDeviceMessageContentT *initDeviceContent,
     int magicNumber) {
@@ -402,14 +407,14 @@ shared_ptr<DeviceMessage> MessageFactory::translateMessageContent(
       this->decodeInitPayload(initDeviceContent->initPayoad, magicNumber);
   if (!decodedPayload) {
     // Was not able to decode a read payload from the buffer.
-    return shared_ptr<DeviceMessage>();
+    return std::shared_ptr<DeviceMessage>();
   }
 
-  return shared_ptr<InitDeviceMessage>(
+  return std::shared_ptr<InitDeviceMessage>(
       new InitDeviceMessage(sourceId, destinationId, decodedPayload));
 }
 
-shared_ptr<DeviceMessage> MessageFactory::translateMessageContent(
+std::shared_ptr<DeviceMessage> MessageFactory::translateMessageContent(
     UserId sourceId, UserId destinationId,
     const Serialization::Messages::ConfigDeviceMessageContentT
         *configDeviceContent,
@@ -420,16 +425,16 @@ shared_ptr<DeviceMessage> MessageFactory::translateMessageContent(
       configDeviceContent->configurationPayload, magicNumber);
   if (!decodedPayload) {
     // Was not able to decode a read payload from the buffer.
-    return shared_ptr<DeviceMessage>();
+    return std::shared_ptr<DeviceMessage>();
   }
 
-  return shared_ptr<DeviceMessage>(
+  return std::shared_ptr<DeviceMessage>(
       new ConfigDeviceMessage(sourceId, destinationId, decodedPayload,
                               UserId(configDeviceContent->responseId)));
 }
 
 MessageFactory *MessageFactory::createInstace(
-    list<shared_ptr<PayloadDecoder>> payloadDecoders) {
+    std::list<std::shared_ptr<PayloadDecoder>> payloadDecoders) {
   if (MessageFactory::instance == nullptr) {
     MessageFactory::instance = new MessageFactory(payloadDecoders);
     return MessageFactory::instance;
@@ -442,7 +447,7 @@ MessageFactory *MessageFactory::getInstace() {
   return MessageFactory::instance;
 }
 
-string MessageFactory::getVersion() const {
+std::string MessageFactory::getVersion() const {
 #ifdef SCIMON_MESSAGE_LIB_VERSION
   return SCIMON_MESSAGE_LIB_VERSION;
 #else

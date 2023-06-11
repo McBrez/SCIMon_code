@@ -109,7 +109,7 @@ public:
                                               float precision, float amplitude);
 
   /**
-   * @brief Build a Set Setup command with the "Add frequency list"
+   * @brief Build a Set Setup command with the "Add frequency std::list"
    * command option.
    * @param fStart Start frequency of sweep.
    * @param fStop Stop frequency of sweep.
@@ -121,7 +121,7 @@ public:
    * and 10.0.
    * @param amplitude The peak amplitude of the sinusoidal excitation. Has to
    * within the technical capabilities of the device.
-   * @return An "Add frequency list" Set Setup command.
+   * @return An "Add frequency std::list" Set Setup command.
    */
   std::vector<unsigned char> buildCmdSetSetup(float fStart, float fStop,
                                               float fCount,
@@ -158,22 +158,24 @@ public:
    * @param bytes The raw data that shall be parsed.
    * @return A shared pointer to the payload object.
    */
-  shared_ptr<ReadPayload> decodeMessage(std::vector<unsigned char> bytes);
+  std::shared_ptr<ReadPayload> decodeMessage(std::vector<unsigned char> bytes);
 
   /**
    * @brief Encodes an init payload into a COM interface data frame.
    * @param payload The payload that shall be encoded.
    * @return The encoded COM interface data frame.
    */
-  std::vector<unsigned char> encodeMessage(shared_ptr<InitPayload> payload);
+  std::vector<unsigned char>
+  encodeMessage(std::shared_ptr<InitPayload> payload);
 
   /**
-   * @brief Encodes a config payload into a list of COM interface data frames.
+   * @brief Encodes a config payload into a std::list of COM interface data
+   * frames.
    * @param payload The payload that shall be encoded.
-   * @return A list of COM interface data frames.
+   * @return A std::list of COM interface data frames.
    */
   std::list<std::vector<unsigned char>>
-  encodeMessage(shared_ptr<ConfigurationPayload> payload);
+  encodeMessage(std::shared_ptr<ConfigurationPayload> payload);
 
 private:
   /**

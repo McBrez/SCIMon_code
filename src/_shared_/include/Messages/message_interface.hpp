@@ -16,7 +16,6 @@
 #include <utilities.hpp>
 #include <write_device_message.hpp>
 
-using namespace std;
 using namespace Utilities;
 
 namespace Messages {
@@ -43,7 +42,7 @@ public:
    * @return True if the initialization message has been received successfully.
    * False otherwise.
    */
-  virtual bool write(shared_ptr<InitDeviceMessage> initMsg) = 0;
+  virtual bool write(std::shared_ptr<InitDeviceMessage> initMsg) = 0;
 
   /**
    * @brief Writes a configuration message to the device.
@@ -52,37 +51,39 @@ public:
    * @return True if the configuration message has been received successfully.
    * False otherwise.
    */
-  virtual bool write(shared_ptr<ConfigDeviceMessage> configMsg) = 0;
+  virtual bool write(std::shared_ptr<ConfigDeviceMessage> configMsg) = 0;
 
   /**
    * @brief Writes a message to the device.
    * @param writeMsg The message that shall be written to the device.
    * @return True if successful. False otherwise.
    */
-  virtual bool write(shared_ptr<WriteDeviceMessage> writeMsg) = 0;
+  virtual bool write(std::shared_ptr<WriteDeviceMessage> writeMsg) = 0;
 
   /**
    * @brief Writes a handshake message to the device.
    * @param writeMsg The handshake message that shall be written to the device.
    * @return True if successful. False otherwise.
    */
-  virtual bool write(shared_ptr<HandshakeMessage> writeMsg) = 0;
+  virtual bool write(std::shared_ptr<HandshakeMessage> writeMsg) = 0;
 
   /**
    * @brief Handles a device specific message. Called by
-   * write(shared_ptr<WriteDeviceMessage>), if the mssage could not be resolved.
+   * write std::shared_ptr<WriteDeviceMessage>), if the mssage could not be
+   * resolved.
    * @param writeMsg The device specific message.
    * @return True if succesful. False otherwise.
    */
-  virtual bool specificWrite(shared_ptr<WriteDeviceMessage> writeMsg) = 0;
+  virtual bool specificWrite(std::shared_ptr<WriteDeviceMessage> writeMsg) = 0;
 
   /**
    * @brief Reads all messages from the message queue.
    * @param timestamp The time at which this method is called.
-   * @return List of references to the messages from the message queue. May
-   * return an empty list, if there was nothing to read.
+   * @return std::list of references to the messages from the message queue. May
+   * return an empty std::list, if there was nothing to read.
    */
-  virtual list<shared_ptr<DeviceMessage>> read(TimePoint timestamp) = 0;
+  virtual std::list<std::shared_ptr<DeviceMessage>>
+  read(TimePoint timestamp) = 0;
 
   /**
    * @brief Device-specific read operation, that is executed on each call of
@@ -90,7 +91,8 @@ public:
    * @param timestamp The time at which this method is called.
    * @return A read message.
    */
-  virtual list<shared_ptr<DeviceMessage>> specificRead(TimePoint timestamp) = 0;
+  virtual std::list<std::shared_ptr<DeviceMessage>>
+  specificRead(TimePoint timestamp) = 0;
 
   /**
    * @brief Handles the response to a write message that has been sent by this
@@ -99,14 +101,14 @@ public:
    * @return TRUE if the response has been handled successfully. False
    * otherwise.
    */
-  virtual bool handleResponse(shared_ptr<ReadDeviceMessage> response) = 0;
+  virtual bool handleResponse(std::shared_ptr<ReadDeviceMessage> response) = 0;
 
   /**
    * @brief Takes the given message and handles it.
    * @param message The message that shall be handled.
    * @return TRUE if the message was handled successfully. FALSE otherwise.
    */
-  bool takeMessage(shared_ptr<DeviceMessage> message);
+  bool takeMessage(std::shared_ptr<DeviceMessage> message);
 
   /**
    * @brief Returns the unique id of the object, that implements this interface.
@@ -116,9 +118,9 @@ public:
 
   /**
    * @brief Returns the Ids this object is the proxy of.
-   * @return The list of proxy ids of this object.
+   * @return The std::list of proxy ids of this object.
    */
-  list<UserId> getProxyUserIds() const;
+  std::list<UserId> getProxyUserIds() const;
 
   /**
    * @brief Comparison operator. Two message interface are equal, if their user
@@ -151,11 +153,11 @@ public:
    * @brief Constructs the current status of the object.
    * @return Pointer to the current status of the object.
    */
-  virtual shared_ptr<StatusPayload> constructStatus() = 0;
+  virtual std::shared_ptr<StatusPayload> constructStatus() = 0;
 
 protected:
   /// Queue for outgoing messages.
-  queue<shared_ptr<DeviceMessage>> messageOut;
+  std::queue<std::shared_ptr<DeviceMessage>> messageOut;
 
   /// Reference to the message distributor this object belongs to. Is set when
   /// the message interface object is added to the distributor as participant.
@@ -163,25 +165,25 @@ protected:
 
   /// A sharable reference to the object itself. Is set when
   /// the message interface object is added to the distributor as participant.
-  shared_ptr<MessageInterface> self;
+  std::shared_ptr<MessageInterface> self;
 
   /**
-   * @brief Adds the given proxy id to the internal list of proxy ids of this
-   * object.
+   * @brief Adds the given proxy id to the internal std::list of proxy ids of
+   * this object.
    * @param proxyId The proxy id that shall be added.
    * @return True if the id has been added. False otherwise.
    */
   bool addProxyId(UserId proxyId);
 
   /**
-   * @brief Removes the given proxy id from the internal list of proxy ids.
+   * @brief Removes the given proxy id from the internal std::list of proxy ids.
    * @param proxyId The proxy ids that shall be removed.
    * @return True if the id has been removed. False otherwise.
    */
   bool removeProxyId(UserId proxyId);
 
   /**
-   * @brief Clear the internal list of proxy ids.
+   * @brief Clear the internal std::list of proxy ids.
    */
   void clearProxyIds();
 
@@ -190,7 +192,7 @@ private:
   UserId id;
 
   /// The unique ids of the objects that are represented by this object.
-  list<UserId> proxyIds;
+  std::list<UserId> proxyIds;
 };
 } // namespace Messages
 

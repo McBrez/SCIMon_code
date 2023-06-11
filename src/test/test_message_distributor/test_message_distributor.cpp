@@ -15,6 +15,6 @@ using namespace Messages;
 TEST_CASE("") {
   MessageDistributor dut;
 
-  dut.addParticipant(shared_ptr<MessageInterface>(new Devices::));
+  dut.addParticipant std::shared_ptr<MessageInterface>(new Devices::));
   dut.addParticipant();
 }

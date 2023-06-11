@@ -17,7 +17,7 @@ Ob1ConfPayload::~Ob1ConfPayload() {}
 
 int Ob1ConfPayload::getMagicNumber() { return MAGIC_NUMBER_OB1_CONF_PAYLOAD; }
 
-vector<unsigned char> Ob1ConfPayload::bytes() {
+std::vector<unsigned char> Ob1ConfPayload::bytes() {
   Serialization::Devices::Ob1ConfPayloadT intermediateObject;
 
   flatbuffers::FlatBufferBuilder builder;
@@ -25,7 +25,7 @@ vector<unsigned char> Ob1ConfPayload::bytes() {
       builder, &intermediateObject));
   uint8_t *buffer = builder.GetBufferPointer();
 
-  return vector<unsigned char>(buffer, buffer + builder.GetSize());
+  return std::vector<unsigned char>(buffer, buffer + builder.GetSize());
 }
 
 } // namespace Devices

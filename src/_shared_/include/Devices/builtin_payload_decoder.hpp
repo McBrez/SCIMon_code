@@ -14,18 +14,19 @@ class BuiltinPayloadDecoder : public PayloadDecoder {
 public:
   BuiltinPayloadDecoder() {}
 
-  virtual InitPayload *decodeInitPayload(const vector<unsigned char> &data,
+  virtual InitPayload *decodeInitPayload(const std::vector<unsigned char> &data,
                                          int magicNumber = 0) override;
 
   virtual ConfigurationPayload *
-  decodeConfigPayload(const vector<unsigned char> &data,
+  decodeConfigPayload(const std::vector<unsigned char> &data,
                       int magicNumber = 0) override;
 
-  virtual ReadPayload *decodeReadPayload(const vector<unsigned char> &data,
+  virtual ReadPayload *decodeReadPayload(const std::vector<unsigned char> &data,
                                          int magicNumber = 0) override;
 
-  virtual WritePayload *decodeWritePayload(const vector<unsigned char> &data,
-                                           int magicNumber = 0) override;
+  virtual WritePayload *
+  decodeWritePayload(const std::vector<unsigned char> &data,
+                     int magicNumber = 0) override;
 };
 } // namespace Devices
 

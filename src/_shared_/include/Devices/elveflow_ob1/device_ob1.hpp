@@ -24,7 +24,7 @@ public:
    * @brief Return the name of the device type.
    * @return The device type name.
    */
-  virtual string getDeviceTypeName() override;
+  virtual std::string getDeviceTypeName() override;
 
   /**
    * @brief Handles the response to a write message that has been sent by this
@@ -33,7 +33,7 @@ public:
    * @return TRUE if the response has been handled successfully. False
    * otherwise.
    */
-  bool handleResponse(shared_ptr<ReadDeviceMessage> response) override;
+  bool handleResponse(std::shared_ptr<ReadDeviceMessage> response) override;
 };
 } // namespace Devices
 

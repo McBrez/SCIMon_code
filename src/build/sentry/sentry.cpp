@@ -15,7 +15,6 @@
 #include <sentry_payload_decoder.hpp>
 #include <sentry_worker.hpp>
 
-
 INITIALIZE_EASYLOGGINGPP
 
 using namespace Messages;
@@ -47,31 +46,31 @@ int main(int argc, char *argv[]) {
   MessageDistributor messageDistributor(program.get<int>("--interval"));
   // Initialize the message factory.
   MessageFactory::createInstace(
-      {shared_ptr<PayloadDecoder>(new Ob1PayloadDecoder()),
-       shared_ptr<PayloadDecoder>(new Isx3PayloadDecoder()),
-       shared_ptr<PayloadDecoder>(new SentryPayloadDecoder())});
+      {std::shared_ptr<PayloadDecoder>(new Ob1PayloadDecoder()),
+       std::shared_ptr<PayloadDecoder>(new Isx3PayloadDecoder()),
+       std::shared_ptr<PayloadDecoder>(new SentryPayloadDecoder())});
 
   // Create Devices and add them to the distributor immediatelly.
   messageDistributor.addParticipant(
-      shared_ptr<MessageInterface>(new DeviceIsx3()));
+      std::shared_ptr<MessageInterface>(new DeviceIsx3()));
   messageDistributor.addParticipant(
-      shared_ptr<MessageInterface>(new DeviceOb1Win()));
-  shared_ptr<MessageInterface> networkWorker(new NetworkWorker());
+      std::shared_ptr<MessageInterface>(new DeviceOb1Win()));
+  std::shared_ptr<MessageInterface> networkWorker(new NetworkWorker());
   messageDistributor.addParticipant(networkWorker);
 
   // Create the master worker and add it to the distributor.
-  shared_ptr<MessageInterface> sentryWorker(new SentryWorker());
+  std::shared_ptr<MessageInterface> sentryWorker(new SentryWorker());
   messageDistributor.addParticipant(sentryWorker);
 
   // Immediatelly queue up messages for the network worker, so that it starts
   // listening.
   messageDistributor.takeMessage(
-      shared_ptr<DeviceMessage>(new InitDeviceMessage(
+      std::shared_ptr<DeviceMessage>(new InitDeviceMessage(
           UserId(), networkWorker->getUserId(),
           new NetworkWorkerInitPayload(
               NetworkWorkerOperationMode::NETWORK_WORKER_OP_MODE_SERVER, "",
               program.get<int>("--port")))));
-  messageDistributor.takeMessage(shared_ptr<DeviceMessage>(
+  messageDistributor.takeMessage(std::shared_ptr<DeviceMessage>(
       new WriteDeviceMessage(UserId(), networkWorker->getUserId(),
                              WriteDeviceTopic::WRITE_TOPIC_RUN)));
 

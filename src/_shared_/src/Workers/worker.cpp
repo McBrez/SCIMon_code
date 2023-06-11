@@ -14,7 +14,7 @@ Worker::Worker()
 
 Worker::~Worker() {}
 
-bool Worker::write(shared_ptr<WriteDeviceMessage> writeMsg) {
+bool Worker::write(std::shared_ptr<WriteDeviceMessage> writeMsg) {
 
   if (WriteDeviceTopic::WRITE_TOPIC_INVALID == writeMsg->getTopic()) {
     LOG(WARNING) << "Received a message with invalid topic.";
@@ -37,7 +37,7 @@ bool Worker::write(shared_ptr<WriteDeviceMessage> writeMsg) {
 
   else if (WriteDeviceTopic::WRITE_TOPIC_QUERY_STATE == writeMsg->getTopic()) {
     // Put the worker state into the message queue.
-    this->messageOut.push(shared_ptr<DeviceMessage>(new ReadDeviceMessage(
+    this->messageOut.push(std::shared_ptr<DeviceMessage>(new ReadDeviceMessage(
         this->self->getUserId(), writeMsg->getSource(),
         READ_TOPIC_DEVICE_STATUS,
         new StatusPayload(this->getUserId(), this->getState(),
@@ -54,9 +54,10 @@ bool Worker::write(shared_ptr<WriteDeviceMessage> writeMsg) {
   }
 }
 
-list<shared_ptr<DeviceMessage>> Worker::read(TimePoint timestamp) {
+std::list<std::shared_ptr<DeviceMessage>> Worker::read(TimePoint timestamp) {
   // Call the device-specific read operation.
-  list<shared_ptr<DeviceMessage>> readMessages = this->specificRead(timestamp);
+  std::list<std::shared_ptr<DeviceMessage>> readMessages =
+      this->specificRead(timestamp);
   // Append the message, if it was not empty.
   if (!readMessages.empty()) {
     for (auto message : readMessages) {
@@ -66,11 +67,11 @@ list<shared_ptr<DeviceMessage>> Worker::read(TimePoint timestamp) {
 
   // Pop the queue, if it is not empty.
   if (this->messageOut.empty()) {
-    // Queue is empty. Return an empty list.
-    return list<shared_ptr<DeviceMessage>>();
+    // Queue is empty. Return an empty std::list.
+    return std::list<std::shared_ptr<DeviceMessage>>();
   } else {
-    // Pop the queue to a list and return it.
-    list<shared_ptr<DeviceMessage>> retVal;
+    // Pop the queue to a std::list and return it.
+    std::list<std::shared_ptr<DeviceMessage>> retVal;
 
     while (!this->messageOut.empty()) {
       retVal.push_back(this->messageOut.front());
@@ -80,7 +81,7 @@ list<shared_ptr<DeviceMessage>> Worker::read(TimePoint timestamp) {
   }
 }
 
-bool Worker::write(shared_ptr<InitDeviceMessage> initMsg) {
+bool Worker::write(std::shared_ptr<InitDeviceMessage> initMsg) {
   if (initMsg->getDestination() != this->getUserId()) {
     LOG(WARNING) << "Got a message that is not meant for this device.";
     return false;
@@ -89,7 +90,7 @@ bool Worker::write(shared_ptr<InitDeviceMessage> initMsg) {
   return this->initialize(initMsg->returnPayload());
 }
 
-bool Worker::write(shared_ptr<ConfigDeviceMessage> configMsg) {
+bool Worker::write(std::shared_ptr<ConfigDeviceMessage> configMsg) {
   if (configMsg->getDestination() != this->getUserId()) {
     LOG(WARNING) << "Got a message that is not meant for this device.";
     return false;
@@ -100,8 +101,8 @@ bool Worker::write(shared_ptr<ConfigDeviceMessage> configMsg) {
 
 DeviceStatus Worker::getState() const { return this->workerState; }
 
-shared_ptr<StatusPayload> Worker::constructStatus() {
-  return shared_ptr<StatusPayload>(new StatusPayload(
+std::shared_ptr<StatusPayload> Worker::constructStatus() {
+  return std::shared_ptr<StatusPayload>(new StatusPayload(
       this->getUserId(), this->workerState, this->getProxyUserIds(),
       DeviceType::UNSPECIFIED, this->getWorkerName()));
 }

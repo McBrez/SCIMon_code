@@ -15,7 +15,7 @@ SentryConfigPayload::SentryConfigPayload(SentryWorkerMode sentryWorkerMode,
     : ConfigurationPayload(DeviceType::UNSPECIFIED),
       sentryWorkerMode(sentryWorkerMode), onTime(onTime), offTime(offTime) {}
 
-vector<unsigned char> SentryConfigPayload::bytes() {
+std::vector<unsigned char> SentryConfigPayload::bytes() {
 
   Serialization::Workers::SentryConfigPayloadT intermediateObject;
 
@@ -30,7 +30,7 @@ vector<unsigned char> SentryConfigPayload::bytes() {
       builder, &intermediateObject));
   uint8_t *buffer = builder.GetBufferPointer();
 
-  return vector<unsigned char>(buffer, buffer + builder.GetSize());
+  return std::vector<unsigned char>(buffer, buffer + builder.GetSize());
 }
 
 int SentryConfigPayload::getMagicNumber() {

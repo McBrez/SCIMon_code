@@ -16,10 +16,11 @@ IsPayload::IsPayload(unsigned int channelNumber, double timestamp,
       impedanceSpectrum(impedanceSpectrum) {}
 
 IsPayload::IsPayload(unsigned int channelNumber, double timestamp,
-                     list<double> frequencies, list<complex<double>> impedances)
+                     std::list<double> frequencies,
+                     std::list<std::complex<double>> impedances)
     : channelNumber(channelNumber), timestamp(timestamp) {
 
-  // Get the smaller of the both lists.
+  // Get the smaller of the both std::lists.
   size_t minLen = std::min(frequencies.size(), impedances.size());
   auto frequenciesIt = frequencies.begin();
   auto impedancesIt = impedances.begin();
@@ -39,25 +40,25 @@ ImpedanceSpectrum IsPayload::getImpedanceSpectrum() const {
   return this->impedanceSpectrum;
 }
 
-string IsPayload::serialize() {
-  string retVal;
-  retVal += "timestamp: " + to_string(this->timestamp) + " ";
-  retVal += "channel: " + to_string(this->channelNumber) + "\n";
+std::string IsPayload::serialize() {
+  std::string retVal;
+  retVal += "timestamp: " + std::to_string(this->timestamp) + " ";
+  retVal += "channel: " + std::to_string(this->channelNumber) + "\n";
   for (auto impedancePoint : this->impedanceSpectrum) {
-    retVal += to_string(get<0>(impedancePoint)) + " Hz, " +
-              to_string(get<1>(impedancePoint).real()) + "Ohm + i * " +
-              to_string(get<1>(impedancePoint).imag()) + " Ohm";
+    retVal += std::to_string(get<0>(impedancePoint)) + " Hz, " +
+              std::to_string(get<1>(impedancePoint).real()) + "Ohm + i * " +
+              std::to_string(get<1>(impedancePoint).imag()) + " Ohm";
   }
 
   return retVal;
 }
 
-vector<unsigned char> IsPayload::bytes() {
+std::vector<unsigned char> IsPayload::bytes() {
   Serialization::Devices::IsPayloadT intermediateObject;
   intermediateObject.channelNumber = this->channelNumber;
   intermediateObject.timestamp = this->timestamp;
-  vector<double> frequencies;
-  vector<Impedance> impedances;
+  std::vector<double> frequencies;
+  std::vector<Impedance> impedances;
   Utilities::splitImpedanceSpectrum(this->impedanceSpectrum, frequencies,
                                     impedances);
   intermediateObject.frequencies = frequencies;
@@ -71,7 +72,7 @@ vector<unsigned char> IsPayload::bytes() {
       Serialization::Devices::IsPayload::Pack(builder, &intermediateObject));
   uint8_t *buffer = builder.GetBufferPointer();
 
-  return vector<unsigned char>(buffer, buffer + builder.GetSize());
+  return std::vector<unsigned char>(buffer, buffer + builder.GetSize());
 }
 
 int IsPayload::getMagicNumber() { return MAGIC_NUMBER_IS_PAYLOAD; }

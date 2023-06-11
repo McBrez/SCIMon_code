@@ -10,5 +10,5 @@ DummyMessage::DummyMessage()
  * @brief Serializes the message into a string.
  * @return A string containing the contents of the message.
  */
-string DummyMessage::serialize() { return "This is a dummy message"; }
+std::string DummyMessage::serialize() { return "This is a dummy message"; }
 } // namespace Messages

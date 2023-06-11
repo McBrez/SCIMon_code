@@ -8,27 +8,25 @@
 #include <string>
 #include <tuple>
 
-using namespace std;
-
 namespace Core {
 
 /// @brief Shortcut to a type that holds electric impedances.
-typedef complex<double> Impedance;
+typedef std::complex<double> Impedance;
 
 /// Shortcut to the definition of an impedance at a given frequency. The first
 /// value of the tuple is the frequency in Hertz. The second value is the
 /// complex impedance in Ohm.
-typedef tuple<double, Impedance> ImpedancePoint;
+typedef std::tuple<double, Impedance> ImpedancePoint;
 
 /// Shortcut to the definition of a discrete impedance spectrum.
-typedef list<ImpedancePoint> ImpedanceSpectrum;
+typedef std::list<ImpedancePoint> ImpedanceSpectrum;
 
 /// @brief shortcut to a type that enables timestamping.
 using TimePoint = std::chrono::time_point<std::chrono::system_clock>;
 
-const string NETWORK_WORKER_TYPE_NAME = "Network Worker";
+const std::string NETWORK_WORKER_TYPE_NAME = "Network Worker";
 
-const string SENTRY_WORKER_TYPE_NAME = "Sentry Worker";
+const std::string SENTRY_WORKER_TYPE_NAME = "Sentry Worker";
 
 /// @brief The default port for network worker connections.
 const int NetworkWorkerDefaultPort = 4545;
@@ -44,6 +42,7 @@ const int NetworkWorkerDefaultPort = 4545;
 #define MAGIC_NUMBER_NETWORK_WORKER_INIT_PAYLOAD 0x0007
 #define MAGIC_NUMBER_SET_PRESSURE_PAYLOAD 0x0008
 #define MAGIC_NUMBER_REQUEST_DATA_PAYLOAD 0x0009
+#define MAGIC_NUMBER_SET_DEVICE_STATUS_PAYLOAD 0x000A
 // ISX3 Payloads
 #define MAGIC_NUMBER_ISX3_INIT_PAYLOAD 0x0101
 #define MAGIC_NUMBER_ISX3_IS_CONF_PAYLOAD 0x0102

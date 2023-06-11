@@ -6,7 +6,7 @@
 #include <utilities.hpp>
 
 using namespace Devices;
-using namespace std;
+
 using namespace Utilities;
 
 namespace Workers {
@@ -41,7 +41,7 @@ public:
    * @brief Serializes the payload into bytes.
    * @return Byte vector, that depicts the payload.
    */
-  virtual vector<unsigned char> bytes() override;
+  virtual std::vector<unsigned char> bytes() override;
 
   /**
    * @brief Returns the magic number of the payload. This number is used to

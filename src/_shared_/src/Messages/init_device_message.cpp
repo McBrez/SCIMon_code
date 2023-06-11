@@ -7,15 +7,15 @@ InitDeviceMessage::InitDeviceMessage(UserId source, UserId destination,
     : DeviceMessage(source, destination), initPayload(initPayload) {}
 
 InitDeviceMessage::InitDeviceMessage(UserId source, UserId destination,
-                                     shared_ptr<InitPayload> initPayload)
+                                     std::shared_ptr<InitPayload> initPayload)
     : DeviceMessage(source, destination), initPayload(initPayload) {}
 
 InitDeviceMessage::~InitDeviceMessage() {}
 
-shared_ptr<InitPayload> InitDeviceMessage::returnPayload() {
+std::shared_ptr<InitPayload> InitDeviceMessage::returnPayload() {
   return this->initPayload;
 }
 
-string InitDeviceMessage::serialize() { return ""; }
+std::string InitDeviceMessage::serialize() { return ""; }
 
 } // namespace Messages

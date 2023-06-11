@@ -15,7 +15,7 @@ bool MessageInterface::operator==(MessageInterface &other) {
   return this->getUserId() == other.getUserId();
 }
 
-bool MessageInterface::takeMessage(shared_ptr<DeviceMessage> message) {
+bool MessageInterface::takeMessage(std::shared_ptr<DeviceMessage> message) {
   // Try to downcast the message.
   // Is it an init message?
   auto initDeviceMessage = dynamic_pointer_cast<InitDeviceMessage>(message);
@@ -72,11 +72,11 @@ bool MessageInterface::takeMessage(shared_ptr<DeviceMessage> message) {
 bool MessageInterface::addProxyId(UserId proxyId) {
 
   if (this->proxyIds.empty()) {
-    // Always add the given id if the list is empty.
+    // Always add the given id if the std::list is empty.
     this->proxyIds.push_back(proxyId);
     return true;
   } else {
-    // If the list is not empty, check if the id is already in there.
+    // If the std::list is not empty, check if the id is already in there.
     auto it = std::find(this->proxyIds.begin(), this->proxyIds.end(), proxyId);
 
     if (it == this->proxyIds.end()) {
@@ -112,7 +112,7 @@ bool MessageInterface::isTarget(UserId id) {
   }
 }
 
-list<UserId> MessageInterface::getProxyUserIds() const {
+std::list<UserId> MessageInterface::getProxyUserIds() const {
   return this->proxyIds;
 }
 

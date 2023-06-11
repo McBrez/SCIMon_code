@@ -10,17 +10,18 @@ ConfigDeviceMessage::ConfigDeviceMessage(
 
 ConfigDeviceMessage::ConfigDeviceMessage(
     UserId source, UserId destination,
-    shared_ptr<ConfigurationPayload> deviceConfiguration, UserId responseId)
+    std::shared_ptr<ConfigurationPayload> deviceConfiguration,
+    UserId responseId)
     : DeviceMessage(source, destination),
       deviceConfiguration(deviceConfiguration), responseId(responseId) {}
 
 ConfigDeviceMessage::~ConfigDeviceMessage() {}
 
-shared_ptr<ConfigurationPayload> ConfigDeviceMessage::getConfiguration() {
+std::shared_ptr<ConfigurationPayload> ConfigDeviceMessage::getConfiguration() {
   return this->deviceConfiguration;
 }
 
-string ConfigDeviceMessage::serialize() { return ""; }
+std::string ConfigDeviceMessage::serialize() { return ""; }
 
 UserId ConfigDeviceMessage::getResponseId() const { return this->responseId; }
 

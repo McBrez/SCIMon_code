@@ -25,7 +25,7 @@ public:
   InitDeviceMessage(UserId source, UserId destination,
                     InitPayload *initPayload);
   InitDeviceMessage(UserId source, UserId destination,
-                    shared_ptr<InitPayload> initPayload);
+                    std::shared_ptr<InitPayload> initPayload);
 
   /**
    * @brief Destroy the Init Device Message object
@@ -36,17 +36,17 @@ public:
    * @brief Returns the initialization data.
    * @return The initialization data.
    */
-  shared_ptr<InitPayload> returnPayload();
+  std::shared_ptr<InitPayload> returnPayload();
 
   /**
    * @brief Serializes the message into a human-readable string.
    * @return A human-readable representation of the message.
    */
-  string serialize() override;
+  std::string serialize() override;
 
 private:
   /// Reference to the initialization data.
-  shared_ptr<InitPayload> initPayload;
+  std::shared_ptr<InitPayload> initPayload;
 };
 
 } // namespace Messages

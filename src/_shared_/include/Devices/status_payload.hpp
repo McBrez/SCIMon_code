@@ -62,15 +62,15 @@ public:
 
   DeviceType getDeviceType();
 
-  string getDeviceName();
+  std::string getDeviceName();
 
-  list<UserId> getProxyIds();
+  std::list<UserId> getProxyIds();
 
   /**
    * @brief Serializes the payload into a human-readable string.
    * @return The string representation of the payload.
    */
-  virtual string serialize() override;
+  virtual std::string serialize() override;
 
   bool operator==(const StatusPayload &other) const;
 
@@ -78,7 +78,7 @@ public:
    * @brief Serializes the payload into bytes.
    * @return Byte vector, that depicts the payload.
    */
-  virtual vector<unsigned char> bytes() override;
+  virtual std::vector<unsigned char> bytes() override;
 
   /**
    * @brief Returns the magic number of the payload. This number is used to
@@ -95,13 +95,13 @@ private:
   UserId deviceId;
 
   /// The proxy ids of the device.
-  list<UserId> proxyIds;
+  std::list<UserId> proxyIds;
 
   /// The device type.
   DeviceType deviceType;
 
   /// The device name.
-  string deviceName;
+  std::string deviceName;
 };
 
 } // namespace Devices

@@ -36,13 +36,14 @@ public:
    */
   virtual void work(TimePoint timestamp) = 0;
 
-  virtual list<shared_ptr<DeviceMessage>> read(TimePoint timestamp) override;
+  virtual std::list<std::shared_ptr<DeviceMessage>>
+  read(TimePoint timestamp) override;
 
-  virtual bool write(shared_ptr<WriteDeviceMessage> writeMsg) override;
+  virtual bool write(std::shared_ptr<WriteDeviceMessage> writeMsg) override;
 
-  virtual bool write(shared_ptr<InitDeviceMessage> initMsg) override;
+  virtual bool write(std::shared_ptr<InitDeviceMessage> initMsg) override;
 
-  virtual bool write(shared_ptr<ConfigDeviceMessage> configMsg) override;
+  virtual bool write(std::shared_ptr<ConfigDeviceMessage> configMsg) override;
 
   /**
    * @brief Tells the worker to start its operation.
@@ -58,9 +59,9 @@ public:
    */
   virtual bool stop() = 0;
 
-  virtual bool initialize(shared_ptr<InitPayload>) = 0;
+  virtual bool initialize(std::shared_ptr<InitPayload>) = 0;
 
-  virtual bool configure(shared_ptr<ConfigurationPayload>) = 0;
+  virtual bool configure(std::shared_ptr<ConfigurationPayload>) = 0;
 
   /**
    * @brief Returns the state of the worker.
@@ -72,13 +73,13 @@ public:
    * @brief Constructs the current status of the object.
    * @return Pointer to the current status of the object.
    */
-  virtual shared_ptr<StatusPayload> constructStatus() override;
+  virtual std::shared_ptr<StatusPayload> constructStatus() override;
 
   /**
    * @brief Returns the name of the worker.
    * @return A string that identifies the type of the worker.
    */
-  virtual string getWorkerName() = 0;
+  virtual std::string getWorkerName() = 0;
 
 protected:
   /// The id of the worker.

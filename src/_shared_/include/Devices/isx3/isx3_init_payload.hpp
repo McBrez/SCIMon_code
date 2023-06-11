@@ -7,8 +7,6 @@
 // Project includes
 #include <init_payload.hpp>
 
-using namespace std;
-
 namespace Devices {
 class Isx3InitPayload : public InitPayload {
 public:
@@ -17,15 +15,15 @@ public:
    * @param ipAddress The ip address that shall be connected to.
    * @param port The port that shall be connected to.
    */
-  Isx3InitPayload(string ipAddress, int port);
+  Isx3InitPayload(std::string ipAddress, int port);
 
   /**
    * @brief Serializes the payload into a human readable string.
    * @return The payload in string representation.
    */
-  virtual string serialize() override;
+  virtual std::string serialize() override;
 
-  string getIpAddress();
+  std::string getIpAddress();
 
   int getPort();
 
@@ -33,7 +31,7 @@ public:
    * @brief Serializes the payload into bytes.
    * @return Byte vector, that depicts the payload.
    */
-  virtual vector<unsigned char> bytes() override;
+  virtual std::vector<unsigned char> bytes() override;
 
   /**
    * @brief Returns the magic number of the payload. This number is used to
@@ -43,7 +41,7 @@ public:
   int getMagicNumber() override;
 
 private:
-  string ipAddress;
+  std::string ipAddress;
   int port;
 };
 } // namespace Devices

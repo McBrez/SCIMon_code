@@ -22,6 +22,7 @@ set(
     ${RES_DIR}/flatbuffers/Devices/status_payload.fbs 
     ${RES_DIR}/flatbuffers/Devices/set_pressure_payload.fbs 
     ${RES_DIR}/flatbuffers/Devices/request_data_payload.fbs 
+    ${RES_DIR}/flatbuffers/Devices/set_device_state_payload.fbs 
 
     ${RES_DIR}/flatbuffers/Devices/elveflow/ob1/ob1_config_payload.fbs
     ${RES_DIR}/flatbuffers/Devices/elveflow/ob1/ob1_init_payload.fbs
@@ -74,6 +75,7 @@ target_include_directories(scimon_message PUBLIC
     ${INCLUDE_DIR}/Workers
     ${INCLUDE_DIR}/Workers/network_worker
     ${INCLUDE_DIR}/Workers/sentry_worker
+    ${INCLUDE_DIR}/Workers/control_worker
 
     ${3RDPARTY_DIR}/easyloggingpp/src
     ${3RDPARTY_DIR}/flatbuffers/include
@@ -110,6 +112,7 @@ target_sources(scimon_message PUBLIC
     ${INCLUDE_DIR}/Devices/write_payload.hpp
     ${INCLUDE_DIR}/Devices/set_pressure_payload.hpp
     ${INCLUDE_DIR}/Devices/request_data_payload.hpp
+    ${INCLUDE_DIR}/Devices/set_device_status_payload.hpp
     ${INCLUDE_DIR}/Devices/payload_decoder.hpp
     ${INCLUDE_DIR}/Devices/builtin_payload_decoder.hpp
     ${INCLUDE_DIR}/Workers/worker.hpp
@@ -119,6 +122,7 @@ target_sources(scimon_message PUBLIC
     ${INCLUDE_DIR}/Workers/sentry_worker/sentry_payload_decoder.hpp
     ${INCLUDE_DIR}/Workers/sentry_worker/sentry_init_payload.hpp
     ${INCLUDE_DIR}/Workers/sentry_worker/sentry_config_payload.hpp
+    ${INCLUDE_DIR}/Workers/control_worker/control_worker.hpp
     ${INCLUDE_DIR}/Devices/isx3/com_interface_codec.hpp
     ${INCLUDE_DIR}/Devices/isx3/device_isx3.hpp
     ${INCLUDE_DIR}/Devices/isx3/isx3_ack_payload.hpp
@@ -161,6 +165,7 @@ target_sources(scimon_message PUBLIC
     ${SOURCE_DIR}/Devices/write_payload.cpp
     ${SOURCE_DIR}/Devices/set_pressure_payload.cpp
     ${SOURCE_DIR}/Devices/request_data_payload.cpp
+    ${SOURCE_DIR}/Devices/set_device_status_payload.cpp
     ${SOURCE_DIR}/Devices/builtin_payload_decoder.cpp
     ${SOURCE_DIR}/Workers/worker.cpp
     ${SOURCE_DIR}/Workers/network_worker/network_worker.cpp
@@ -169,6 +174,7 @@ target_sources(scimon_message PUBLIC
     ${SOURCE_DIR}/Workers/sentry_worker/sentry_payload_decoder.cpp
     ${SOURCE_DIR}/Workers/sentry_worker/sentry_init_payload.cpp
     ${SOURCE_DIR}/Workers/sentry_worker/sentry_config_payload.cpp
+    ${SOURCE_DIR}/Workers/control_worker/control_worker.cpp
     ${SOURCE_DIR}/Devices/isx3/com_interface_codec.cpp
     ${SOURCE_DIR}/Devices/isx3/device_isx3.cpp
     ${SOURCE_DIR}/Devices/isx3/isx3_ack_payload.cpp
@@ -211,7 +217,8 @@ target_compile_definitions(scimon_message
 if (WIN32)
     # Disable the "byte" type, introduced by MSVC in newer versions. Otherwise, 
     # it would clash with the std::byte type. 
-    add_compile_definitions(_HAS_STD_BYTE=0)
+    #add_compile_definitions(_HAS_STD_BYTE=0)
+
     
     # Find libraries
     find_library(LIB_ELVEFLOW Elveflow64 ${3RDPARTY_DIR}/elveflow/x64)

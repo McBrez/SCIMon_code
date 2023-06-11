@@ -1,49 +1,34 @@
-#ifndef SET_PRESSURE_PAYLOAD_HPP
-#define SET_PRESSURE_PAYLOAD_HPP
-
-// Standard includes
-#include <vector>
+#ifndef SET_DEVICE_STATUS_PAYLOAD_HPP
+#define SET_DEVICE_STATUS_PAYLOAD_HPP
 
 // Project includes
+#include <user_id.hpp>
 #include <write_payload.hpp>
 
+using namespace Messages;
+
 namespace Devices {
-
-enum PressureUnit { PSI = 0, BAR = 1 };
-
 /**
- * @brief Encapsulates the set point pressures of an pump controller.
+ * @brief Payload that tells an message interface to set the status of another
+ * messsage interface object it manages.
  */
-class SetPressurePayload : public WritePayload {
+class SetDeviceStatusPayload : public WritePayload {
 public:
-  /**a
+  /**
    * @brief Construct a new ReadPayload object.
    */
-  SetPressurePayload(const std::vector<double> &pressures,
-                     PressureUnit pressureUnit);
+  SetDeviceStatusPayload(UserId targetId, bool setStatus);
 
   /**
    * @brief Destroy the ReadPayload object.
    */
-  virtual ~SetPressurePayload() override;
+  virtual ~SetDeviceStatusPayload() override;
 
   /**
    * @brief Serializes the payload into a human readable string.
    * @return The payload in string representation.
    */
   virtual std::string serialize() override;
-
-  /**
-   * @brief Returns the pressures held by this payload.
-   * @return The pressures held by this payload.
-   */
-  std::vector<double> getPressures() const;
-
-  /**
-   * @brief Get the unit of the pressures.
-   * @return The unit of pressure.
-   */
-  PressureUnit getPressureUnit() const;
 
   /**
    * @brief Serializes the payload into bytes.
@@ -58,9 +43,10 @@ public:
    */
   virtual int getMagicNumber() override;
 
-private:
-  std::vector<double> pressures;
-  PressureUnit pressureUnit;
+  /// The id of the message interface, whose status shall be set.
+  UserId targetId;
+  /// The status that shall be set.
+  bool setStatus;
 };
 
 } // namespace Devices

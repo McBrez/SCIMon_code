@@ -4,8 +4,6 @@
 // Standard includes
 #include <vector>
 
-using namespace std;
-
 namespace Devices {
 /**
  * @brief A generic payload that may be used for device initialization,
@@ -17,7 +15,7 @@ public:
    * @brief Serializes the payload into bytes.
    * @return Byte vector, that depicts the payload.
    */
-  virtual vector<unsigned char> bytes() = 0;
+  virtual std::vector<unsigned char> bytes() = 0;
 
   /**
    * @brief Returns the magic number of the payload. This number is used to

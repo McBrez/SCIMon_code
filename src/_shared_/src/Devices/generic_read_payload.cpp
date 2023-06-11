@@ -10,12 +10,12 @@
 
 using namespace Devices;
 
-GenericReadPayload::GenericReadPayload(vector<unsigned char> byteVector)
+GenericReadPayload::GenericReadPayload(std::vector<unsigned char> byteVector)
     : byteVector(byteVector) {}
 
-string GenericReadPayload::serialize() { return ""; }
+std::string GenericReadPayload::serialize() { return ""; }
 
-vector<unsigned char> GenericReadPayload::bytes() {
+std::vector<unsigned char> GenericReadPayload::bytes() {
   Serialization::Devices::GenericReadPayloadT intermediateObject;
   intermediateObject.byteVector = this->byteVector;
 
@@ -24,10 +24,10 @@ vector<unsigned char> GenericReadPayload::bytes() {
       builder, &intermediateObject));
   uint8_t *buffer = builder.GetBufferPointer();
 
-  return vector<unsigned char>(buffer, buffer + builder.GetSize());
+  return std::vector<unsigned char>(buffer, buffer + builder.GetSize());
 }
 
-vector<unsigned char> GenericReadPayload::getByteVector() {
+std::vector<unsigned char> GenericReadPayload::getByteVector() {
   return this->byteVector;
 }
 

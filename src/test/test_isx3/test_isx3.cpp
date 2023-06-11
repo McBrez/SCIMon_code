@@ -35,18 +35,18 @@ TEST_CASE("Testing the implementation of the Sciospec ISX3 device",
     // Create the DUT.
     DeviceIsx3 *dut = new DeviceIsx3Win();
     // Create an init message.
-    shared_ptr<InitDeviceMessage> initMsg(
+    std::shared_ptr<InitDeviceMessage> initMsg(
         new InitMessageIsx3("127.0.0.1", telnetPort));
     REQUIRE(dut->write(initMsg) == true);
 
     // After an init message, an empty response is expected.
-    shared_ptr<DeviceMessage> response = dut->read();
+    std::shared_ptr<DeviceMessage> response = dut->read();
     REQUIRE(!response);
 
     // Configure the dut.
     DeviceConfiguration *deviceConfig = new IsConfiguration(
         10.0, 100.0, 3, 0, "BNC", IsScale::LINEAR_SCALE, 0.0, 250.0, 0, 0);
-    shared_ptr<ConfigDeviceMessage> configMsg(
+    std::shared_ptr<ConfigDeviceMessage> configMsg(
         new ConfigDeviceMessage(deviceConfig));
     REQUIRE(dut->write(configMsg) == true);
 
@@ -55,7 +55,7 @@ TEST_CASE("Testing the implementation of the Sciospec ISX3 device",
     REQUIRE(!response);
 
     // Start measuring.
-    shared_ptr<WriteDeviceMessage> startMsg(
+    std::shared_ptr<WriteDeviceMessage> startMsg(
         new WriteDeviceMessage(WriteDeviceTopic::RUN_TOPIC));
     REQUIRE(dut->write(startMsg) == true);
 

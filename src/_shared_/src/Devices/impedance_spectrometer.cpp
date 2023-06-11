@@ -18,8 +18,8 @@ bool ImpedanceSpectrometer::open() { return true; }
 
 bool ImpedanceSpectrometer::close() { return true; }
 
-bool ImpedanceSpectrometer::write(shared_ptr<DeviceMessage> message) {
-  shared_ptr<MessageImpedanceSpectrometer> castedMessage =
+bool ImpedanceSpectrometer::write std::shared_ptr<DeviceMessage> message) {
+  std::shared_ptr<MessageImpedanceSpectrometer> castedMessage =
       dynamic_pointer_cast<MessageImpedanceSpectrometer>(message);
 
   if (castedMessage->type() == ImpedanceSpectrometerMessageType::CALIBRATE) {
@@ -35,6 +35,6 @@ bool ImpedanceSpectrometer::write(shared_ptr<DeviceMessage> message) {
 }
 
 shared_ptr<DeviceMessage> ImpedanceSpectrometer::read() {
-  return shared_ptr<DeviceMessage>();
+  return std::shared_ptr<DeviceMessage>();
 }
 } // namespace Devices

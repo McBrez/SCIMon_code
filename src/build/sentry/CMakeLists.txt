@@ -36,7 +36,7 @@ set_property(TARGET sentry PROPERTY CXX_STANDARD 20)
 if (WIN32)
     # Disable the "byte" type, introduced by MSVC in newer versions. Otherwise, 
     # it would clash with the std::byte type. 
-    add_compile_definitions(_HAS_STD_BYTE=0)
+    # add_compile_definitions(_HAS_STD_BYTE=0)
 
     # Copy the DLLs to the output directory
     find_library(DLL_ELVEFLOW Elveflow64.dll ${3RDPARTY_DIR}/elveflow/x64)

@@ -22,7 +22,7 @@ public:
    * @brief Serializes the payload into a human readable string.
    * @return The payload in string representation.
    */
-  virtual string serialize() override;
+  virtual std::string serialize() override;
 
   Isx3AckType getAckType();
 
@@ -32,7 +32,7 @@ public:
    * @brief Serializes the payload into bytes.
    * @return Byte vector, that depicts the payload.
    */
-  virtual vector<unsigned char> bytes() override;
+  virtual std::vector<unsigned char> bytes() override;
 
   /**
    * @brief Returns the magic number of the payload. This number is used to

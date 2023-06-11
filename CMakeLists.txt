@@ -19,7 +19,7 @@ add_subdirectory(${PROJECT_DIR}/scimon_message_lib)
 
 # ------------------------------------------------------- Project Executables --
 add_subdirectory(${PROJECT_DIR}/sentry)
-#add_subdirectory(${PROJECT_DIR}/control)
+add_subdirectory(${PROJECT_DIR}/control)
 
 # --------------------------------------------------------------------- Tests --
 add_subdirectory(${TEST_DIR}/test_ob1)

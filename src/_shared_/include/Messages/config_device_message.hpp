@@ -36,7 +36,7 @@ public:
    * (I.e. after start() has been called on the device.)
    */
   ConfigDeviceMessage(UserId source, UserId destination,
-                      shared_ptr<ConfigurationPayload> deviceConfiguration,
+                      std::shared_ptr<ConfigurationPayload> deviceConfiguration,
                       UserId responseId = UserId());
 
   /**
@@ -49,7 +49,7 @@ public:
    *
    * @return The held configuration.
    */
-  shared_ptr<ConfigurationPayload> getConfiguration();
+  std::shared_ptr<ConfigurationPayload> getConfiguration();
 
   /**
    * @brief Returns the response id.
@@ -62,10 +62,10 @@ public:
    *
    * @return The serialized message.
    */
-  virtual string serialize() override;
+  virtual std::string serialize() override;
 
 protected:
-  shared_ptr<ConfigurationPayload> deviceConfiguration;
+  std::shared_ptr<ConfigurationPayload> deviceConfiguration;
   /// The id to which the primary response shall be written to. (I.e.after
   /// start() has been called on the device.)
   UserId responseId;

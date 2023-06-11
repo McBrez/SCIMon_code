@@ -1,0 +1,8 @@
+namespace Serialization.Devices;
+
+table SetDeviceStatePayload {
+    targetDeviceId:uint64;
+    setStatus:bool;
+}
+
+root_type SetDeviceStatePayload;

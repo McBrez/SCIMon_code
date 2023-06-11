@@ -53,14 +53,15 @@ public:
    * @return Pointer to a device message if decoding was successfull. Null
    * pointer otherwise.
    */
-  shared_ptr<DeviceMessage> decodeMessage(vector<unsigned char> &buffer);
+  std::shared_ptr<DeviceMessage>
+  decodeMessage(std::vector<unsigned char> &buffer);
 
   /**
    * @brief Encodes the given message into a byte vector.
    * @param msg The message that shall be ecnoded.
    * @return The encoded message.
    */
-  vector<unsigned char> encodeMessage(shared_ptr<DeviceMessage> msg);
+  std::vector<unsigned char> encodeMessage(std::shared_ptr<DeviceMessage> msg);
 
   /**
    * @brief Create an instance of the message factory, if there is not already
@@ -71,7 +72,7 @@ public:
    * existed.
    */
   static MessageFactory *
-  createInstace(list<shared_ptr<PayloadDecoder>> payloadDecoders);
+  createInstace(std::list<std::shared_ptr<PayloadDecoder>> payloadDecoders);
 
   /**
    * @brief Gets the only instance of the class, assuming createInstance() has
@@ -85,16 +86,17 @@ public:
    * @brief Returns the version of the scimon message interface implementation.
    * @return The version of the scimon message interface implementation.
    */
-  string getVersion() const;
+  std::string getVersion() const;
 
-  ReadPayload *decodeReadPayload(vector<unsigned char> payload,
+  ReadPayload *decodeReadPayload(std::vector<unsigned char> payload,
                                  int magicNumber);
-  WritePayload *decodeWritePayload(vector<unsigned char> payload,
+  WritePayload *decodeWritePayload(std::vector<unsigned char> payload,
                                    int magicNumber);
-  InitPayload *decodeInitPayload(vector<unsigned char> payload,
+  InitPayload *decodeInitPayload(std::vector<unsigned char> payload,
                                  int magicNumber);
   ConfigurationPayload *
-  decodeConfigurationPayload(vector<unsigned char> payload, int magicNumber);
+  decodeConfigurationPayload(std::vector<unsigned char> payload,
+                             int magicNumber);
 
 private:
   /**
@@ -104,35 +106,35 @@ private:
    */
   bool isMessageTypeTag(char byte) const;
 
-  vector<unsigned char> *extractFrame(list<unsigned char> &buffer);
+  std::vector<unsigned char> *extractFrame(std::list<unsigned char> &buffer);
 
-  shared_ptr<DeviceMessage> decodeFrame(vector<unsigned char> *buffer,
-                                        MessageType &msgTypeHint);
+  std::shared_ptr<DeviceMessage> decodeFrame(std::vector<unsigned char> *buffer,
+                                             MessageType &msgTypeHint);
 
-  shared_ptr<DeviceMessage> translateMessageContent(
+  std::shared_ptr<DeviceMessage> translateMessageContent(
       UserId sourceId, UserId destinationId,
       const Serialization::Messages::HandshakeMessageContentT
           *handshakeContent);
 
-  shared_ptr<DeviceMessage> translateMessageContent(
+  std::shared_ptr<DeviceMessage> translateMessageContent(
       UserId sourceId, UserId destinationId,
       const Serialization::Messages::ReadDeviceMessageContentT
           *readDeviceContent,
       int magicNumber);
 
-  shared_ptr<DeviceMessage> translateMessageContent(
+  std::shared_ptr<DeviceMessage> translateMessageContent(
       UserId sourceId, UserId destinationId,
       const Serialization::Messages::InitDeviceMessageContentT
           *initDeviceContent,
       int magicNumber);
 
-  shared_ptr<DeviceMessage> translateMessageContent(
+  std::shared_ptr<DeviceMessage> translateMessageContent(
       UserId sourceId, UserId destinationId,
       const Serialization::Messages::ConfigDeviceMessageContentT
           *configDeviceContent,
       int magicNumber);
 
-  shared_ptr<DeviceMessage> translateMessageContent(
+  std::shared_ptr<DeviceMessage> translateMessageContent(
       UserId sourceId, UserId destinationId,
       const Serialization::Messages::WriteDeviceMessageContentT
           *writeDeviceContent,
@@ -141,14 +143,14 @@ private:
   /**
    * @brief Construct a new Message Factory object
    */
-  MessageFactory(list<shared_ptr<PayloadDecoder>> payloadDecoders);
+  MessageFactory(std::list<std::shared_ptr<PayloadDecoder>> payloadDecoders);
 
   /// @brief The only instance of the class.
   static MessageFactory *instance;
 
-  /// @brief List of payload decoders, that are available to the message
+  /// @brief std::list of payload decoders, that are available to the message
   /// factory.
-  list<shared_ptr<PayloadDecoder>> payloadDecoders;
+  std::list<std::shared_ptr<PayloadDecoder>> payloadDecoders;
 };
 
 } // namespace Messages

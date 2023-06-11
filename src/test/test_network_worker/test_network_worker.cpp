@@ -23,30 +23,29 @@ INITIALIZE_EASYLOGGINGPP
 using namespace Workers;
 using namespace Messages;
 using namespace Devices;
-using namespace std;
 
 #if 0
 TEST_CASE("Test the network worker handshake") {
-  MessageFactory::createInstace(list<shared_ptr<PayloadDecoder>>{
-      shared_ptr<PayloadDecoder>(new Isx3PayloadDecoder()),
-      shared_ptr<PayloadDecoder>(new Ob1PayloadDecoder())});
+  MessageFactory::createInstace(list std::shared_ptr<PayloadDecoder>>{
+      std::shared_ptr<PayloadDecoder>(new Isx3PayloadDecoder()),
+      std::shared_ptr<PayloadDecoder>(new Ob1PayloadDecoder())});
   MessageDistributor distributorServer(100);
   MessageDistributor distributorClient(100);
-  shared_ptr<MessageInterface> server(new NetworkWorker());
-  shared_ptr<MessageInterface> client(new NetworkWorker());
-  shared_ptr<NetworkWorker> serverWorker =
+  std::shared_ptr<MessageInterface> server(new NetworkWorker());
+  std::shared_ptr<MessageInterface> client(new NetworkWorker());
+  std::shared_ptr<NetworkWorker> serverWorker =
       dynamic_pointer_cast<NetworkWorker>(server);
-  shared_ptr<NetworkWorker> clientWorker =
+  std::shared_ptr<NetworkWorker> clientWorker =
       dynamic_pointer_cast<NetworkWorker>(client);
   distributorServer.addParticipant(server);
   distributorClient.addParticipant(client);
 
-  shared_ptr<InitDeviceMessage> serverInitMessage(new InitDeviceMessage(
+  std::shared_ptr<InitDeviceMessage> serverInitMessage(new InitDeviceMessage(
       UserId(), server->getUserId(),
       new NetworkWorkerInitPayload(
           NetworkWorkerOperationMode::NETWORK_WORKER_OP_MODE_SERVER,
           "127.0.0.1", 54321)));
-  shared_ptr<InitDeviceMessage> clientInitMessage(new InitDeviceMessage(
+  std::shared_ptr<InitDeviceMessage> clientInitMessage(new InitDeviceMessage(
       UserId(), client->getUserId(),
       new NetworkWorkerInitPayload(
           NetworkWorkerOperationMode::NETWORK_WORKER_OP_MODE_CLIENT,
@@ -55,17 +54,17 @@ TEST_CASE("Test the network worker handshake") {
   REQUIRE(server->write(serverInitMessage));
   REQUIRE(client->write(clientInitMessage));
 
-  shared_ptr<ConfigDeviceMessage> serverConfigMessage(
+  std::shared_ptr<ConfigDeviceMessage> serverConfigMessage(
       new ConfigDeviceMessage(UserId(), server->getUserId(), nullptr));
-  shared_ptr<ConfigDeviceMessage> clientConfigMessage(
+  std::shared_ptr<ConfigDeviceMessage> clientConfigMessage(
       new ConfigDeviceMessage(UserId(), client->getUserId(), nullptr));
 
   REQUIRE(server->write(serverConfigMessage));
   REQUIRE(client->write(clientConfigMessage));
 
-  shared_ptr<WriteDeviceMessage> serverStartMessage(new WriteDeviceMessage(
+  std::shared_ptr<WriteDeviceMessage> serverStartMessage(new WriteDeviceMessage(
       UserId(), server->getUserId(), WriteDeviceTopic::WRITE_TOPIC_RUN));
-  shared_ptr<WriteDeviceMessage> clientStartMessage(new WriteDeviceMessage(
+  std::shared_ptr<WriteDeviceMessage> clientStartMessage(new WriteDeviceMessage(
       UserId(), client->getUserId(), WriteDeviceTopic::WRITE_TOPIC_RUN));
 
   REQUIRE(server->write(serverStartMessage));
@@ -84,9 +83,9 @@ TEST_CASE("Test the network worker handshake") {
           list<UserId>{serverWorker->getUserId()});
 
   // Shut down the connection.
-  shared_ptr<WriteDeviceMessage> serverStopMessage(new WriteDeviceMessage(
+  std::shared_ptr<WriteDeviceMessage> serverStopMessage(new WriteDeviceMessage(
       UserId(), server->getUserId(), WriteDeviceTopic::WRITE_TOPIC_STOP));
-  shared_ptr<WriteDeviceMessage> clientStopMessage(new WriteDeviceMessage(
+  std::shared_ptr<WriteDeviceMessage> clientStopMessage(new WriteDeviceMessage(
       UserId(), client->getUserId(), WriteDeviceTopic::WRITE_TOPIC_STOP));
 
   REQUIRE(server->write(serverStopMessage));
@@ -99,30 +98,31 @@ TEST_CASE("Test the network worker handshake") {
 #endif
 
 TEST_CASE("Test communication between the end points") {
-  MessageFactory::createInstace(list<shared_ptr<PayloadDecoder>>{
-      shared_ptr<PayloadDecoder>(new Isx3PayloadDecoder()),
-      shared_ptr<PayloadDecoder>(new Ob1PayloadDecoder())});
+  MessageFactory::createInstace(
+      list std::shared_ptr < PayloadDecoder >>
+      {std::shared_ptr<PayloadDecoder>(new Isx3PayloadDecoder()),
+       std::shared_ptr<PayloadDecoder>(new Ob1PayloadDecoder())});
   MessageDistributor distributorServer(100);
   MessageDistributor distributorClient(100);
-  shared_ptr<MessageInterface> server(new NetworkWorker());
-  shared_ptr<MessageInterface> client(new NetworkWorker());
-  shared_ptr<NetworkWorker> serverWorker =
+  std::shared_ptr<MessageInterface> server(new NetworkWorker());
+  std::shared_ptr<MessageInterface> client(new NetworkWorker());
+  std::shared_ptr<NetworkWorker> serverWorker =
       dynamic_pointer_cast<NetworkWorker>(server);
-  shared_ptr<NetworkWorker> clientWorker =
+  std::shared_ptr<NetworkWorker> clientWorker =
       dynamic_pointer_cast<NetworkWorker>(client);
   distributorServer.addParticipant(server);
   distributorClient.addParticipant(client);
-  shared_ptr<TestDevice> serverDevice(new TestDevice());
-  shared_ptr<TestDevice> clientDevice(new TestDevice());
+  std::shared_ptr<TestDevice> serverDevice(new TestDevice());
+  std::shared_ptr<TestDevice> clientDevice(new TestDevice());
   distributorServer.addParticipant(serverDevice);
   distributorClient.addParticipant(clientDevice);
 
-  shared_ptr<InitDeviceMessage> serverInitMessage(new InitDeviceMessage(
+  std::shared_ptr<InitDeviceMessage> serverInitMessage(new InitDeviceMessage(
       UserId(), server->getUserId(),
       new NetworkWorkerInitPayload(
           NetworkWorkerOperationMode::NETWORK_WORKER_OP_MODE_SERVER,
           "127.0.0.1", 54321)));
-  shared_ptr<InitDeviceMessage> clientInitMessage(new InitDeviceMessage(
+  std::shared_ptr<InitDeviceMessage> clientInitMessage(new InitDeviceMessage(
       UserId(), client->getUserId(),
       new NetworkWorkerInitPayload(
           NetworkWorkerOperationMode::NETWORK_WORKER_OP_MODE_CLIENT,
@@ -131,17 +131,17 @@ TEST_CASE("Test communication between the end points") {
   REQUIRE(server->write(serverInitMessage));
   REQUIRE(client->write(clientInitMessage));
 
-  shared_ptr<ConfigDeviceMessage> serverConfigMessage(
+  std::shared_ptr<ConfigDeviceMessage> serverConfigMessage(
       new ConfigDeviceMessage(UserId(), server->getUserId(), nullptr));
-  shared_ptr<ConfigDeviceMessage> clientConfigMessage(
+  std::shared_ptr<ConfigDeviceMessage> clientConfigMessage(
       new ConfigDeviceMessage(UserId(), client->getUserId(), nullptr));
 
   REQUIRE(server->write(serverConfigMessage));
   REQUIRE(client->write(clientConfigMessage));
 
-  shared_ptr<WriteDeviceMessage> serverStartMessage(new WriteDeviceMessage(
+  std::shared_ptr<WriteDeviceMessage> serverStartMessage(new WriteDeviceMessage(
       UserId(), server->getUserId(), WriteDeviceTopic::WRITE_TOPIC_RUN));
-  shared_ptr<WriteDeviceMessage> clientStartMessage(new WriteDeviceMessage(
+  std::shared_ptr<WriteDeviceMessage> clientStartMessage(new WriteDeviceMessage(
       UserId(), client->getUserId(), WriteDeviceTopic::WRITE_TOPIC_RUN));
 
   REQUIRE(server->write(serverStartMessage));

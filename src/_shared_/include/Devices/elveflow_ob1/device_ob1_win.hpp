@@ -8,7 +8,6 @@
 // Project includes
 #include <device_ob1.hpp>
 
-using namespace std;
 using namespace Utilities;
 
 namespace Devices {
@@ -33,7 +32,7 @@ public:
    * device.
    * @return TRUE if configuration was successful. False otherwise.
    */
-  virtual bool initialize(shared_ptr<InitPayload> initPayload) override;
+  virtual bool initialize(std::shared_ptr<InitPayload> initPayload) override;
 
   /**
    * Configures the device according to the given configuration.
@@ -42,7 +41,7 @@ public:
    * @return TRUE if configuration was successful. False otherwise.
    */
   virtual bool
-  configure(shared_ptr<ConfigurationPayload> deviceConfiguration) override;
+  configure(std::shared_ptr<ConfigurationPayload> deviceConfiguration) override;
 
   /**
    * @brief Starts the OB1 device and restores the previously set channel
@@ -61,11 +60,13 @@ public:
 
   /**
    * @brief Handles a device specific message. Called by
-   * write(shared_ptr<WriteDeviceMessage>), if the mssage could not be resolved.
+   * write std::shared_ptr<WriteDeviceMessage>), if the mssage could not be
+   * resolved.
    * @param writeMsg The device specific message.
    * @return True if succesful. False otherwise.
    */
-  virtual bool specificWrite(shared_ptr<WriteDeviceMessage> writeMsg) override;
+  virtual bool
+  specificWrite(std::shared_ptr<WriteDeviceMessage> writeMsg) override;
 
   /**
    * @brief Device-specific read operation, that is executed on each call of
@@ -73,7 +74,7 @@ public:
    * @param timestamp The time at which this method is called.
    * @return A read message.
    */
-  virtual list<shared_ptr<DeviceMessage>>
+  virtual std::list<std::shared_ptr<DeviceMessage>>
   specificRead(TimePoint timestamp) override;
 
 private:
@@ -81,7 +82,8 @@ private:
    * @brief Thread worker for the configuration process.
    * @param deviceConfiguration Holds the configuration data.
    */
-  void configureWorker(shared_ptr<ConfigurationPayload> deviceConfiguration);
+  void
+  configureWorker(std::shared_ptr<ConfigurationPayload> deviceConfiguration);
 
   /// Id of the OB1 device. Used by the OB1 driver.
   int ob1Id;
@@ -90,11 +92,11 @@ private:
   double *calibration;
 
   /// Reference to a thread, that calls the configuration() method.
-  unique_ptr<thread> configurationThread;
+  std::unique_ptr<std::thread> configurationThread;
 
   /// Cache for the channel pressures, used to restore the previous pressures,
   /// when start() is called.
-  map<int, double> cachedPressures;
+  std::map<int, double> cachedPressures;
 };
 } // namespace Devices
 

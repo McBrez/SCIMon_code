@@ -7,8 +7,6 @@
 // Project includes
 #include <read_payload.hpp>
 
-using namespace std;
-
 namespace Devices {
 /**
  * @brief Encapsulates a read payload that may hold a byte vector.
@@ -19,25 +17,25 @@ public:
    * @brief Construct a new generic read payload with the given byte vector.
    * @param byteVector The byte vector which shall be held by this payload.
    */
-  GenericReadPayload(vector<unsigned char> byteVector);
+  GenericReadPayload(std::vector<unsigned char> byteVector);
 
   /**
    * @brief Serializes the payload into a human readable string.
    * @return The payload in string representation.
    */
-  virtual string serialize() override;
+  virtual std::string serialize() override;
 
   /**
    * @brief Serializes the payload into bytes.
    * @return Byte vector, that depicts the payload.
    */
-  virtual vector<unsigned char> bytes() override;
+  virtual std::vector<unsigned char> bytes() override;
 
   /**
    * @brief Returns the byte vector held by this payload.
    * @return vector<unsigned int>
    */
-  vector<unsigned char> getByteVector();
+  std::vector<unsigned char> getByteVector();
 
   /**
    * @brief Returns the magic number of the payload. This number is used to
@@ -48,7 +46,7 @@ public:
 
 private:
   /// @brief The byte vector that is held by the payload.
-  vector<unsigned char> byteVector;
+  std::vector<unsigned char> byteVector;
 };
 } // namespace Devices
 

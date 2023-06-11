@@ -11,7 +11,6 @@
 #include <message_interface.hpp>
 #include <status_payload.hpp>
 
-using namespace std;
 using namespace Messages;
 using namespace Utilities;
 
@@ -55,7 +54,7 @@ public:
    * device.
    * @return TRUE if configuration was successful. False otherwise.
    */
-  virtual bool initialize(shared_ptr<InitPayload> initPayload) = 0;
+  virtual bool initialize(std::shared_ptr<InitPayload> initPayload) = 0;
 
   /**
    * Configures the device according to the given configuration.
@@ -64,7 +63,7 @@ public:
    * @return TRUE if configuration was successful. False otherwise.
    */
   virtual bool
-  configure(shared_ptr<ConfigurationPayload> deviceConfiguration) = 0;
+  configure(std::shared_ptr<ConfigurationPayload> deviceConfiguration) = 0;
 
   /**
    * @brief Retruns whether the device has been succesfully configured.
@@ -84,7 +83,7 @@ public:
    * @brief Return the name of the device type.
    * @return The device type name.
    */
-  virtual string getDeviceTypeName() = 0;
+  virtual std::string getDeviceTypeName() = 0;
 
   DeviceType getDeviceType();
 
@@ -105,7 +104,7 @@ public:
    * @param writeMsg The message that shall be written to the device.
    * @return True if successful. False otherwise.
    */
-  virtual bool write(shared_ptr<WriteDeviceMessage> writeMsg) override;
+  virtual bool write(std::shared_ptr<WriteDeviceMessage> writeMsg) override;
 
   /**
    * @brief Writes a message to the device that triggers an initialization of
@@ -113,35 +112,36 @@ public:
    * @param initMsg The init message.
    * @return True if the initialization was succesfull. False otherwise.
    */
-  virtual bool write(shared_ptr<InitDeviceMessage> initMsg) override;
+  virtual bool write(std::shared_ptr<InitDeviceMessage> initMsg) override;
 
   /**
    * @brief Writes a message to the device that triggers a configuration.
    * @param configMsg The configuration message.
    * @return True if configuration was succesfull. False otherwise.
    */
-  virtual bool write(shared_ptr<ConfigDeviceMessage> configMsg) override;
+  virtual bool write(std::shared_ptr<ConfigDeviceMessage> configMsg) override;
 
   /**
    * @brief Writes a handshake message to the device.
    * @param writeMsg The handshake message that shall be written to the device.
    * @return True if successful. False otherwise.
    */
-  virtual bool write(shared_ptr<HandshakeMessage> writeMsg) override;
+  virtual bool write(std::shared_ptr<HandshakeMessage> writeMsg) override;
 
   /**
    * @brief Reads all messages from the message queue.
    * @param timestamp The time at which this method is called.
-   * @return List of references to the messages from the message queue. May
-   * return an empty list, if there was nothing to read.
+   * @return std::list of references to the messages from the message queue. May
+   * return an empty std::list, if there was nothing to read.
    */
-  virtual list<shared_ptr<DeviceMessage>> read(TimePoint timestamp) override;
+  virtual std::list<std::shared_ptr<DeviceMessage>>
+  read(TimePoint timestamp) override;
 
   /**
    * @brief Constructs the current status of the object.
    * @return Pointer to the current status of the object.
    */
-  virtual shared_ptr<StatusPayload> constructStatus() override;
+  virtual std::shared_ptr<StatusPayload> constructStatus() override;
 
   /**
    * @brief Returns the string representation of the given device status.
@@ -149,17 +149,17 @@ public:
    * to string.
    * @return The string representation of the device status value.
    */
-  static string deviceStatusToString(DeviceStatus deviceStatus);
+  static std::string deviceStatusToString(DeviceStatus deviceStatus);
 
 protected:
   /// Caches the message that triggered the most recent start command.
-  shared_ptr<WriteDeviceMessage> startMessageCache;
+  std::shared_ptr<WriteDeviceMessage> startMessageCache;
   /// Flag, that indicates whether the device has been successfully configured.
   bool configurationFinished;
   /// Flag, that indicates whether the device has been succesfully initialized.
   bool initFinished;
   /// Reference to the currently active device configuration.
-  shared_ptr<ConfigurationPayload> deviceConfiguration;
+  std::shared_ptr<ConfigurationPayload> deviceConfiguration;
   /// The state of the device.
   DeviceStatus deviceState;
   /// The type of the device.

@@ -24,10 +24,10 @@ DeviceOb1Win::~DeviceOb1Win() {
   }
 }
 
-bool DeviceOb1Win::initialize(shared_ptr<InitPayload> initPayload) {
+bool DeviceOb1Win::initialize(std::shared_ptr<InitPayload> initPayload) {
 
   // Get the payload of the message and check if it is the correct type.
-  shared_ptr<Ob1InitPayload> ob1InitPayload =
+  std::shared_ptr<Ob1InitPayload> ob1InitPayload =
       dynamic_pointer_cast<Ob1InitPayload>(initPayload);
   if (!initPayload) {
     LOG(ERROR) << "Received an ill-formed init message.";
@@ -61,7 +61,7 @@ bool DeviceOb1Win::initialize(shared_ptr<InitPayload> initPayload) {
 }
 
 void DeviceOb1Win::configureWorker(
-    shared_ptr<ConfigurationPayload> deviceConfiguration) {
+    std::shared_ptr<ConfigurationPayload> deviceConfiguration) {
   this->deviceState = DeviceStatus::CONFIGURING;
   this->configurationFinished = false;
   LOG(INFO) << "Starting calibration of OB1.";
@@ -130,18 +130,19 @@ bool DeviceOb1Win::stop() {
   }
 }
 
-bool DeviceOb1Win::configure(shared_ptr<ConfigurationPayload> configPayload) {
+bool DeviceOb1Win::configure(
+    std::shared_ptr<ConfigurationPayload> configPayload) {
   // Create a new thread and start it.
   this->configurationThread.reset(
-      new thread(&DeviceOb1Win::configureWorker, this, configPayload));
+      new std::thread(&DeviceOb1Win::configureWorker, this, configPayload));
   return true;
 }
 
-list<shared_ptr<DeviceMessage>>
+std::list<std::shared_ptr<DeviceMessage>>
 DeviceOb1Win::specificRead(TimePoint timestamp) {
   // Only read, when in the correct state.
   if (this->deviceState != DeviceStatus::OPERATING) {
-    return list<shared_ptr<DeviceMessage>>();
+    return std::list<std::shared_ptr<DeviceMessage>>();
   }
 
   double pressureCh1;
@@ -158,10 +159,10 @@ DeviceOb1Win::specificRead(TimePoint timestamp) {
                 Constants::Ob1CalibrationArrayLen);
 
   ReadPayloadOb1 *readPayload = new ReadPayloadOb1(
-      make_tuple(pressureCh1, pressureCh2, pressureCh3, pressureCh4));
+      std::make_tuple(pressureCh1, pressureCh2, pressureCh3, pressureCh4));
 
   LOG(DEBUG) << readPayload->serialize();
-  list<shared_ptr<DeviceMessage>> retVal;
+  std::list<std::shared_ptr<DeviceMessage>> retVal;
   retVal.emplace_back(new ReadDeviceMessage(
       this->self->getUserId(), this->startMessageCache->getSource(),
       ReadDeviceTopic::READ_TOPIC_DEVICE_SPECIFIC_MSG, readPayload,
@@ -169,7 +170,7 @@ DeviceOb1Win::specificRead(TimePoint timestamp) {
   return retVal;
 }
 
-bool DeviceOb1Win::specificWrite(shared_ptr<WriteDeviceMessage> writeMsg) {
+bool DeviceOb1Win::specificWrite(std::shared_ptr<WriteDeviceMessage> writeMsg) {
   LOG(DEBUG) << "OB1 received a device specific message.";
 
   // Try to cast down the payload.
@@ -178,7 +179,7 @@ bool DeviceOb1Win::specificWrite(shared_ptr<WriteDeviceMessage> writeMsg) {
       dynamic_pointer_cast<SetPressurePayload>(writeMsg->getPayload());
   if (setPressurePayload) {
     // It is a set pressure message. Set them now.
-    vector<double> setPressures = setPressurePayload->getPressures();
+    std::vector<double> setPressures = setPressurePayload->getPressures();
     for (int i = 0; i > setPressures.size(); i++) {
       int retVal =
           OB1_Set_Press(this->ob1Id, i + 1, setPressures[i], this->calibration,

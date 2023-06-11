@@ -41,20 +41,29 @@ bool NetworkWorker::start() {
 
   if (NetworkWorkerOperationMode::NETWORK_WORKER_OP_MODE_SERVER ==
       this->initPayload->getOperationMode()) {
-    // Start the listener thread.
+    // Start the std::listener thread.
     this->workerState = DeviceStatus::BUSY;
     this->commState =
         NetworkWorkerCommState::NETWORK_WOKER_COMM_STATE_LISTENING;
     *this->doListen = true;
-    this->listenerThread.reset(new thread(&NetworkWorker::listenWorker, this));
+    this->listenerThread.reset(
+        new std::thread(&NetworkWorker::listenWorker, this));
 
   } else if (NetworkWorkerOperationMode::NETWORK_WORKER_OP_MODE_CLIENT ==
              this->initPayload->getOperationMode()) {
+    // Check if the pointer to the comm thread is not null.
+    if(commThread) {
+        // A thread seems to have existed before. Be sure to join the thread.
+        this->doComm = false;
+        commThread->join();
+        this->commThread.release();
+    }
+
     // Start comm thread.
     this->workerState = DeviceStatus::BUSY;
     this->commState = NetworkWorkerCommState::NETWORK_WOKER_COMM_STATE_STARTING;
     this->doComm = true;
-    this->commThread.reset(new thread(&NetworkWorker::commWorker, this));
+    this->commThread.reset(new std::thread(&NetworkWorker::commWorker, this));
 
   } else {
     this->workerState = DeviceStatus::ERROR;
@@ -81,7 +90,7 @@ bool NetworkWorker::stop() {
   return true;
 }
 
-bool NetworkWorker::initialize(shared_ptr<InitPayload> initPayload) {
+bool NetworkWorker::initialize(std::shared_ptr<InitPayload> initPayload) {
 
   if (!initPayload) {
     LOG(ERROR) << "Received malformed init message.";
@@ -100,22 +109,25 @@ bool NetworkWorker::initialize(shared_ptr<InitPayload> initPayload) {
   return true;
 }
 
-bool NetworkWorker::configure(shared_ptr<ConfigurationPayload> configPayload) {
+bool NetworkWorker::configure(
+    std::shared_ptr<ConfigurationPayload> configPayload) {
   // Nothing to do. Just return true.
 
   return true;
 }
 
-bool NetworkWorker::specificWrite(shared_ptr<WriteDeviceMessage> writeMsg) {
+bool NetworkWorker::specificWrite(
+    std::shared_ptr<WriteDeviceMessage> writeMsg) {
   return false;
 }
 
-list<shared_ptr<DeviceMessage>>
+std::list<std::shared_ptr<DeviceMessage>>
 NetworkWorker::specificRead(TimePoint timestamp) {
-  return list<shared_ptr<DeviceMessage>>();
+  return std::list<std::shared_ptr<DeviceMessage>>();
 }
 
-bool NetworkWorker::handleResponse(shared_ptr<ReadDeviceMessage> response) {
+bool NetworkWorker::handleResponse(
+    std::shared_ptr<ReadDeviceMessage> response) {
 
   if (NetworkWorkerCommState::NETWORK_WOKER_COMM_STATE_INVALID ==
       this->commState) {
@@ -127,8 +139,8 @@ bool NetworkWorker::handleResponse(shared_ptr<ReadDeviceMessage> response) {
 
   else if (NetworkWorkerCommState::NETWORK_WOKER_COMM_STATE_LISTENING ==
            this->commState) {
-    // Nothing to do while listening for connections.
-    LOG(INFO) << "Network Worker got a response while listening for "
+    // Nothing to do while std::listening for connections.
+    LOG(INFO) << "Network Worker got a response while std::listening for "
                  "connections. It "
                  "will not be handled.";
     return true;
@@ -163,7 +175,7 @@ bool NetworkWorker::handleResponse(shared_ptr<ReadDeviceMessage> response) {
            this->commState) {
     // Check if the received response belongs to a device this object is a proxy
     // of.
-    list<UserId> proxyIds = this->getProxyUserIds();
+    std::list<UserId> proxyIds = this->getProxyUserIds();
     auto it =
         find(proxyIds.begin(), proxyIds.end(), response->getDestination());
     if (it != proxyIds.end()) {
@@ -203,14 +215,14 @@ void NetworkWorker::listenWorker() {
 
   if (NetworkWorkerCommState::NETWORK_WOKER_COMM_STATE_LISTENING ==
       this->commState) {
-    LOG(INFO) << "Network Worker starts listening on port "
+    LOG(INFO) << "Network Worker starts std::listening on port "
               << this->initPayload->getPort() << ".";
     this->socketWrapper->close();
     this->socketWrapper->clear();
 
     bool success = this->socketWrapper->listenConnection(
         this->doListen, this->initPayload->getPort());
-    LOG(INFO) << "Network Worker finished listening on port "
+    LOG(INFO) << "Network Worker finished std::listening on port "
               << this->initPayload->getPort() << ".";
 
     if (success) {
@@ -220,7 +232,7 @@ void NetworkWorker::listenWorker() {
       this->commState =
           NetworkWorkerCommState::NETWORK_WOKER_COMM_STATE_HANDSHAKING;
       this->doComm = true;
-      this->commThread.reset(new thread(&NetworkWorker::commWorker, this));
+      this->commThread.reset(new std::thread(&NetworkWorker::commWorker, this));
     }
   } else {
     LOG(ERROR) << "Invalid communication state.";
@@ -274,7 +286,7 @@ void NetworkWorker::commWorker() {
       if (NetworkWorkerOperationMode::NETWORK_WORKER_OP_MODE_CLIENT ==
           this->initPayload->getOperationMode()) {
         // The client initiates the handshake. Send a handshake message.
-        shared_ptr<DeviceMessage> handshakeMsg(
+        std::shared_ptr<DeviceMessage> handshakeMsg(
             new HandshakeMessage(this->self->getUserId(), UserId(),
                                  this->messageDistributor->getStatus(),
                                  this->messageFactory->getVersion()));
@@ -292,7 +304,7 @@ void NetworkWorker::commWorker() {
         // client. Read from the socket and try to decode a message from
         // that.
         int readRet = this->socketWrapper->read(this->readBuffer);
-        shared_ptr<DeviceMessage> msg =
+        std::shared_ptr<DeviceMessage> msg =
             this->messageFactory->decodeMessage(this->readBuffer);
 
         // Has a message been decoded?
@@ -318,10 +330,11 @@ void NetworkWorker::commWorker() {
           this->addProxyId(statusPayload->getDeviceId());
         }
         // Send back a handshake message.
-        shared_ptr<DeviceMessage> handshakeMsgResponse(new HandshakeMessage(
-            this->self->getUserId(), handshakeMsg->getSource(),
-            this->messageDistributor->getStatus(),
-            this->messageFactory->getVersion()));
+        std::shared_ptr<DeviceMessage> handshakeMsgResponse(
+            new HandshakeMessage(this->self->getUserId(),
+                                 handshakeMsg->getSource(),
+                                 this->messageDistributor->getStatus(),
+                                 this->messageFactory->getVersion()));
         this->socketWrapper->write(
             this->messageFactory->encodeMessage(handshakeMsgResponse));
 
@@ -349,7 +362,7 @@ void NetworkWorker::commWorker() {
       // This state is only relevant if the worker is configured as client.
       // Read from the socket and try to decode a message from that.
       int readRet = this->socketWrapper->read(this->readBuffer);
-      shared_ptr<DeviceMessage> msg =
+      std::shared_ptr<DeviceMessage> msg =
           this->messageFactory->decodeMessage(this->readBuffer);
 
       // Has a message been decoded?
@@ -395,7 +408,7 @@ void NetworkWorker::commWorker() {
         //             "Closing down socket.";
         // this->doComm = false;
       }
-      shared_ptr<DeviceMessage> msg =
+      std::shared_ptr<DeviceMessage> msg =
           this->messageFactory->decodeMessage(this->readBuffer);
       // If a message could be decoded, push it to the queue.
       if (msg) {
@@ -407,7 +420,7 @@ void NetworkWorker::commWorker() {
       // Write message to socket.
       this->outgoingNetworkMessagesMutex.lock();
       while (!this->outgoingNetworkMessages.empty()) {
-        shared_ptr<DeviceMessage> message =
+        std::shared_ptr<DeviceMessage> message =
             this->outgoingNetworkMessages.front();
         this->outgoingNetworkMessages.pop();
         int sendSuccess = this->socketWrapper->write(
@@ -428,11 +441,11 @@ void NetworkWorker::commWorker() {
   this->socketWrapper->close();
 }
 
-bool NetworkWorker::write(shared_ptr<HandshakeMessage> writeMsg) {
+bool NetworkWorker::write(std::shared_ptr<HandshakeMessage> writeMsg) {
   return true;
 }
 
-bool NetworkWorker::write(shared_ptr<WriteDeviceMessage> writeMsg) {
+bool NetworkWorker::write(std::shared_ptr<WriteDeviceMessage> writeMsg) {
   // Does the message target this object?
   if (this->isExactTarget(writeMsg->getDestination())) {
     // This object is targeted. Just execute the default method.
@@ -448,7 +461,7 @@ bool NetworkWorker::write(shared_ptr<WriteDeviceMessage> writeMsg) {
   }
 }
 
-bool NetworkWorker::write(shared_ptr<InitDeviceMessage> initMsg) {
+bool NetworkWorker::write(std::shared_ptr<InitDeviceMessage> initMsg) {
   // Does the message target this object?
   if (this->isExactTarget(initMsg->getDestination())) {
     // This object is targeted. Just execute the default method.
@@ -464,7 +477,7 @@ bool NetworkWorker::write(shared_ptr<InitDeviceMessage> initMsg) {
   }
 }
 
-bool NetworkWorker::write(shared_ptr<ConfigDeviceMessage> configMsg) {
+bool NetworkWorker::write(std::shared_ptr<ConfigDeviceMessage> configMsg) {
   // Does the message target this object?
   if (this->isExactTarget(configMsg->getDestination())) {
     // This object is targeted. Just execute the default method.
@@ -480,6 +493,8 @@ bool NetworkWorker::write(shared_ptr<ConfigDeviceMessage> configMsg) {
   }
 }
 
-string NetworkWorker::getWorkerName() { return Core::NETWORK_WORKER_TYPE_NAME; }
+std::string NetworkWorker::getWorkerName() {
+  return Core::NETWORK_WORKER_TYPE_NAME;
+}
 
 } // namespace Workers

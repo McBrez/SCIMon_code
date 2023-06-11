@@ -23,7 +23,7 @@ INITIALIZE_EASYLOGGINGPP
  * @return The bytes that have been read.
  */
 std::vector<unsigned char>
-readFromSocket(shared_ptr<SocketWrapper> socketWrapper, int retries = 10) {
+readFromSocket std::shared_ptr<SocketWrapper> socketWrapper, int retries = 10) {
   // Read until device no longer sends data.
   std::vector<unsigned char> readBuffer;
   int bytesRead = -1;
@@ -57,7 +57,7 @@ std::list<std::vector<unsigned char>> extractFrames(Isx3CommandBuffer &buffer) {
 
 #ifndef SKIP_TEST_BACKEND
 TEST_CASE("Test the backend communication classes") {
-  shared_ptr<Utilities::SocketWrapper> socketWrapper(
+  std::shared_ptr<Utilities::SocketWrapper> socketWrapper(
       new Utilities::WinSocket());
   Devices::ComInterfaceCodec codec;
   Devices::Isx3CommandBuffer buffer;
@@ -301,7 +301,7 @@ TEST_CASE("Test the backend communication classes") {
     readBuffer.clear();
 
     // Read from the socket for a few cycles and sollect the payload.
-    std::list<shared_ptr<ReadPayload>> payloads;
+    std::list std::shared_ptr < ReadPayload >> payloads;
     for (int i = 0; i < 10; i++) {
       // Check if acknowledgment has been received.
       readBuffer = readFromSocket(socketWrapper);
@@ -348,18 +348,18 @@ TEST_CASE("Test the backend communication classes") {
 // #define SKIP_TEST_DEVICEISX3
 #ifndef SKIP_TEST_DEVICEISX3
 TEST_CASE("Testing the implementation of the Sciospec ISX3 device") {
-  shared_ptr<Device> dut(new DeviceIsx3());
+  std::shared_ptr<Device> dut(new DeviceIsx3());
 
   // Init the device.
-  shared_ptr<InitDeviceMessage> initMsg(
-      new InitDeviceMessage(shared_ptr<MessageInterface>(), dut,
+  std::shared_ptr<InitDeviceMessage> initMsg(
+      new InitDeviceMessage std::shared_ptr<MessageInterface>(), dut,
                             new Isx3InitPayload("128.131.197.41", 8888)));
   bool initSuccess = dut->write(initMsg);
   REQUIRE(initSuccess);
 
   // Configure the device.
-  shared_ptr<ConfigDeviceMessage> configMsg(new ConfigDeviceMessage(
-      shared_ptr<MessageInterface>(), dut,
+  std::shared_ptr<ConfigDeviceMessage> configMsg(new ConfigDeviceMessage(
+      std::shared_ptr<MessageInterface>(), dut,
       new Isx3IsConfPayload(
           10.0, 100.0, 10, 0,
           map<ChannelFunction, int>({{ChannelFunction::CHAN_FUNC_CP, 10},
@@ -374,14 +374,15 @@ TEST_CASE("Testing the implementation of the Sciospec ISX3 device") {
   REQUIRE(configSuccess);
 
   // Start the measurement.
-  shared_ptr<WriteDeviceMessage> startMsg(new WriteDeviceMessage(
-      shared_ptr<MessageInterface>(), dut, WriteDeviceTopic::WRITE_TOPIC_RUN));
+  std::shared_ptr<WriteDeviceMessage> startMsg(
+      new WriteDeviceMessage(std::shared_ptr<MessageInterface>(), dut,
+                             WriteDeviceTopic::WRITE_TOPIC_RUN));
   bool startSuccess = dut->write(startMsg);
   REQUIRE(startSuccess);
 
   // Read measurement data.
   int readCounter = 1000;
-  list<shared_ptr<DeviceMessage>> readList;
+  list std::shared_ptr < DeviceMessage >> readList;
   for (int i = 0; i < readCounter; i++) {
     readList.merge(dut->read(TimePoint()));
     this_thread::sleep_for(chrono::microseconds(10));
@@ -389,8 +390,9 @@ TEST_CASE("Testing the implementation of the Sciospec ISX3 device") {
   REQUIRE(!readList.empty());
 
   // Stop the measurement.
-  shared_ptr<WriteDeviceMessage> stopMsg(new WriteDeviceMessage(
-      shared_ptr<MessageInterface>(), dut, WriteDeviceTopic::WRITE_TOPIC_STOP));
+  std::shared_ptr<WriteDeviceMessage> stopMsg(
+      new WriteDeviceMessage(std::shared_ptr<MessageInterface>(), dut,
+                             WriteDeviceTopic::WRITE_TOPIC_STOP));
   bool stopSuccess = dut->write(stopMsg);
   REQUIRE(stopSuccess);
 }

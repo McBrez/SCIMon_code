@@ -16,7 +16,7 @@
 using namespace Devices;
 
 InitPayload *
-Ob1PayloadDecoder::decodeInitPayload(const vector<unsigned char> &data,
+Ob1PayloadDecoder::decodeInitPayload(const std::vector<unsigned char> &data,
                                      int magicNumber) {
   const unsigned char *buffer = data.data();
 
@@ -24,7 +24,7 @@ Ob1PayloadDecoder::decodeInitPayload(const vector<unsigned char> &data,
     const Serialization::Devices::Ob1InitPayloadT *ob1Payload =
         Serialization::Devices::GetOb1InitPayload(buffer)->UnPack();
 
-    string deviceName = ob1Payload->deviceName;
+    std::string deviceName = ob1Payload->deviceName;
     ChannelConfiguration channelConfiguration{
         ob1Payload->channelconfiguration->channel1(),
         ob1Payload->channelconfiguration->channel2(),
@@ -38,7 +38,7 @@ Ob1PayloadDecoder::decodeInitPayload(const vector<unsigned char> &data,
 }
 
 ConfigurationPayload *
-Ob1PayloadDecoder::decodeConfigPayload(const vector<unsigned char> &data,
+Ob1PayloadDecoder::decodeConfigPayload(const std::vector<unsigned char> &data,
                                        int magicNumber) {
   const unsigned char *buffer = data.data();
 
@@ -53,7 +53,7 @@ Ob1PayloadDecoder::decodeConfigPayload(const vector<unsigned char> &data,
 }
 
 ReadPayload *
-Ob1PayloadDecoder::decodeReadPayload(const vector<unsigned char> &data,
+Ob1PayloadDecoder::decodeReadPayload(const std::vector<unsigned char> &data,
                                      int magicNumber) {
   const unsigned char *buffer = data.data();
 
@@ -75,7 +75,7 @@ Ob1PayloadDecoder::decodeReadPayload(const vector<unsigned char> &data,
 }
 
 WritePayload *
-Ob1PayloadDecoder::decodeWritePayload(const vector<unsigned char> &data,
+Ob1PayloadDecoder::decodeWritePayload(const std::vector<unsigned char> &data,
                                       int magicNumber) {
   return nullptr;
 }

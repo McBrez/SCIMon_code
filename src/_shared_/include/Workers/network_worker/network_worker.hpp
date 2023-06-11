@@ -19,7 +19,7 @@ namespace Workers {
 enum NetworkWorkerCommState {
   /// Invalid state.
   NETWORK_WOKER_COMM_STATE_INVALID,
-  /// Worker is listening to connection requests.
+  /// Worker is std::listening to connection requests.
   NETWORK_WOKER_COMM_STATE_LISTENING,
   /// Worker is starting up.
   NETWORK_WOKER_COMM_STATE_STARTING,
@@ -74,7 +74,7 @@ public:
    * @param initPayload The initialization data.
    * @return TRUE if initialization was successfull. FALSE otherwise.
    */
-  virtual bool initialize(shared_ptr<InitPayload> initPayload) override;
+  virtual bool initialize(std::shared_ptr<InitPayload> initPayload) override;
 
   /**
    * @brief Triggers a configuration of the network worker.
@@ -82,28 +82,30 @@ public:
    * @return TRUE if initialization was successfull. FALSE otherwise.
    */
   virtual bool
-  configure(shared_ptr<ConfigurationPayload> configPayload) override;
+  configure(std::shared_ptr<ConfigurationPayload> configPayload) override;
 
-  virtual bool write(shared_ptr<WriteDeviceMessage> writeMsg) override;
+  virtual bool write(std::shared_ptr<WriteDeviceMessage> writeMsg) override;
 
-  virtual bool write(shared_ptr<InitDeviceMessage> initMsg) override;
+  virtual bool write(std::shared_ptr<InitDeviceMessage> initMsg) override;
 
-  virtual bool write(shared_ptr<ConfigDeviceMessage> configMsg) override;
+  virtual bool write(std::shared_ptr<ConfigDeviceMessage> configMsg) override;
 
   /**
    * @brief Writes a handshake message to the device.
    * @param writeMsg The handshake message that shall be written to the device.
    * @return True if successful. False otherwise.
    */
-  virtual bool write(shared_ptr<HandshakeMessage> writeMsg) override;
+  virtual bool write(std::shared_ptr<HandshakeMessage> writeMsg) override;
 
   /**
    * @brief Handles a device specific message. Called by
-   * write(shared_ptr<WriteDeviceMessage>), if the mssage could not be resolved.
+   * write std::shared_ptr<WriteDeviceMessage>), if the mssage could not be
+   * resolved.
    * @param writeMsg The device specific message.
    * @return True if succesful. False otherwise.
    */
-  virtual bool specificWrite(shared_ptr<WriteDeviceMessage> writeMsg) override;
+  virtual bool
+  specificWrite(std::shared_ptr<WriteDeviceMessage> writeMsg) override;
 
   /**
    * @brief Device-specific read operation, that is executed on each call of
@@ -111,7 +113,7 @@ public:
    * @param timestamp The time at which this method is called.
    * @return A read message.
    */
-  virtual list<shared_ptr<DeviceMessage>>
+  virtual std::list<std::shared_ptr<DeviceMessage>>
   specificRead(TimePoint timestamp) override;
 
   /**
@@ -121,10 +123,11 @@ public:
    * @return TRUE if the response has been handled successfully. False
    * otherwise.
    */
-  virtual bool handleResponse(shared_ptr<ReadDeviceMessage> response) override;
+  virtual bool
+  handleResponse(std::shared_ptr<ReadDeviceMessage> response) override;
 
   /**
-   * @brief Worker function that is used by the listener thread.
+   * @brief Worker function that is used by the std::listener thread.
    */
   void listenWorker();
 
@@ -137,31 +140,31 @@ public:
    * @brief Returns the name of the worker.
    * @return A string that identifies the type of the worker.
    */
-  virtual string getWorkerName() override;
+  virtual std::string getWorkerName() override;
 
 private:
-  shared_ptr<NetworkWorkerInitPayload> initPayload;
+  std::shared_ptr<NetworkWorkerInitPayload> initPayload;
 
-  shared_ptr<SocketWrapper> socketWrapper;
+  std::shared_ptr<SocketWrapper> socketWrapper;
 
-  unique_ptr<thread> commThread;
+  std::unique_ptr<std::thread> commThread;
 
-  unique_ptr<thread> listenerThread;
+  std::unique_ptr<std::thread> listenerThread;
 
-  shared_ptr<bool> doListen;
+  std::shared_ptr<bool> doListen;
 
   NetworkWorkerCommState commState;
 
   bool doComm;
 
   /// The read buffer used by the comm thread.
-  vector<unsigned char> readBuffer;
+  std::vector<unsigned char> readBuffer;
 
   /// Buffer for the messages that shall be sent over the network.
-  queue<shared_ptr<DeviceMessage>> outgoingNetworkMessages;
+  std::queue<std::shared_ptr<DeviceMessage>> outgoingNetworkMessages;
 
   /// Mutex that guards the buffer for the outgoing messages.
-  mutex outgoingNetworkMessagesMutex;
+  std::mutex outgoingNetworkMessagesMutex;
 
   MessageFactory *messageFactory;
 };

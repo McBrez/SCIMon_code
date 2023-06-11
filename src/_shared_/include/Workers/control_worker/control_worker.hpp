@@ -1,41 +1,41 @@
-#ifndef SENTRY_WORKER_HPP
-#define SENTRY_WORKER_HPP
+#ifndef CONTROL_WORKER_HPP
+#define CONTROL_WORKER_HPP
 
 // Project includes
-#include <is_payload.hpp>
-#include <sentry_config_payload.hpp>
-#include <sentry_init_payload.hpp>
 #include <worker.hpp>
 
 using namespace Devices;
 
 namespace Workers {
 
-enum InitSubState {
-  /// @brief Invalid state.
-  INIT_SUB_STATE_INVALID,
-  /// @brief Init messages have been sent to the devices. It is waited for them
-  /// to finish initializing.
-  INIT_SUB_STATE_INIT,
-  /// @brief Config message have been sent to the devices. It is waited for them
-  /// to finish configuring.
-  INIT_SUB_STATE_CONFIGURE,
-  /// @brief All devices have been initialized and have been confiured. They are
-  /// ready.
-  INIT_SUB_STATE_READY
+/**
+ * @brief Identfies the sub states of the control worker.
+ */
+enum ControlWorkerSubState {
+  /// Invalid sub state.
+  CONTROL_WORKER_SUBSTATE_IVALID = 0x00,
+  /// It is waited for the connect command
+  CONTROL_WORKER_SUBSTATE_WAITING_FOR_CONNECTION = 0x01,
+  /// Control worker is connecting
+  CONTROL_WORKER_SUBSTATE_CONNECTING = 0x02,
+  /// Control worker is connected.
+  CONTROL_WORKER_SUBSTATE_CONNECTED = 0x03
 };
 
-class SentryWorker : public Worker {
+/**
+ * @brief Worker that interfaces with the UI part of SCIMon.
+ */
+class ControlWorker : public Worker {
 public:
-  SentryWorker();
+  ControlWorker();
 
-  virtual ~SentryWorker() override;
+  virtual ~ControlWorker() override;
 
   virtual void work(TimePoint timestamp) override;
 
-  virtual bool start();
+  virtual bool start() override;
 
-  virtual bool stop();
+  virtual bool stop() override;
 
   virtual bool initialize(std::shared_ptr<InitPayload> initPayload) override;
 
@@ -84,36 +84,30 @@ public:
    */
   virtual std::string getWorkerName() override;
 
+  /**
+   * @brief Try to connect to the specified host.
+   * @param ip The IP to which a connection shall be established.
+   * @param port The port to which a connection shall be established.
+   * @return TRUE if connection was successfull. FALSE otherwise.
+   */
+  bool startConnect(std::string ip, int port);
+
+  /**
+   * @brief Starts the configuration of the control worker.
+   * I.e. The control worker queries all remote message
+   * interface object.
+   * @return
+   */
+  bool startConfig();
+
+  ControlWorkerSubState getControlWorkerState() const;
+
 private:
-  std::list<std::shared_ptr<ReadPayload>> getData(DeviceType deviceType,
-                                                  TimePoint from, TimePoint to);
+  /// The id of the network worker.
+  UserId networkWorkerId;
 
-  /// The payload with which this object has been initialized.
-  std::shared_ptr<SentryInitPayload> initPayload;
-
-  /// The payload with which this object has been configured.
-  std::shared_ptr<SentryConfigPayload> configPayload;
-
-  /// The current sub state of the configure logic.
-  InitSubState initSubState;
-
-  UserId pumpController;
-  DeviceStatus pumpControllerState;
-
-  UserId spectrometer;
-  DeviceStatus spectrometerState;
-
-  std::unique_ptr<std::thread> workerThread;
-  bool runThread;
-  bool threadWaiting;
-
-  /// @brief In case timer mode is configured, the worker thread will do nothing
-  /// until this timepoint.
-  TimePoint waitUntil;
-
-  std::list<std::shared_ptr<IsPayload>> isPayloadCache;
-  std::mutex isPayloadCacheMutex;
-  Duration workerThreadInterval;
+  /// The currently active sub state.
+  ControlWorkerSubState controlWorkerSubState;
 };
 } // namespace Workers
 

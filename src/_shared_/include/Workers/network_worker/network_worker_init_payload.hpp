@@ -12,7 +12,7 @@ namespace Workers {
 enum NetworkWorkerOperationMode {
   /// Invalid operation mode.
   NETWORK_WORKER_OP_MODE_INVALID,
-  /// Network worker is listening and waiting for communication.
+  /// Network worker is std::listening and waiting for communication.
   NETWORK_WORKER_OP_MODE_SERVER,
   /// Network worker is connecting to a server and sends it instructions.
   NETWORK_WORKER_OP_MODE_CLIENT
@@ -32,10 +32,10 @@ public:
    * @param ipAddress If operation mode is NETWORK_WORKER_OP_MODE_CLIENT, this
    * is the ip that shall be connected to.
    * @param port Depending on the operation mode, this is the port that is
-   * connected, or listened to.
+   * connected, or std::listened to.
    */
   NetworkWorkerInitPayload(NetworkWorkerOperationMode operationMode,
-                           string ipAddress, int port);
+                           std::string ipAddress, int port);
 
   /**
    * @brief Destroy the Network Worker Init Payload objectF
@@ -52,7 +52,7 @@ public:
    * @brief Returns the ip address held by this object.
    * @return The ip address held by this object.
    */
-  string getIpAddress();
+  std::string getIpAddress();
 
   /**
    * @brief Returns the port held by this object.
@@ -64,13 +64,13 @@ public:
    * @brief  Serializes the object.
    * @return String representation of the object.
    */
-  virtual string serialize() override;
+  virtual std::string serialize() override;
 
   /**
    * @brief Serializes the payload into bytes.
    * @return Byte vector, that depicts the payload.
    */
-  virtual vector<unsigned char> bytes() override;
+  virtual std::vector<unsigned char> bytes() override;
 
   /**
    * @brief Returns the magic number of the payload. This number is used to
@@ -84,8 +84,8 @@ private:
   NetworkWorkerOperationMode operationMode;
   /// The ip address that the worker shall connect to, when in
   /// NETWORK_WORKER_OP_MODE_CLIENT mode.
-  string ipAddress;
-  /// The port that shall be listened to or connected to (depending on the
+  std::string ipAddress;
+  /// The port that shall be std::listened to or connected to (depending on the
   /// operation mode).
   int port;
 };

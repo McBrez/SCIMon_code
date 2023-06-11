@@ -2,25 +2,25 @@
 
 namespace Utilities {
 
-vector<string> split(const string &str, unsigned char token) {
-  vector<string> retVal;
+std::vector<std::string> split(const std::string &str, unsigned char token) {
+  std::vector<std::string> retVal;
 
   auto tokenStart = str.begin();
   auto tokenEnd = str.end();
-  string::const_iterator it;
+  std::string::const_iterator it;
 
-  vector<string::const_iterator> tokenPositions;
-  string::const_iterator tokenPosition = str.cbegin();
+  std::vector<std::string::const_iterator> tokenPositions;
+  std::string::const_iterator tokenPosition = str.cbegin();
   do {
-    tokenPosition = find(tokenPosition, str.cend(), token);
+    tokenPosition = std::find(tokenPosition, str.cend(), token);
     tokenPositions.push_back(tokenPosition);
     if (tokenPosition != str.cend())
       tokenPosition++;
   } while (tokenPosition != str.cend());
 
-  string::const_iterator strStart = str.cbegin();
+  std::string::const_iterator strStart = str.cbegin();
   for (auto strEnd : tokenPositions) {
-    string splitStr = "";
+    std::string splitStr = "";
     for (auto ch = strStart; ch != strEnd; ++ch) {
       splitStr += *ch;
     }
@@ -34,8 +34,8 @@ vector<string> split(const string &str, unsigned char token) {
 }
 
 void splitImpedanceSpectrum(const ImpedanceSpectrum &isSpectrum,
-                            vector<double> &frequencies,
-                            vector<Impedance> &impedance) {
+                            std::vector<double> &frequencies,
+                            std::vector<Impedance> &impedance) {
 
   frequencies.reserve(isSpectrum.size());
   for (auto impedancePoint : isSpectrum) {

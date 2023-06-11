@@ -5,7 +5,7 @@
 namespace Workers {
 
 NetworkWorkerInitPayload::NetworkWorkerInitPayload(
-    NetworkWorkerOperationMode operationMode, string ipAddress, int port)
+    NetworkWorkerOperationMode operationMode, std::string ipAddress, int port)
     : operationMode(operationMode), ipAddress(ipAddress), port(port) {}
 
 NetworkWorkerInitPayload::~NetworkWorkerInitPayload() {}
@@ -14,14 +14,14 @@ NetworkWorkerOperationMode NetworkWorkerInitPayload::getOperationMode() {
   return this->operationMode;
 }
 
-string NetworkWorkerInitPayload::getIpAddress() { return this->ipAddress; }
+std::string NetworkWorkerInitPayload::getIpAddress() { return this->ipAddress; }
 
 int NetworkWorkerInitPayload::getPort() { return this->port; }
 
-string NetworkWorkerInitPayload::serialize() { return ""; }
+std::string NetworkWorkerInitPayload::serialize() { return ""; }
 
-vector<unsigned char> NetworkWorkerInitPayload::bytes() {
-  return vector<unsigned char>();
+std::vector<unsigned char> NetworkWorkerInitPayload::bytes() {
+  return std::vector<unsigned char>();
 }
 
 int NetworkWorkerInitPayload::getMagicNumber() {

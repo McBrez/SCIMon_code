@@ -8,13 +8,11 @@
 // Project includes
 #include <init_payload.hpp>
 
-using namespace std;
-
 namespace Devices {
 
 /// Typedef for a channelconfiguration. The integers of the tuple shall have the
 /// values defind in ElveflowXX.h
-using ChannelConfiguration = tuple<int, int, int, int>;
+using ChannelConfiguration = std::tuple<int, int, int, int>;
 
 /**
  * @brief Encapsulated initialization data for an Elveflow OB1 device.
@@ -26,7 +24,7 @@ public:
    * @param deviceName The device name as reported by the NI MAX application.
    * @param channelConfig The channel configuration;
    */
-  Ob1InitPayload(string deviceName, ChannelConfiguration channelConfig);
+  Ob1InitPayload(std::string deviceName, ChannelConfiguration channelConfig);
   /**
    * @brief Constructs the object.
    *
@@ -36,7 +34,7 @@ public:
    * @param channel3Config The configuration of channel 3.
    * @param channel4Config The configuration of channel 4.
    */
-  Ob1InitPayload(string deviceName, int channel1Config, int channel2Config,
+  Ob1InitPayload(std::string deviceName, int channel1Config, int channel2Config,
                  int channel3Config, int channel4Config);
 
   /**
@@ -44,14 +42,14 @@ public:
    *
    * @return The payload in string representation.
    */
-  virtual string serialize() override;
+  virtual std::string serialize() override;
 
   /**
    * @brief Returns the device name as string.
    *
    * @return The device name.
    */
-  string getDeviceName();
+  std::string getDeviceName();
 
   /**
    * @brief Returns the channel configuration.
@@ -64,7 +62,7 @@ public:
    * @brief Serializes the payload into bytes.
    * @return Byte vector, that depicts the payload.
    */
-  virtual vector<unsigned char> bytes() override;
+  virtual std::vector<unsigned char> bytes() override;
 
   /**
    * @brief Returns the magic number of the payload. This number is used to
@@ -75,7 +73,7 @@ public:
 
 private:
   /// The device name.
-  string deviceName;
+  std::string deviceName;
   /// The channel configuration
   ChannelConfiguration channelConfig;
 };

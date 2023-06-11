@@ -14,7 +14,7 @@
 #include <worker.hpp>
 
 using namespace Utilities;
-using namespace std;
+
 using namespace chrono_literals;
 using namespace Devices;
 using namespace Workers;
@@ -41,11 +41,11 @@ enum MainControlState {
  */
 class MainControl {
 private:
-  /// A list of references to devices.
-  list<shared_ptr<Device>> devices;
+  /// A std::list of references to devices.
+  std::list<std::shared_ptr<Device>> devices;
 
-  /// A list of references to workers.
-  list<shared_ptr<Worker>> workers;
+  /// A std::list of references to workers.
+  std::list<std::shared_ptr<Worker>> workers;
 
   /// Reference to the thread, that executes the worker function.
   unique_ptr<thread> workerThread;

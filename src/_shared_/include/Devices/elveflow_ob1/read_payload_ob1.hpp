@@ -9,7 +9,7 @@
 
 namespace Devices {
 
-using Ob1ChannelPressures = tuple<double, double, double, double>;
+using Ob1ChannelPressures = std::tuple<double, double, double, double>;
 
 /**
  * @brief Encapsulates the device image of an OB1 device.
@@ -22,7 +22,7 @@ public:
    *
    * @return The payload in string representation.
    */
-  virtual string serialize() override;
+  virtual std::string serialize() override;
 
   Ob1ChannelPressures getChannelPressures();
 
@@ -30,7 +30,7 @@ public:
    * @brief Serializes the payload into bytes.
    * @return Byte vector, that depicts the payload.
    */
-  virtual vector<unsigned char> bytes() override;
+  virtual std::vector<unsigned char> bytes() override;
 
   /**
    * @brief Returns the magic number of the payload. This number is used to

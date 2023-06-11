@@ -2,7 +2,6 @@
 #include <common.hpp>
 #include <is_configuration.hpp>
 
-
 namespace Devices {
 
 IsConfiguration::IsConfiguration(double frequencyFrom, double frequencyTo,
@@ -13,8 +12,8 @@ IsConfiguration::IsConfiguration(double frequencyFrom, double frequencyTo,
 
 IsConfiguration::~IsConfiguration() {}
 
-vector<unsigned char> IsConfiguration::bytes() {
-  return vector<unsigned char>();
+std::vector<unsigned char> IsConfiguration::bytes() {
+  return std::vector<unsigned char>();
 }
 
 int IsConfiguration::getMagicNumber() { return MAGIC_NUMBER_IS_CONFIGURATION; }

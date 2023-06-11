@@ -17,8 +17,10 @@ AdditionalData WriteDeviceMessage::getAdditionalData() {
 }
 WriteDeviceTopic WriteDeviceMessage::getTopic() { return this->topic; }
 
-string WriteDeviceMessage::serialize() { return "Write Message"; }
+std::string WriteDeviceMessage::serialize() { return "Write Message"; }
 
-shared_ptr<Payload> WriteDeviceMessage::getPayload() { return this->payload; }
+std::shared_ptr<Payload> WriteDeviceMessage::getPayload() {
+  return this->payload;
+}
 
 } // namespace Messages

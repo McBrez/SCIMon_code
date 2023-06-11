@@ -6,7 +6,7 @@ namespace Devices {
 
 Isx3IsConfPayload::Isx3IsConfPayload(
     double frequencyFrom, double frequencyTo, int measurementPoints,
-    int repetitions, map<ChannelFunction, int> channel, IsScale scale,
+    int repetitions, std::map<ChannelFunction, int> channel, IsScale scale,
     MeasurmentConfigurationRange measurementConfRange,
     MeasurmentConfigurationChannel measurementConfChannel,
     MeasurementConfiguration measurementConfiguration, const double precision,
@@ -21,8 +21,8 @@ Isx3IsConfPayload::Isx3IsConfPayload(
 
 Isx3IsConfPayload::~Isx3IsConfPayload() {}
 
-vector<unsigned char> Isx3IsConfPayload::bytes() {
-  return vector<unsigned char>();
+std::vector<unsigned char> Isx3IsConfPayload::bytes() {
+  return std::vector<unsigned char>();
 }
 
 int Isx3IsConfPayload::getMagicNumber() {

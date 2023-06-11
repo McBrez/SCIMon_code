@@ -21,7 +21,7 @@ bool Device::isConfigured() { return this->configurationFinished; }
 
 bool Device::isInitialized() { return this->initFinished; }
 
-bool Device::write(shared_ptr<WriteDeviceMessage> writeMsg) {
+bool Device::write(std::shared_ptr<WriteDeviceMessage> writeMsg) {
 
   if (WriteDeviceTopic::WRITE_TOPIC_INVALID == writeMsg->getTopic()) {
     LOG(WARNING) << "Received a message with invalid topic.";
@@ -45,7 +45,7 @@ bool Device::write(shared_ptr<WriteDeviceMessage> writeMsg) {
 
   else if (WriteDeviceTopic::WRITE_TOPIC_QUERY_STATE == writeMsg->getTopic()) {
     // Put the device state into the message queue.
-    this->messageOut.push(shared_ptr<DeviceMessage>(new ReadDeviceMessage(
+    this->messageOut.push(std::shared_ptr<DeviceMessage>(new ReadDeviceMessage(
         this->self->getUserId(), writeMsg->getSource(),
         READ_TOPIC_DEVICE_STATUS,
         new StatusPayload(this->getUserId(), this->getDeviceStatus(),
@@ -62,9 +62,10 @@ bool Device::write(shared_ptr<WriteDeviceMessage> writeMsg) {
   }
 }
 
-list<shared_ptr<DeviceMessage>> Device::read(TimePoint timestamp) {
+std::list<std::shared_ptr<DeviceMessage>> Device::read(TimePoint timestamp) {
   // Call the device-specific read operation.
-  list<shared_ptr<DeviceMessage>> readMessages = this->specificRead(timestamp);
+  std::list<std::shared_ptr<DeviceMessage>> readMessages =
+      this->specificRead(timestamp);
   // Append the message, if it was not empty.
   if (!readMessages.empty()) {
     for (auto message : readMessages) {
@@ -74,11 +75,11 @@ list<shared_ptr<DeviceMessage>> Device::read(TimePoint timestamp) {
 
   // Pop the queue, if it is not empty.
   if (this->messageOut.empty()) {
-    // Queue is empty. Return an empty list.
-    return list<shared_ptr<DeviceMessage>>();
+    // Queue is empty. Return an empty std::list.
+    return std::list<std::shared_ptr<DeviceMessage>>();
   } else {
-    // Pop the queue to a list and return it.
-    list<shared_ptr<DeviceMessage>> retVal;
+    // Pop the queue to a std::list and return it.
+    std::list<std::shared_ptr<DeviceMessage>> retVal;
     while (!this->messageOut.empty()) {
       retVal.push_back(this->messageOut.front());
       this->messageOut.pop();
@@ -87,7 +88,7 @@ list<shared_ptr<DeviceMessage>> Device::read(TimePoint timestamp) {
   }
 }
 
-string Device::deviceStatusToString(DeviceStatus deviceStatus) {
+std::string Device::deviceStatusToString(DeviceStatus deviceStatus) {
 
   if (UNKNOWN_DEVICE_STATUS == deviceStatus)
     return "UNKNOWN DEVICE STATUS";
@@ -109,7 +110,7 @@ string Device::deviceStatusToString(DeviceStatus deviceStatus) {
     return "";
 }
 
-bool Device::write(shared_ptr<InitDeviceMessage> initMsg) {
+bool Device::write(std::shared_ptr<InitDeviceMessage> initMsg) {
   if (initMsg->getDestination() != this->getUserId()) {
     LOG(WARNING) << "Got a message that is not meant for this device.";
     return false;
@@ -118,13 +119,13 @@ bool Device::write(shared_ptr<InitDeviceMessage> initMsg) {
   return this->initialize(initMsg->returnPayload());
 }
 
-bool Device::write(shared_ptr<ConfigDeviceMessage> configMsg) {
+bool Device::write(std::shared_ptr<ConfigDeviceMessage> configMsg) {
 
   this->responseId = configMsg->getResponseId();
   return this->configure(configMsg->getConfiguration());
 }
 
-bool Device::write(shared_ptr<HandshakeMessage> writeMsg) {
+bool Device::write(std::shared_ptr<HandshakeMessage> writeMsg) {
   // Devices should not react to handshake messages.
   LOG(WARNING) << "Device received a handshake message. This will be ingnored.";
   return false;
@@ -132,8 +133,8 @@ bool Device::write(shared_ptr<HandshakeMessage> writeMsg) {
 
 DeviceType Device::getDeviceType() { return this->deviceType; }
 
-shared_ptr<StatusPayload> Device::constructStatus() {
-  return shared_ptr<StatusPayload>(new StatusPayload(
+std::shared_ptr<StatusPayload> Device::constructStatus() {
+  return std::shared_ptr<StatusPayload>(new StatusPayload(
       this->getUserId(), this->getDeviceStatus(), this->getProxyUserIds(),
       this->getDeviceType(), this->getDeviceTypeName()));
 }

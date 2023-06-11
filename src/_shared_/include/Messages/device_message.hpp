@@ -9,8 +9,6 @@
 #include <string>
 #include <vector>
 
-using namespace std;
-
 namespace Messages {
 
 /// Forward declaration of the message interface. Can not include it here, as it
@@ -38,7 +36,7 @@ public:
    * @brief Serializes the message into a human-friendly string.
    * @return A string containing the contents of the message.
    */
-  virtual string serialize() = 0;
+  virtual std::string serialize() = 0;
 
   /**
    * @brief Deserializes the given string into a message.
@@ -47,7 +45,7 @@ public:
    * @return true
    * @return false
    */
-  static shared_ptr<DeviceMessage> deserialize(string data);
+  static std::shared_ptr<DeviceMessage> deserialize(std::string data);
 
   /**
    * @brief Returns the unique id of this message.

@@ -45,25 +45,39 @@ public:
    */
   ReadDeviceMessage(UserId source, UserId destination, ReadDeviceTopic topic,
                     ReadPayload *readPayload,
-                    shared_ptr<WriteDeviceMessage> originalMessage);
+                    std::shared_ptr<WriteDeviceMessage> originalMessage);
+
+  /**
+   * @brief Constructs the read device message with the given topic and
+   * payload.
+   * @param source Reference to the source of this message.
+   * @param destination Reference to the destination of this message.
+   * @param topic The topic of the message.
+   * @param readPayload The payload of the message.
+   * @param originalMessage Reference to the message, this message is the
+   * response to.
+   */
+  ReadDeviceMessage(UserId source, UserId destination, ReadDeviceTopic topic,
+                    std::shared_ptr<ReadPayload> readPayload,
+                    std::shared_ptr<WriteDeviceMessage> originalMessage);
 
   /**
    * @brief Serializes the message into a human-readable string.
    * @return The string representation of the message.
    */
-  virtual string serialize() override;
+  virtual std::string serialize() override;
 
   /**
    * @brief Return the payload of the message.
    * @return The payload, held by this message.
    */
-  shared_ptr<ReadPayload> getReadPaylod();
+  std::shared_ptr<ReadPayload> getReadPaylod();
 
   /**
    * @brief Returns the message, this object is the response to.
    * @return Reference to the message, this object is the respons to.
    */
-  shared_ptr<WriteDeviceMessage> getOriginalMessage();
+  std::shared_ptr<WriteDeviceMessage> getOriginalMessage();
 
   /**
    * @brief Returns the topic of this message.
@@ -73,10 +87,10 @@ public:
 
 private:
   /// Reference to the messsage this message is the response to.
-  shared_ptr<WriteDeviceMessage> originalMessage;
+  std::shared_ptr<WriteDeviceMessage> originalMessage;
 
   /// Reference to the payload.
-  shared_ptr<ReadPayload> readPayload;
+  std::shared_ptr<ReadPayload> readPayload;
 
   /// The topic of the message.
   ReadDeviceTopic topic;

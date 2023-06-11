@@ -4,14 +4,16 @@
 
 namespace Devices {
 
-IdPayload::IdPayload(string manufacturer, DeviceType deviceType,
+IdPayload::IdPayload(std::string manufacturer, DeviceType deviceType,
                      int deviceIdentifier, int serialNumber)
     : ReadPayload(), manufacturer(manufacturer), deviceType(deviceType),
       deviceIdentifier(deviceIdentifier), serialNumber(serialNumber) {}
 
-string IdPayload::serialize() { return ""; }
+std::string IdPayload::serialize() { return ""; }
 
-vector<unsigned char> IdPayload::bytes() { return vector<unsigned char>(); }
+std::vector<unsigned char> IdPayload::bytes() {
+  return std::vector<unsigned char>();
+}
 
 int IdPayload::getMagicNumber() { return MAGIC_NUMBER_ID_PAYLOAD; }
 

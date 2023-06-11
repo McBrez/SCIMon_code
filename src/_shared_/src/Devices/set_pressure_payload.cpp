@@ -8,18 +8,17 @@
 // Generated includes
 #include <set_pressure_payload_generated.h>
 
-using namespace std;
 using namespace Devices;
 
-SetPressurePayload::SetPressurePayload(const vector<double> &pressures,
+SetPressurePayload::SetPressurePayload(const std::vector<double> &pressures,
                                        PressureUnit pressureUnit)
     : pressures(pressures), pressureUnit(pressureUnit) {}
 
 SetPressurePayload::~SetPressurePayload() {}
 
-string SetPressurePayload::serialize() { return ""; }
+std::string SetPressurePayload::serialize() { return ""; }
 
-vector<double> SetPressurePayload::getPressures() const {
+std::vector<double> SetPressurePayload::getPressures() const {
   return this->pressures;
 }
 
@@ -27,7 +26,7 @@ PressureUnit SetPressurePayload::getPressureUnit() const {
   return this->pressureUnit;
 }
 
-vector<unsigned char> SetPressurePayload::bytes() {
+std::vector<unsigned char> SetPressurePayload::bytes() {
   Serialization::Devices::SetPressurePayloadT intermediateObject;
   intermediateObject.pressures = this->pressures;
   intermediateObject.pressureUnit =
@@ -38,7 +37,7 @@ vector<unsigned char> SetPressurePayload::bytes() {
       builder, &intermediateObject));
   uint8_t *buffer = builder.GetBufferPointer();
 
-  return vector<unsigned char>(buffer, buffer + builder.GetSize());
+  return std::vector<unsigned char>(buffer, buffer + builder.GetSize());
 }
 
 int SetPressurePayload::getMagicNumber() {

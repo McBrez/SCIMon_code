@@ -7,8 +7,6 @@
 // Project includes
 #include <payload.hpp>
 
-using namespace std;
-
 namespace Devices {
 
 /**
@@ -30,7 +28,7 @@ public:
    * @brief Serializes the payload into a human readable string.
    * @return The payload in string representation.
    */
-  virtual string serialize() = 0;
+  virtual std::string serialize() = 0;
 };
 
 } // namespace Devices

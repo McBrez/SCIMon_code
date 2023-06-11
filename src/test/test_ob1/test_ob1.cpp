@@ -19,14 +19,15 @@ INITIALIZE_EASYLOGGINGPP
 TEST_CASE("Testing the implementation of the ElveFlow OB1 device",
           "[Devices]") {
   // Build up
-  shared_ptr<MessageInterface> dut;
+  std::shared_ptr<MessageInterface> dut;
 #ifdef WIN32
   dut.reset(new DeviceOb1Win());
 #else
 #error Target operating systems other than WIN32 are not yet supported.
 #endif
   // Prepare a downcasted version of the dut.
-  shared_ptr<DeviceOb1> downcastedDut = dynamic_pointer_cast<DeviceOb1>(dut);
+  std::shared_ptr<DeviceOb1> downcastedDut =
+      dynamic_pointer_cast<DeviceOb1>(dut);
   REQUIRE(downcastedDut);
 
   SECTION("Initializing") {
@@ -35,8 +36,8 @@ TEST_CASE("Testing the implementation of the ElveFlow OB1 device",
         "01FB0FA3",
         make_tuple(Z_regulator_type_m1000_1000_mbar, Z_regulator_type_none,
                    Z_regulator_type_none, Z_regulator_type_none));
-    shared_ptr<InitDeviceMessage> initMsg(new InitDeviceMessage(
-        shared_ptr<MessageInterface>(), dut, initPayload));
+    std::shared_ptr<InitDeviceMessage> initMsg(new InitDeviceMessage(
+        std::shared_ptr<MessageInterface>(), dut, initPayload));
     REQUIRE(dut->write(initMsg) == true);
 
     // A read should return an empty message.
@@ -44,18 +45,18 @@ TEST_CASE("Testing the implementation of the ElveFlow OB1 device",
     REQUIRE(ackMsg.empty());
 
     // Configure the DUT.
-    shared_ptr<ConfigDeviceMessage> configMsg(new ConfigDeviceMessage(
-        shared_ptr<MessageInterface>(), dut, new Ob1ConfPayload()));
+    std::shared_ptr<ConfigDeviceMessage> configMsg(new ConfigDeviceMessage(
+        std::shared_ptr<MessageInterface>(), dut, new Ob1ConfPayload()));
     REQUIRE(dut->write(configMsg));
 
     // Configuration may take a while. Query the DUT until configuration
     // finishes.
-    list<shared_ptr<DeviceMessage>> readMessages;
+    list std::shared_ptr < DeviceMessage >> readMessages;
     bool run = true;
     while (run) {
       this_thread::sleep_for(chrono::seconds(1));
-      shared_ptr<WriteDeviceMessage> queryStateMsg(
-          new WriteDeviceMessage(shared_ptr<MessageInterface>(), dut,
+      std::shared_ptr<WriteDeviceMessage> queryStateMsg(
+          new WriteDeviceMessage std::shared_ptr<MessageInterface>(), dut,
                                  WriteDeviceTopic::WRITE_TOPIC_QUERY_STATE));
       // Query state messages should always be successful.
       REQUIRE(dut->write(queryStateMsg));
@@ -63,7 +64,7 @@ TEST_CASE("Testing the implementation of the ElveFlow OB1 device",
       // Query state messages should immediately return with a single message.
       REQUIRE(readMessages.size() == 1);
       // Cast the message.
-      shared_ptr<ReadDeviceMessage> readMsg =
+      std::shared_ptr<ReadDeviceMessage> readMsg =
           dynamic_pointer_cast<ReadDeviceMessage>(readMessages.front());
       REQUIRE(readMsg);
       // Check if this is the response to the previously sent query state
@@ -83,12 +84,12 @@ TEST_CASE("Testing the implementation of the ElveFlow OB1 device",
       }
     }
     if (true) {
-      bool startMessageSuccess = dut->write(shared_ptr<WriteDeviceMessage>(
+      bool startMessageSuccess = dut->write std::shared_ptr<WriteDeviceMessage>(
           new WriteDeviceMessage(dut, dut, WriteDeviceTopic::WRITE_TOPIC_RUN)));
       REQUIRE(startMessageSuccess);
-      shared_ptr<WriteDeviceMessage> setPressureMsg(
+      std::shared_ptr<WriteDeviceMessage> setPressureMsg(
           new WriteMessageOb1SetPressure(
-              shared_ptr<MessageInterface>(), dut,
+              std::shared_ptr<MessageInterface>(), dut,
               map<int, double>({{0, 0.0}, {1, 0.0}})));
       REQUIRE(dut->write(setPressureMsg));
 

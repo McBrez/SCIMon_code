@@ -23,8 +23,8 @@ public:
    * deliverMessages().
    * @param message The message that shall be taken.
    */
-  void takeMessage(shared_ptr<DeviceMessage> message);
-  void takeMessage(list<shared_ptr<DeviceMessage>> messages);
+  void takeMessage(std::shared_ptr<DeviceMessage> message);
+  void takeMessage(std::list<std::shared_ptr<DeviceMessage>> messages);
 
   /**
    * @brief Delivers the message that have been added prior with calls to
@@ -40,19 +40,19 @@ public:
    * @return TRUE if the participant has been added successfully. FALSE
    * otherwise.
    */
-  bool addParticipant(shared_ptr<MessageInterface> participant);
+  bool addParticipant(std::shared_ptr<MessageInterface> participant);
 
   /**
    * @brief Return all the participants of the message interface.
-   * @return A list of all participants of the message interface.
+   * @return A std::list of all participants of the message interface.
    */
-  list<UserId> getParticipants();
+  std::list<UserId> getParticipants();
 
   /**
    * @brief Returns the status of all participants.
-   * @return List containing the status of all participants.
+   * @return std::list containing the status of all participants.
    */
-  list<shared_ptr<StatusPayload>> getStatus();
+  std::list<std::shared_ptr<StatusPayload>> getStatus();
 
   /**
    * @brief Starts the execution loop. Note that this method blocks, until it is
@@ -65,16 +65,21 @@ public:
    */
   void stop();
 
+    /**
+     * @brief Returns whether the message distributor is currently running.
+    */
+  bool isRunning() const;
+
 private:
   /// Chaches messages until the next call to deliverMessages().
-  list<shared_ptr<DeviceMessage>> messageCache;
+  std::list<std::shared_ptr<DeviceMessage>> messageCache;
 
   /// Chaches messages that indicate a failed response until they can be added
   /// to the message cache.
-  list<shared_ptr<DeviceMessage>> failedResponseCache;
+  std::list<std::shared_ptr<DeviceMessage>> failedResponseCache;
 
-  /// List of participants.
-  list<shared_ptr<MessageInterface>> participants;
+  /// std::list of participants.
+  std::list<std::shared_ptr<MessageInterface>> participants;
 
   /// Flag that tells the message distributor to run.
   bool doRun;

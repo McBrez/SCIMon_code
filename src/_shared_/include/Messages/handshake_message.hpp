@@ -23,8 +23,8 @@ public:
    * this message. message.
    */
   HandshakeMessage(UserId source, UserId destination,
-                   list<shared_ptr<StatusPayload>> statusPayloads,
-                   string version);
+                   std::list<std::shared_ptr<StatusPayload>> statusPayloads,
+                   std::string version);
 
   /**
    * @brief Destroy the Handshake Message object
@@ -35,19 +35,19 @@ public:
    * @brief Serializes the message into a human readable string.
    * @return A string representation of the message.
    */
-  virtual string serialize() override;
+  virtual std::string serialize() override;
 
   /**
    * @brief Serializes the message into a char vector.
    * @return Byte representation of the message.
    */
-  virtual vector<unsigned char> bytes();
+  virtual std::vector<unsigned char> bytes();
 
   /**
    * @brief Returns the status payloads held by this object.
    * @return Status payloads held by this object.
    */
-  list<shared_ptr<StatusPayload>> getPayload();
+  std::list<std::shared_ptr<StatusPayload>> getPayload();
 
   /**
    * @brief Returns the message lib version string of the host that generated
@@ -55,14 +55,14 @@ public:
    * @return The message lib version string of the host that generated
    * this message.
    */
-  string getVersion();
+  std::string getVersion();
 
 private:
   /// The status payloads.
-  list<shared_ptr<StatusPayload>> statusPayloads;
+  std::list<std::shared_ptr<StatusPayload>> statusPayloads;
 
   /// The version of the message lib of the host that generated this message.
-  string version;
+  std::string version;
 };
 } // namespace Messages
 

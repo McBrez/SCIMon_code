@@ -15,9 +15,9 @@ RequestDataPayload::RequestDataPayload(DeviceType deviceType, TimePoint from,
 
 RequestDataPayload::~RequestDataPayload() {}
 
-string RequestDataPayload::serialize() { return ""; }
+std::string RequestDataPayload::serialize() { return ""; }
 
-vector<unsigned char> RequestDataPayload::bytes() {
+std::vector<unsigned char> RequestDataPayload::bytes() {
   Serialization::Devices::RequestDataPayloadT intermediateObject;
   intermediateObject.deviceType =
       static_cast<Serialization::Devices::DeviceType>(this->deviceType);
@@ -29,7 +29,7 @@ vector<unsigned char> RequestDataPayload::bytes() {
       builder, &intermediateObject));
   uint8_t *buffer = builder.GetBufferPointer();
 
-  return vector<unsigned char>(buffer, buffer + builder.GetSize());
+  return std::vector<unsigned char>(buffer, buffer + builder.GetSize());
 }
 
 int RequestDataPayload::getMagicNumber() {

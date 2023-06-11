@@ -8,9 +8,8 @@
 #include <device_message.hpp>
 #include <payload.hpp>
 
-using namespace std;
 using namespace Devices;
-using AdditionalData = variant<bool, int, float, string>;
+using AdditionalData = std::variant<bool, int, float, std::string>;
 
 namespace Messages {
 
@@ -71,13 +70,13 @@ public:
    * @brief Serializes the contents of the message into a human-readable string.
    * @return The string representation of the message.
    */
-  virtual string serialize() override;
+  virtual std::string serialize() override;
 
   /**
    * @brief Returns the payload held by this object.
    * @return Pointer to the payload held by this object. (May be nullptr).
    */
-  shared_ptr<Payload> getPayload();
+  std::shared_ptr<Payload> getPayload();
 
 private:
   /// The additional data.
@@ -85,7 +84,7 @@ private:
   /// The topic of the message.
   WriteDeviceTopic topic;
   /// May hold a payload.
-  shared_ptr<Payload> payload;
+  std::shared_ptr<Payload> payload;
 };
 } // namespace Messages
 

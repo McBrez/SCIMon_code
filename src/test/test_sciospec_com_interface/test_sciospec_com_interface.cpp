@@ -77,11 +77,11 @@ TEST_CASE("Testing ComInterfaceCodec::decodeMessage()") {
                                       0xB2, 0x00, 0x01, 0x43, 0x16, 0x00, 0x00,
                                       0x43, 0x48, 0x00, 0x00, 0xB8});
 
-    shared_ptr<Devices::ReadPayload> result = dut.decodeMessage(frame);
+    std::shared_ptr<Devices::ReadPayload> result = dut.decodeMessage(frame);
 
     // Result pointer should not be null.
     REQUIRE(result);
-    shared_ptr<Devices::IsPayload> resultCasted =
+    std::shared_ptr<Devices::IsPayload> resultCasted =
         dynamic_pointer_cast<Devices::IsPayload>(result);
     // Result should be castable to IsPayload.
     REQUIRE(resultCasted);

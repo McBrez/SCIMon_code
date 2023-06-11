@@ -7,8 +7,6 @@
 // Project includes
 #include <device_message.hpp>
 
-using namespace std;
-
 namespace Messages {
 
 DeviceMessage::DeviceMessage(UserId source, UserId destination)
@@ -16,8 +14,8 @@ DeviceMessage::DeviceMessage(UserId source, UserId destination)
 
 DeviceMessage::~DeviceMessage() {}
 
-shared_ptr<DeviceMessage> DeviceMessage::deserialize(string data) {
-  return shared_ptr<DeviceMessage>();
+std::shared_ptr<DeviceMessage> DeviceMessage::deserialize(std::string data) {
+  return std::shared_ptr<DeviceMessage>();
 }
 
 int DeviceMessage::getMessageId() { return this->messageId; }

@@ -34,15 +34,15 @@ public:
    * @param writeMsg The specific message.
    * @return True if the write operation was successfull. False otherwise.
    */
-  virtual bool specificWrite(shared_ptr<WriteDeviceMessage> writeMsg) override;
+  virtual bool specificWrite std::shared_ptr<WriteDeviceMessage> writeMsg) override;
 
   /**
    * @brief Handles a device specific read operation.
    * @param timestamp The timestamp with which this operation is called.
    * @return The response to the specific read operation.
    */
-  virtual list<shared_ptr<DeviceMessage>>
-  specificRead(TimePoint timestamp) override;
+  virtual list std::shared_ptr < DeviceMessage >>
+      specificRead(TimePoint timestamp) override;
 
   /**
    * @brief Handles the response to a write message that has been sent by this
@@ -51,7 +51,7 @@ public:
    * @return TRUE if the response has been handled successfully. False
    * otherwise.
    */
-  virtual bool handleResponse(shared_ptr<ReadDeviceMessage> response) override;
+  virtual bool handleResponse std::shared_ptr<ReadDeviceMessage> response) override;
 
   /**
    * Configures the device according to the given configuration.
@@ -60,7 +60,7 @@ public:
    * @return TRUE if configuration was successful. False otherwise.
    */
   virtual bool
-  configure(shared_ptr<ConfigurationPayload> deviceConfiguration) override;
+  configure std::shared_ptr<ConfigurationPayload> deviceConfiguration) override;
 
   /**
    * Initializes the device according to the given configuration.
@@ -68,7 +68,7 @@ public:
    * device.
    * @return TRUE if configuration was successful. False otherwise.
    */
-  virtual bool initialize(shared_ptr<InitPayload> initPayload) override;
+  virtual bool initialize std::shared_ptr<InitPayload> initPayload) override;
 
   /**
    * @brief Starts the operation of the device, provided that there is a valid

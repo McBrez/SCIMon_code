@@ -11,7 +11,7 @@
 using namespace Devices;
 
 InitPayload *
-Isx3PayloadDecoder::decodeInitPayload(const vector<unsigned char> &data,
+Isx3PayloadDecoder::decodeInitPayload(const std::vector<unsigned char> &data,
                                       int magicNumber) {
   const Serialization::Devices::Isx3InitPayloadT *payload =
       Serialization::Devices::GetIsx3InitPayload(data.data())->UnPack();
@@ -20,19 +20,19 @@ Isx3PayloadDecoder::decodeInitPayload(const vector<unsigned char> &data,
 }
 
 ConfigurationPayload *
-Isx3PayloadDecoder::decodeConfigPayload(const vector<unsigned char> &data,
+Isx3PayloadDecoder::decodeConfigPayload(const std::vector<unsigned char> &data,
                                         int magicNumber) {
   return nullptr;
 }
 
 ReadPayload *
-Isx3PayloadDecoder::decodeReadPayload(const vector<unsigned char> &data,
+Isx3PayloadDecoder::decodeReadPayload(const std::vector<unsigned char> &data,
                                       int magicNumber) {
   return nullptr;
 }
 
 WritePayload *
-Isx3PayloadDecoder::decodeWritePayload(const vector<unsigned char> &data,
+Isx3PayloadDecoder::decodeWritePayload(const std::vector<unsigned char> &data,
                                        int magicNumber) {
   return nullptr;
 }

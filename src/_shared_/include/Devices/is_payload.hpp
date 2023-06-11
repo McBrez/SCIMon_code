@@ -10,7 +10,6 @@
 #include <common.hpp>
 #include <read_payload.hpp>
 
-using namespace std;
 using namespace Core;
 
 namespace Devices {
@@ -36,11 +35,12 @@ public:
    * @param channelNumber The number of the channel the impedance spectrum has
    * been gathered from.
    * @param timestamp The timestamp of the measurement in UNIX time.
-   * @param frequencies List of frequencies that match to impedances.
-   * @param impedances List of impedances that match to frequencies.
+   * @param frequencies std::list of frequencies that match to impedances.
+   * @param impedances std::list of impedances that match to frequencies.
    */
   IsPayload(unsigned int channelNumber, double timestamp,
-            list<double> frequencies, list<complex<double>> impedances);
+            std::list<double> frequencies,
+            std::list<std::complex<double>> impedances);
 
   unsigned int getChannelNumber() const;
 
@@ -52,13 +52,13 @@ public:
    * @brief Serializes the payload into a human readable string.
    * @return The payload in string representation.
    */
-  virtual string serialize() override;
+  virtual std::string serialize() override;
 
   /**
    * @brief Serializes the payload into bytes.
    * @return Byte vector, that depicts the payload.
    */
-  virtual vector<unsigned char> bytes() override;
+  virtual std::vector<unsigned char> bytes() override;
 
   /**
    * @brief Returns the magic number of the payload. This number is used to

@@ -82,7 +82,7 @@ enum SetSetupCommandOption {
   SET_SETUP_CMD_OPTION_INIT_MEASUREMENT = 0x01,
   /// Adds a specific frequency point to the measurement setup.
   SET_SETUP_CMD_OPTION_ADD_FREQ_POINT = 0x02,
-  /// Adds a list of frequencies to the measurement setup.
+  /// Adds a std::list of frequencies to the measurement setup.
   SET_SETUP_CMD_OPTION_ADD_FREQ_LIST = 0x03
 };
 

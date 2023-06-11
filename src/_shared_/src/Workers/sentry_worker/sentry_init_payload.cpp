@@ -17,9 +17,9 @@ SentryInitPayload::SentryInitPayload(
       pumpControllerInitPayload(pumpControllerInitPayload),
       pumpControllerConfigPayload(pumpControllerConfigPayload) {}
 
-string SentryInitPayload::serialize() { return ""; }
+std::string SentryInitPayload::serialize() { return ""; }
 
-vector<unsigned char> SentryInitPayload::bytes() {
+std::vector<unsigned char> SentryInitPayload::bytes() {
   Serialization::Workers::SentryInitPayloadT intermediateObject;
 
   intermediateObject.pumpControllerConfPayload->magicNumber =
@@ -47,7 +47,7 @@ vector<unsigned char> SentryInitPayload::bytes() {
       builder, &intermediateObject));
   uint8_t *buffer = builder.GetBufferPointer();
 
-  return vector<unsigned char>(buffer, buffer + builder.GetSize());
+  return std::vector<unsigned char>(buffer, buffer + builder.GetSize());
 }
 
 int SentryInitPayload::getMagicNumber() {

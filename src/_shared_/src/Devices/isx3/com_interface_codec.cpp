@@ -135,7 +135,7 @@ ComInterfaceCodec::buildCmdSetSetup(float fStart, float fStop, float fCount,
   return this->wrapPayload(payload, Isx3CmdTag::ISX3_COMMAND_TAG_SET_SETUP);
 }
 
-shared_ptr<ReadPayload>
+std::shared_ptr<ReadPayload>
 ComInterfaceCodec::decodeMessage(std::vector<unsigned char> bytes) {
 
   std::vector<unsigned char> payload;
@@ -143,17 +143,17 @@ ComInterfaceCodec::decodeMessage(std::vector<unsigned char> bytes) {
 
   bool unwrapSuccess = this->unwrapPayload(bytes, payload, commandTag);
   if (!unwrapSuccess) {
-    return shared_ptr<ReadPayload>();
+    return std::shared_ptr<ReadPayload>();
   }
 
   if (ISX3_COMMAND_TAG_ACK == commandTag) {
     Isx3AckType ackType;
     bool decodeSuccess = this->decodeAck(payload, ackType);
     if (decodeSuccess) {
-      return shared_ptr<Isx3AckPayload>(
+      return std::shared_ptr<Isx3AckPayload>(
           new Isx3AckPayload(ackType, commandTag));
     } else {
-      return shared_ptr<ReadPayload>();
+      return std::shared_ptr<ReadPayload>();
     }
   }
 
@@ -165,13 +165,13 @@ ComInterfaceCodec::decodeMessage(std::vector<unsigned char> bytes) {
     bool decodeSuccess = this->decodeImpedanceData(payload, fNumber, timestamp,
                                                    channelNumber, impedance);
     if (!decodeSuccess) {
-      return shared_ptr<ReadPayload>();
+      return std::shared_ptr<ReadPayload>();
     } else {
-      return shared_ptr<ReadPayload>(
+      return std::shared_ptr<ReadPayload>(
           new IsPayload(channelNumber, timestamp,
                         std::list<double>({static_cast<double>(fNumber)}),
-                        std::list<complex<double>>(
-                            {static_cast<complex<double>>(impedance)})));
+                        std::list<std::complex<double>>(
+                            {static_cast<std::complex<double>>(impedance)})));
     }
   }
 
@@ -185,9 +185,9 @@ ComInterfaceCodec::decodeMessage(std::vector<unsigned char> bytes) {
         payload, formatVersion, deviceIdentifier, serialNumber,
         dateOfDeliveryYear, dateOfDeliveryMonth);
     if (!decodeSuccess) {
-      return shared_ptr<ReadPayload>();
+      return std::shared_ptr<ReadPayload>();
     } else {
-      shared_ptr<IdPayload> idPayload(
+      std::shared_ptr<IdPayload> idPayload(
           new IdPayload("Sciospec", DeviceType::IMPEDANCE_SPECTROMETER,
                         deviceIdentifier, serialNumber));
       return idPayload;
@@ -196,23 +196,23 @@ ComInterfaceCodec::decodeMessage(std::vector<unsigned char> bytes) {
 
   else {
     // Command not known.
-    return shared_ptr<ReadPayload>();
+    return std::shared_ptr<ReadPayload>();
   }
 }
 
 std::vector<unsigned char>
-ComInterfaceCodec::encodeMessage(shared_ptr<InitPayload> payload) {
+ComInterfaceCodec::encodeMessage(std::shared_ptr<InitPayload> payload) {
   return std::vector<unsigned char>();
 }
 
-std::list<std::vector<unsigned char>>
-ComInterfaceCodec::encodeMessage(shared_ptr<ConfigurationPayload> payload) {
+std::list<std::vector<unsigned char>> ComInterfaceCodec::encodeMessage(
+    std::shared_ptr<ConfigurationPayload> payload) {
   if (!payload) {
     return std::list<std::vector<unsigned char>>();
   }
 
   // Try to cast it to an isx3 configuration payload.
-  shared_ptr<Isx3IsConfPayload> confPayload =
+  std::shared_ptr<Isx3IsConfPayload> confPayload =
       dynamic_pointer_cast<Isx3IsConfPayload>(payload);
   if (!confPayload) {
     // TODO: Try to cast it to a more generic IS configuration and assemble a
@@ -233,7 +233,7 @@ ComInterfaceCodec::encodeMessage(shared_ptr<ConfigurationPayload> payload) {
   commandList.push_back(this->buildCmdInitMeasurement(
       false,
       MeasurementMode::MEASUREMENT_MODE_FULL_RANGE_IMPEDANCE_SPECTROSCOPY));
-  // Configure the given frequency list.
+  // Configure the given frequency std::list.
   commandList.push_back(this->buildCmdSetSetup(
       static_cast<float>(confPayload->frequencyFrom),
       static_cast<float>(confPayload->frequencyTo),

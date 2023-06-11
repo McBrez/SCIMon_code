@@ -10,7 +10,6 @@
 #include <init_payload.hpp>
 #include <utilities.hpp>
 
-using namespace std;
 using namespace Devices;
 using namespace Utilities;
 
@@ -26,13 +25,13 @@ public:
    * @brief Serializes the payload into a human readable string.
    * @return The payload in string representation.
    */
-  virtual string serialize() override;
+  virtual std::string serialize() override;
 
   /**
    * @brief Serializes the payload into bytes.
    * @return Byte vector, that depicts the payload.
    */
-  virtual vector<unsigned char> bytes() override;
+  virtual std::vector<unsigned char> bytes() override;
 
   /**
    * @brief Returns the magic number of the payload. This number is used to
@@ -42,14 +41,14 @@ public:
   virtual int getMagicNumber() override;
 
   // Impedance spectrometer init data
-  const shared_ptr<InitPayload> isSpecInitPayload;
+  const std::shared_ptr<InitPayload> isSpecInitPayload;
   // Impedance spectrometer config data
-  const shared_ptr<ConfigurationPayload> isSpecConfPayload;
+  const std::shared_ptr<ConfigurationPayload> isSpecConfPayload;
 
   // Pump controller init data.
-  const shared_ptr<InitPayload> pumpControllerInitPayload;
+  const std::shared_ptr<InitPayload> pumpControllerInitPayload;
   // Pump controller config data
-  const shared_ptr<ConfigurationPayload> pumpControllerConfigPayload;
+  const std::shared_ptr<ConfigurationPayload> pumpControllerConfigPayload;
 };
 } // namespace Workers
 
