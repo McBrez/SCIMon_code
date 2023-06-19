@@ -165,8 +165,6 @@ private:
 
   /// Mutex that guards the buffer for the outgoing messages.
   std::mutex outgoingNetworkMessagesMutex;
-
-  MessageFactory *messageFactory;
 };
 } // namespace Workers
 

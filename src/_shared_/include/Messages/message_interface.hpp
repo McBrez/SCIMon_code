@@ -156,9 +156,6 @@ public:
   virtual std::shared_ptr<StatusPayload> constructStatus() = 0;
 
 protected:
-  /// Queue for outgoing messages.
-  std::queue<std::shared_ptr<DeviceMessage>> messageOut;
-
   /// Reference to the message distributor this object belongs to. Is set when
   /// the message interface object is added to the distributor as participant.
   MessageDistributor *messageDistributor;
@@ -187,12 +184,37 @@ protected:
    */
   void clearProxyIds();
 
+  /**
+   * @brief Pushes the given message to the outgoing queue.
+   * @param msg The message that shall be pushed to the outgoing message queue.
+   */
+  void pushMessageQueue(std::shared_ptr<DeviceMessage> msg);
+
+  /**
+   * @brief Pops a message from the internal message queue.
+   * @return Pointer to a message. May be a nullptr, if there was no message in
+   * the queue.
+   */
+  std::shared_ptr<DeviceMessage> popMessageQueue();
+
+  /**
+   * @brief Indicates, whether the internal message queue is empty.
+   * @return True if internal message queue is empty. False otherwise.
+   */
+  bool messageQueueEmpty();
+
 private:
   /// The unique id of the object that implements this interface.
   UserId id;
 
   /// The unique ids of the objects that are represented by this object.
   std::list<UserId> proxyIds;
+
+  /// Queue for outgoing messages.
+  std::queue<std::shared_ptr<DeviceMessage>> messageOut;
+
+  /// Mutex that guards the messageOut queue.
+  std::mutex messageOutMutex;
 };
 } // namespace Messages
 

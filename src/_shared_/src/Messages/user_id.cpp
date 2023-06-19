@@ -32,15 +32,23 @@ size_t UserId::generateUserId(MessageInterface *messageInterface) {
 }
 
 bool UserId::operator==(const UserId &other) {
-  return this->userId == other.id();
+  return this->userId == other.userId;
 }
 
 bool UserId::operator!=(const UserId &other) {
-  return this->userId != other.id();
+  return this->userId != other.userId;
 }
 
 UserId::operator bool() const { return this->isValid(); }
 
 bool UserId::isValid() const { return this->userId != 0; }
 
+bool UserId::operator<(const UserId &other) {
+  return this->userId < other.userId;
+}
+
 } // namespace Messages
+
+bool operator<(const Messages::UserId &lhs, const Messages::UserId &rhs) {
+  return lhs.id() < rhs.id();
+}

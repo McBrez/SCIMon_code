@@ -5,6 +5,7 @@
 #include <easylogging++.h>
 
 // Project includes
+#include <common.hpp>
 #include <device_isx3.hpp>
 #include <is_configuration.hpp>
 #include <isx3_ack_payload.hpp>
@@ -23,7 +24,7 @@ DeviceIsx3::~DeviceIsx3() {
   this->socketWrapper->close();
 };
 
-std::string DeviceIsx3::getDeviceTypeName() { return "ISX-3"; }
+std::string DeviceIsx3::getDeviceTypeName() { return ISX3_DEVICE_TYPE_NAME; }
 
 std::shared_ptr<Isx3CmdAckStruct>
 DeviceIsx3::pushToSendBuffer(const std::vector<unsigned char> &bytes) {
@@ -372,7 +373,7 @@ bool DeviceIsx3::handleReadPayload(std::shared_ptr<ReadPayload> readPayload) {
           destinationId = this->startMessageCache->getSource();
         }
 
-        this->messageOut.push(
+        this->pushMessageQueue(
             std::shared_ptr<DeviceMessage>(new ReadDeviceMessage(
                 this->self->getUserId(), destinationId,
                 ReadDeviceTopic::READ_TOPIC_DEVICE_SPECIFIC_MSG,

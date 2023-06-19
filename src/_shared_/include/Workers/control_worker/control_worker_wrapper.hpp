@@ -51,6 +51,8 @@ public slots:
    */
   void startConnection(QString ip, int port);
 
+  void startConfig();
+
   /**
    * @brief Converts the given enum value to a QString.
    * @param subState The enum value that shall be converted to a string.
@@ -62,6 +64,8 @@ signals:
   void stateChanged(DeviceStatus oldState, DeviceStatus newState);
   void subStateChanged(ControlWorkerSubState oldState,
                        ControlWorkerSubState newState);
+  void remoteStateChanged(QList<std::shared_ptr<StatusPayload>> oldStates,
+                          QList<std::shared_ptr<StatusPayload>> newStates);
 
 private:
   std::shared_ptr<MessageDistributor> messageDistributor;

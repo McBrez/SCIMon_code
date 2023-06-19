@@ -48,6 +48,14 @@ public:
   bool operator==(const UserId &other);
 
   /**
+   * @brief Checks if the user id is lesser than the other. Allows usage of
+   * maps.
+   * @param other The other device id.
+   * @return True if the user id is lesser than the other. False otherwise.
+   */
+  bool operator<(const UserId &other);
+
+  /**
    * @brief Checks if two device ids are unequal.
    *
    * @param other The other device id.
@@ -71,5 +79,7 @@ private:
   size_t generateUserId(MessageInterface *messageInterface);
 };
 } // namespace Messages
+
+bool operator<(const Messages::UserId &lhs, const Messages::UserId &rhs);
 
 #endif

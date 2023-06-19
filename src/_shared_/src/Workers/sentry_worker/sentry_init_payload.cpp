@@ -22,25 +22,38 @@ std::string SentryInitPayload::serialize() { return ""; }
 std::vector<unsigned char> SentryInitPayload::bytes() {
   Serialization::Workers::SentryInitPayloadT intermediateObject;
 
-  intermediateObject.pumpControllerConfPayload->magicNumber =
+  Serialization::Workers::NestedPayloadT *nestedPumpControlConfPayload =
+      new Serialization::Workers::NestedPayloadT();
+  nestedPumpControlConfPayload->magicNumber =
       this->pumpControllerConfigPayload->getMagicNumber();
-  intermediateObject.pumpControllerConfPayload->payload =
+  nestedPumpControlConfPayload->payload =
       this->pumpControllerConfigPayload->bytes();
+  intermediateObject.pumpControllerConfPayload.reset(
+      nestedPumpControlConfPayload);
 
-  intermediateObject.pumpControllerInitPayload->magicNumber =
+  Serialization::Workers::NestedPayloadT *nestedPumpControlInitPayload =
+      new Serialization::Workers::NestedPayloadT();
+  nestedPumpControlInitPayload->magicNumber =
       this->pumpControllerInitPayload->getMagicNumber();
-  intermediateObject.pumpControllerInitPayload->payload =
+  nestedPumpControlInitPayload->payload =
       this->pumpControllerInitPayload->bytes();
+  intermediateObject.pumpControllerInitPayload.reset(
+      nestedPumpControlInitPayload);
 
-  intermediateObject.impedanceSpectrometerConfPayload->magicNumber =
+  Serialization::Workers::NestedPayloadT *nestedIsInitPayload =
+      new Serialization::Workers::NestedPayloadT();
+  nestedIsInitPayload->magicNumber = this->isSpecInitPayload->getMagicNumber();
+  nestedIsInitPayload->payload = this->isSpecInitPayload->bytes();
+  intermediateObject.impedanceSpectrometerInitPayload.reset(
+      nestedIsInitPayload);
+
+  Serialization::Workers::NestedPayloadT *nestedIsConfigPayload =
+      new Serialization::Workers::NestedPayloadT();
+  nestedIsConfigPayload->magicNumber =
       this->isSpecConfPayload->getMagicNumber();
-  intermediateObject.impedanceSpectrometerConfPayload->payload =
-      this->isSpecConfPayload->bytes();
-
-  intermediateObject.impedanceSpectrometerInitPayload->magicNumber =
-      this->isSpecInitPayload->getMagicNumber();
-  intermediateObject.impedanceSpectrometerInitPayload->payload =
-      this->isSpecInitPayload->bytes();
+  nestedIsConfigPayload->payload = this->isSpecConfPayload->bytes();
+  intermediateObject.impedanceSpectrometerConfPayload.reset(
+      nestedIsConfigPayload);
 
   flatbuffers::FlatBufferBuilder builder;
   builder.Finish(Serialization::Workers::SentryInitPayload::Pack(

@@ -45,7 +45,7 @@ bool Device::write(std::shared_ptr<WriteDeviceMessage> writeMsg) {
 
   else if (WriteDeviceTopic::WRITE_TOPIC_QUERY_STATE == writeMsg->getTopic()) {
     // Put the device state into the message queue.
-    this->messageOut.push(std::shared_ptr<DeviceMessage>(new ReadDeviceMessage(
+    this->pushMessageQueue(std::shared_ptr<DeviceMessage>(new ReadDeviceMessage(
         this->self->getUserId(), writeMsg->getSource(),
         READ_TOPIC_DEVICE_STATUS,
         new StatusPayload(this->getUserId(), this->getDeviceStatus(),
@@ -69,20 +69,19 @@ std::list<std::shared_ptr<DeviceMessage>> Device::read(TimePoint timestamp) {
   // Append the message, if it was not empty.
   if (!readMessages.empty()) {
     for (auto message : readMessages) {
-      this->messageOut.push(message);
+      this->pushMessageQueue(message);
     }
   }
 
   // Pop the queue, if it is not empty.
-  if (this->messageOut.empty()) {
+  if (this->messageQueueEmpty()) {
     // Queue is empty. Return an empty std::list.
     return std::list<std::shared_ptr<DeviceMessage>>();
   } else {
     // Pop the queue to a std::list and return it.
     std::list<std::shared_ptr<DeviceMessage>> retVal;
-    while (!this->messageOut.empty()) {
-      retVal.push_back(this->messageOut.front());
-      this->messageOut.pop();
+    while (!this->messageQueueEmpty()) {
+      retVal.push_back(this->popMessageQueue());
     }
     return retVal;
   }

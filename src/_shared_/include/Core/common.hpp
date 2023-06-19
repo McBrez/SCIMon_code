@@ -25,8 +25,11 @@ typedef std::list<ImpedancePoint> ImpedanceSpectrum;
 using TimePoint = std::chrono::time_point<std::chrono::system_clock>;
 
 const std::string NETWORK_WORKER_TYPE_NAME = "Network Worker";
-
+const std::string OB1_DEVICE_TYPE_NAME = "Elveflow OB1";
+const std::string ISX3_DEVICE_TYPE_NAME = "Sciospec ISX3";
+const std::string EPIX_DEVICE_TYPE_NAME = "Sciospec EPIX";
 const std::string SENTRY_WORKER_TYPE_NAME = "Sentry Worker";
+const std::string CONTROL_WORKER_TYPE_NAME = "Control Worker";
 
 /// @brief The default port for network worker connections.
 const int NetworkWorkerDefaultPort = 4545;

@@ -11,22 +11,23 @@ namespace Ui {
 class Dialog;
 }
 
-class Dialog : public QDialog
-{
-    Q_OBJECT
+class Dialog : public QDialog {
+  Q_OBJECT
 
 public:
-    explicit Dialog(QWidget *parent = nullptr);
-    ~Dialog();
+  explicit Dialog(QWidget *parent = nullptr);
+  ~Dialog();
 
 public slots:
-    void onControlStateChanged(DeviceStatus oldState, DeviceStatus newState);
-    void onControlSubStateChanged(ControlWorkerSubState oldState,
-                             ControlWorkerSubState newState);
+  void onControlStateChanged(DeviceStatus oldState, DeviceStatus newState);
+  void onControlSubStateChanged(ControlWorkerSubState oldState,
+                                ControlWorkerSubState newState);
+  void onRemoteStatesChanged(QList<std::shared_ptr<StatusPayload>> oldStates,
+                             QList<std::shared_ptr<StatusPayload>> newStates);
 
 private:
-    Ui::Dialog *ui;
-    ControlWorkerWrapper controlWorkerWrapper;
+  Ui::Dialog *ui;
+  ControlWorkerWrapper controlWorkerWrapper;
 };
 
 #endif // DIALOG_H

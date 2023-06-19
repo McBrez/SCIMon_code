@@ -14,8 +14,7 @@ NetworkWorker::NetworkWorker()
     : Worker(), socketWrapper(SocketWrapper::getSocketWrapper()),
       doListen(new bool(false)), doComm(false),
       commState(NetworkWorkerCommState::NETWORK_WOKER_COMM_STATE_INVALID),
-      messageFactory(MessageFactory::getInstace()), commThread(nullptr),
-      listenerThread(nullptr) {}
+      commThread(nullptr), listenerThread(nullptr) {}
 
 NetworkWorker::~NetworkWorker() {
   *this->doListen = false;
@@ -52,11 +51,11 @@ bool NetworkWorker::start() {
   } else if (NetworkWorkerOperationMode::NETWORK_WORKER_OP_MODE_CLIENT ==
              this->initPayload->getOperationMode()) {
     // Check if the pointer to the comm thread is not null.
-    if(commThread) {
-        // A thread seems to have existed before. Be sure to join the thread.
-        this->doComm = false;
-        commThread->join();
-        this->commThread.release();
+    if (commThread) {
+      // A thread seems to have existed before. Be sure to join the thread.
+      this->doComm = false;
+      commThread->join();
+      this->commThread.release();
     }
 
     // Start comm thread.
@@ -289,9 +288,9 @@ void NetworkWorker::commWorker() {
         std::shared_ptr<DeviceMessage> handshakeMsg(
             new HandshakeMessage(this->self->getUserId(), UserId(),
                                  this->messageDistributor->getStatus(),
-                                 this->messageFactory->getVersion()));
+                                 MessageFactory::getInstace()->getVersion()));
         this->socketWrapper->write(
-            this->messageFactory->encodeMessage(handshakeMsg));
+            MessageFactory::getInstace()->encodeMessage(handshakeMsg));
         this->commState =
             NETWORK_WOKER_COMM_STATE_WAITING_FOR_HANDSHAKE_RESPONSE;
 
@@ -305,7 +304,7 @@ void NetworkWorker::commWorker() {
         // that.
         int readRet = this->socketWrapper->read(this->readBuffer);
         std::shared_ptr<DeviceMessage> msg =
-            this->messageFactory->decodeMessage(this->readBuffer);
+            MessageFactory::getInstace()->decodeMessage(this->readBuffer);
 
         // Has a message been decoded?
         if (!msg) {
@@ -334,9 +333,9 @@ void NetworkWorker::commWorker() {
             new HandshakeMessage(this->self->getUserId(),
                                  handshakeMsg->getSource(),
                                  this->messageDistributor->getStatus(),
-                                 this->messageFactory->getVersion()));
+                                 MessageFactory::getInstace()->getVersion()));
         this->socketWrapper->write(
-            this->messageFactory->encodeMessage(handshakeMsgResponse));
+            MessageFactory::getInstace()->encodeMessage(handshakeMsgResponse));
 
         // Handshake was successful. Proceed to next state.
         this->commState =
@@ -363,7 +362,7 @@ void NetworkWorker::commWorker() {
       // Read from the socket and try to decode a message from that.
       int readRet = this->socketWrapper->read(this->readBuffer);
       std::shared_ptr<DeviceMessage> msg =
-          this->messageFactory->decodeMessage(this->readBuffer);
+          MessageFactory::getInstace()->decodeMessage(this->readBuffer);
 
       // Has a message been decoded?
       if (!msg) {
@@ -409,12 +408,12 @@ void NetworkWorker::commWorker() {
         // this->doComm = false;
       }
       std::shared_ptr<DeviceMessage> msg =
-          this->messageFactory->decodeMessage(this->readBuffer);
+          MessageFactory::getInstace()->decodeMessage(this->readBuffer);
       // If a message could be decoded, push it to the queue.
       if (msg) {
         LOG(DEBUG) << "Network worker decoded a " << msg->serialize()
                    << " from " << msg->getSource().id() << ".";
-        this->messageOut.push(msg);
+        this->pushMessageQueue(msg);
       }
 
       // Write message to socket.
@@ -424,7 +423,7 @@ void NetworkWorker::commWorker() {
             this->outgoingNetworkMessages.front();
         this->outgoingNetworkMessages.pop();
         int sendSuccess = this->socketWrapper->write(
-            this->messageFactory->encodeMessage(message));
+            MessageFactory::getInstace()->encodeMessage(message));
       }
       this->outgoingNetworkMessagesMutex.unlock();
     }

@@ -42,8 +42,8 @@ SentryPayloadDecoder::decodeInitPayload(const std::vector<unsigned char> &data,
             sentryInitPayload->impedanceSpectrometerInitPayload->magicNumber);
     ConfigurationPayload *isConfigPayload =
         MessageFactory::getInstace()->decodeConfigurationPayload(
-            sentryInitPayload->impedanceSpectrometerInitPayload->payload,
-            sentryInitPayload->impedanceSpectrometerInitPayload->magicNumber);
+            sentryInitPayload->impedanceSpectrometerConfPayload->payload,
+            sentryInitPayload->impedanceSpectrometerConfPayload->magicNumber);
 
     return new SentryInitPayload(isInitPayload, isConfigPayload,
                                  pumpControllerInitPayload,

@@ -1,7 +1,12 @@
 #ifndef CONTROL_WORKER_HPP
 #define CONTROL_WORKER_HPP
 
+// Standard includes
+#include <map>
+
 // Project includes
+#include <sentry_config_payload.hpp>
+#include <sentry_init_payload.hpp>
 #include <worker.hpp>
 
 using namespace Devices;
@@ -19,7 +24,15 @@ enum ControlWorkerSubState {
   /// Control worker is connecting
   CONTROL_WORKER_SUBSTATE_CONNECTING = 0x02,
   /// Control worker is connected.
-  CONTROL_WORKER_SUBSTATE_CONNECTED = 0x03
+  CONTROL_WORKER_SUBSTATE_CONNECTED = 0x03,
+  /// Control worker is exploring the remote host.
+  CONTROL_WORKER_SUBSTATE_CONF_EXPLORE = 0x04,
+  /// Control worker is configuring the remote host.
+  CONTROL_WORKER_SUBSTATE_CONF_REMOTE = 0x05,
+  /// Remote host is currently running.
+  CONTROL_WORKER_SUBSTATE_REMOTE_RUNNING = 0x06,
+  /// Remot host is currently stopped.
+  CONTROL_WORKER_SUBSTATE_REMOTE_STOPPED = 0x07
 };
 
 /**
@@ -98,16 +111,68 @@ public:
    * interface object.
    * @return
    */
-  bool startConfig();
+  bool startConfig(std::shared_ptr<SentryInitPayload> initPayload,
+                   std::shared_ptr<SentryConfigPayload> configPayload);
 
   ControlWorkerSubState getControlWorkerState() const;
 
+  /// Identifies a device in the remoteHostIds mapping, whose name is not yet
+  /// known.
+  const static std::string UnknownDeviceSpecifier;
+
+  /**
+   * @brief Periodically queries the state of remote devices.
+   */
+  void queryRemoteStateWorker();
+
+  /**
+   * @brief Returns the state of the remote workers.
+   * @return A list containing the states of the remote workers.
+   */
+  std::list<std::shared_ptr<StatusPayload>> getRemoteStatus();
+
 private:
+  /**
+   * @brief Returns the User id of the remote sentry from the remote id mapper.
+   * @return The user id of the remote sentry worker. May return invalid user
+   * id, if id of the sentry worker has not yet been resolved.
+   */
+  UserId getSentryId();
+
+  /**
+   * @brief Checks if the given read device message contains a status payload
+   * and caches the status payloads, that are received due to the periodic
+   * status queries from the query state worker.
+   * @param sourceId The id of the source device.
+   * @param statusPayload The corresponding status payload.
+   * @return TRUE if the message contained a status payload and if has been
+   * handled. FALSE otherwise.
+   */
+  bool handleStatusPayload(std::shared_ptr<ReadDeviceMessage> msg);
+
   /// The id of the network worker.
   UserId networkWorkerId;
-
   /// The currently active sub state.
   ControlWorkerSubState controlWorkerSubState;
+  /// Holds the time point the worker started connecting. Used for time out
+  /// detection.
+  TimePoint connectionTimeout;
+  /// Holds the remote worker/device ids. Maps from user id to a tuple
+  /// containing worker/device name, the device type and a flag that indicates,
+  /// whether the device name and type have already been resolved..
+  std::map<size_t, std::tuple<bool, std::string, DeviceType>> remoteHostIds;
+  /// The init payload, that shall be sent to the remote host, during
+  /// configuration.
+  std::shared_ptr<SentryInitPayload> remoteInitPayload;
+  /// The config payload, that shall be sent to the remote host, during
+  /// configuration.
+  std::shared_ptr<SentryConfigPayload> remoteConfigPayload;
+  /// Execution flag for the queryRemoteStateWorker.
+  bool doQueryState;
+  /// Pointer to the queryRemoteStateWorker thread.
+  std::unique_ptr<std::thread> queryRemoteStateThread;
+  /// List containing pointers to the remote status.
+  std::list<std::shared_ptr<StatusPayload>> remoteStatus;
 };
 } // namespace Workers
 

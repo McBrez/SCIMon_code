@@ -120,4 +120,26 @@ void MessageInterface::clearProxyIds() { this->proxyIds.clear(); }
 
 bool MessageInterface::isExactTarget(UserId id) { return this->id == id; }
 
+void MessageInterface::pushMessageQueue(std::shared_ptr<DeviceMessage> msg) {
+  this->messageOutMutex.lock();
+  this->messageOut.push(msg);
+  this->messageOutMutex.unlock();
+}
+
+std::shared_ptr<DeviceMessage> MessageInterface::popMessageQueue() {
+  this->messageOutMutex.lock();
+  if (!messageQueueEmpty()) {
+    std::shared_ptr<DeviceMessage> msg = this->messageOut.front();
+    this->messageOut.pop();
+    this->messageOutMutex.unlock();
+
+    return msg;
+  } else {
+    this->messageOutMutex.unlock();
+    return std::shared_ptr<DeviceMessage>();
+  }
+}
+
+bool MessageInterface::messageQueueEmpty() { return this->messageOut.empty(); }
+
 } // namespace Messages

@@ -16,6 +16,6 @@ std::shared_ptr<InitPayload> InitDeviceMessage::returnPayload() {
   return this->initPayload;
 }
 
-std::string InitDeviceMessage::serialize() { return ""; }
+std::string InitDeviceMessage::serialize() { return "Init Device Message"; }
 
 } // namespace Messages

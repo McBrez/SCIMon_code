@@ -39,7 +39,7 @@ bool StatusPayload::operator==(const StatusPayload &other) const {
 std::vector<unsigned char> StatusPayload::bytes() {
   Serialization::Devices::StatusPayloadT intermediateObject;
 
-  intermediateObject.deviceId = this->deviceId;
+  intermediateObject.deviceId = this->deviceId.id();
   intermediateObject.deviceName = this->deviceName;
   intermediateObject.deviceStatus =
       static_cast<Serialization::Devices::DeviceStatus>(this->deviceStatus);

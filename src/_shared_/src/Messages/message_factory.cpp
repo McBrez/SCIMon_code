@@ -101,48 +101,57 @@ MessageFactory::encodeMessage(std::shared_ptr<DeviceMessage> msg) {
                 intermediatePayload));
       }
       intermediateObject.content.Set(handshakeMessageContent);
-    }
+    } else {
 
-    // -------------------------------------------------- Read device message --
-    auto readMsg = dynamic_pointer_cast<ReadDeviceMessage>(msg);
-    if (readMsg) {
-      messageType = MessageType::READ_DEVICE_MESSAGE;
-      Serialization::Messages::ReadDeviceMessageContentT
-          readDeviceMessageContent;
-      readDeviceMessageContent.readDeviceTopic =
-          static_cast<Serialization::Messages::ReadDeviceTopic>(
-              readMsg->getTopic());
-      readDeviceMessageContent.magicNumber =
-          readMsg->getReadPaylod()->getMagicNumber();
-      readDeviceMessageContent.readPayload = readMsg->getReadPaylod()->bytes();
-      intermediateObject.content.Set(readDeviceMessageContent);
-    }
-
-    else {
-      // ------------------------------------------------ Init device message --
-      auto initMsg = dynamic_pointer_cast<InitDeviceMessage>(msg);
-      if (initMsg) {
-        Serialization::Messages::InitDeviceMessageContentT
-            initDeviceMessageContent;
-        initDeviceMessageContent.initPayoad = initMsg->returnPayload()->bytes();
-        initDeviceMessageContent.magicNumber =
-            initMsg->returnPayload()->getMagicNumber();
-        intermediateObject.content.Set(initDeviceMessageContent);
+      // ------------------------------------------------ Read device message --
+      auto readMsg = dynamic_pointer_cast<ReadDeviceMessage>(msg);
+      if (readMsg) {
+        messageType = MessageType::READ_DEVICE_MESSAGE;
+        Serialization::Messages::ReadDeviceMessageContentT
+            readDeviceMessageContent;
+        readDeviceMessageContent.readDeviceTopic =
+            static_cast<Serialization::Messages::ReadDeviceTopic>(
+                readMsg->getTopic());
+        readDeviceMessageContent.magicNumber =
+            readMsg->getReadPaylod()->getMagicNumber();
+        readDeviceMessageContent.readPayload =
+            readMsg->getReadPaylod()->bytes();
+        intermediateObject.content.Set(readDeviceMessageContent);
       }
 
       else {
-        // -------------------------------------------- Config device message --
-        auto configMsg = dynamic_pointer_cast<ConfigDeviceMessage>(msg);
-        if (configMsg) {
-          Serialization::Messages::ConfigDeviceMessageContentT
-              configDeviceMessageContent;
-          configDeviceMessageContent.responseId =
-              configMsg->getResponseId().id();
-          configDeviceMessageContent.configurationPayload =
-              configMsg->getConfiguration()->bytes();
-          configDeviceMessageContent.magicNumber =
-              configMsg->getConfiguration()->getMagicNumber();
-          intermediateObject.content.Set(configDeviceMessageContent);
+        // ---------------------------------------------- Init device message --
+        messageType = MessageType::INIT_DEVICE_MESSAGE;
+        auto initMsg = dynamic_pointer_cast<InitDeviceMessage>(msg);
+        if (initMsg) {
+          Serialization::Messages::InitDeviceMessageContentT
+              initDeviceMessageContent;
+          initDeviceMessageContent.initPayoad =
+              initMsg->returnPayload()->bytes();
+          initDeviceMessageContent.magicNumber =
+              initMsg->returnPayload()->getMagicNumber();
+          intermediateObject.content.Set(initDeviceMessageContent);
+        }
+
+        else {
+          // ------------------------------------------ Config device message --
+          messageType = MessageType::CONFIG_DEVICE_MESSAGE;
+          auto configMsg = dynamic_pointer_cast<ConfigDeviceMessage>(msg);
+          if (configMsg) {
+            Serialization::Messages::ConfigDeviceMessageContentT
+                configDeviceMessageContent;
+            configDeviceMessageContent.responseId =
+                configMsg->getResponseId().id();
+            configDeviceMessageContent.configurationPayload =
+                configMsg->getConfiguration()->bytes();
+            configDeviceMessageContent.magicNumber =
+                configMsg->getConfiguration()->getMagicNumber();
+            intermediateObject.content.Set(configDeviceMessageContent);
+          } else {
+            LOG(ERROR)
+                << "Message factory was presented an Unsupported message type.";
+            return std::vector<unsigned char>();
+          }
         }
       }
     }
@@ -274,6 +283,14 @@ MessageFactory::decodeFrame(std::vector<unsigned char> *buffer,
         UserId(static_cast<size_t>(deviceMsg->desinationId)),
         deviceMsg->content.AsConfigDeviceMessageContent(),
         deviceMsg->content.AsConfigDeviceMessageContent()->magicNumber);
+  }
+  // ---------------------------------------------------- Init Device message --
+  else if (MessageType::INIT_DEVICE_MESSAGE == messageType) {
+    return this->translateMessageContent(
+        UserId(static_cast<size_t>(deviceMsg->sourceId)),
+        UserId(static_cast<size_t>(deviceMsg->desinationId)),
+        deviceMsg->content.AsInitDeviceMessageContent(),
+        deviceMsg->content.AsInitDeviceMessageContent()->magicNumber);
   }
 
   else {
