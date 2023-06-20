@@ -280,8 +280,6 @@ bool SentryWorker::handleResponse(std::shared_ptr<ReadDeviceMessage> response) {
         // It is. Check if it finished initializing.
         if (statusPayload->getDeviceStatus() == DeviceStatus::IDLE) {
           this->spectrometerState = DeviceStatus::IDLE;
-
-          return true;
         } else {
           // Device is not yet ready. Resend the query state message.
           this->pushMessageQueue(
@@ -298,8 +296,6 @@ bool SentryWorker::handleResponse(std::shared_ptr<ReadDeviceMessage> response) {
         // It is. Check if it finished initializing.
         if (statusPayload->getDeviceStatus() == DeviceStatus::IDLE) {
           this->pumpControllerState = DeviceStatus::IDLE;
-
-          return true;
         } else {
           // Device is not yet ready. Resend the query state message.
           this->pushMessageQueue(

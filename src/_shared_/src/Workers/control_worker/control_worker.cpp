@@ -19,7 +19,15 @@ ControlWorker::~ControlWorker() {}
 
 void ControlWorker::work(TimePoint timestamp) {}
 
-bool ControlWorker::start() { return false; }
+bool ControlWorker::start() {
+  // Check if control worker is in correct state.
+  if (this->workerState != DeviceStatus::IDLE ||
+      this->controlWorkerSubState !=
+          ControlWorkerSubState::CONTROL_WORKER_SUBSTATE_REMOTE_STOPPED) {
+  }
+
+  return false;
+}
 
 bool ControlWorker::stop() { return false; }
 

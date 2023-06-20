@@ -176,23 +176,33 @@ target_sources(scimon_message PUBLIC
     ${SOURCE_DIR}/Workers/sentry_worker/sentry_config_payload.cpp
     ${SOURCE_DIR}/Workers/control_worker/control_worker.cpp
     ${SOURCE_DIR}/Devices/isx3/com_interface_codec.cpp
-    ${SOURCE_DIR}/Devices/isx3/device_isx3.cpp
     ${SOURCE_DIR}/Devices/isx3/isx3_ack_payload.cpp
     ${SOURCE_DIR}/Devices/isx3/isx3_command_buffer.cpp
     ${SOURCE_DIR}/Devices/isx3/isx3_init_payload.cpp
     ${SOURCE_DIR}/Devices/isx3/isx3_is_conf_payload.cpp
     ${SOURCE_DIR}/Devices/isx3/isx3_payload_decoder.cpp
-    ${SOURCE_DIR}/Devices/elveflow_ob1/device_ob1.cpp
     ${SOURCE_DIR}/Devices/elveflow_ob1/ob1_init_payload.cpp
     ${SOURCE_DIR}/Devices/elveflow_ob1/read_payload_ob1.cpp
     ${SOURCE_DIR}/Devices/elveflow_ob1/ob1_conf_payload.cpp
     ${SOURCE_DIR}/Devices/elveflow_ob1/ob1_payload_decoder.cpp
+    ${SOURCE_DIR}/Devices/elveflow_ob1/device_ob1.cpp
 
     ${3RDPARTY_DIR}/flatbuffers/include/flatbuffers/flatbuffers.h
     ${3RDPARTY_DIR}/easyloggingpp/src/easylogging++.h
 
     ${3RDPARTY_DIR}/easyloggingpp/src/easylogging++.cc
 )
+
+# Add Mockable devices.
+if(SCIMON_MOCK_DEVICE_EPIX)
+    target_sources(scimon_message PUBLIC
+        ${SOURCE_DIR}/Devices/isx3/device_isx3_mockup.cpp
+    )
+else()
+    target_sources(scimon_message PUBLIC
+        ${SOURCE_DIR}/Devices/isx3/device_isx3.cpp
+    )
+endif()
 
 # Add dependency to the generated flatbuffer headers and link against
 # flatbuffers library.
@@ -214,19 +224,15 @@ target_compile_definitions(scimon_message
 
 
 # OS specific configuration.
-if (WIN32)
-    # Disable the "byte" type, introduced by MSVC in newer versions. Otherwise, 
-    # it would clash with the std::byte type. 
-    #add_compile_definitions(_HAS_STD_BYTE=0)
-
-    
-    # Find libraries
+if (WIN32)  
+    # Find the elveflow library.
     find_library(LIB_ELVEFLOW Elveflow64 ${3RDPARTY_DIR}/elveflow/x64)
-
+    # Link to libraries.
     target_link_libraries(scimon_message
       PRIVATE Ws2_32
       PRIVATE ${LIB_ELVEFLOW}
     )
+    # Add OS specific headers.
     target_sources(scimon_message PUBLIC
         ${INCLUDE_DIR}/Utilities/win_socket.hpp
         ${INCLUDE_DIR}/Devices/elveflow_ob1/device_ob1_win.hpp
@@ -234,8 +240,17 @@ if (WIN32)
         ${3RDPARTY_DIR}/elveflow/x64/Elveflow64_shim.h
 
         ${SOURCE_DIR}/Utilities/win_socket.cpp
-        ${SOURCE_DIR}/Devices/elveflow_ob1/device_ob1_win.cpp
     )
+    # Add mocked up version of ob1 device, depending on a cache variable.
+    if(SCIMON_MOCK_DEVICE_OB1)
+        target_sources(scimon_message PUBLIC
+            ${SOURCE_DIR}/Devices/elveflow_ob1/device_ob1_win_mockup.cpp
+        )
+    else()
+        target_sources(scimon_message PUBLIC
+            ${SOURCE_DIR}/Devices/elveflow_ob1/device_ob1_win.cpp
+        )
+    endif(SCIMON_MOCK_DEVICE_OB1)
 endif (WIN32)
 if (UNIX)
     

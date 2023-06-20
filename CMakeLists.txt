@@ -5,6 +5,20 @@ set(PROJECT_DIR src/build)
 set(TEST_DIR src/test)
 set(3RDPARTY_DIR src/3rd_party)
 
+# ------------------------------------------------------------ Cache Variable --
+set(SCIMON_MOCK_DEVICE_EPIX 
+    FALSE
+    CACHE
+    BOOL 
+    "Instructs the build system to include a mocked up version of the DeviceEpix class."
+)
+set(SCIMON_MOCK_DEVICE_OB1
+    FALSE
+    CACHE
+    BOOL 
+    "Instructs the build system to include a mocked up version of the DeviceOb1 class."
+)
+
 # ------------------------------------------------------------ Pre-requisites --
 
 add_subdirectory(
