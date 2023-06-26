@@ -27,12 +27,14 @@ enum ControlWorkerSubState {
   CONTROL_WORKER_SUBSTATE_CONNECTED = 0x03,
   /// Control worker is exploring the remote host.
   CONTROL_WORKER_SUBSTATE_CONF_EXPLORE = 0x04,
+  /// Control worker is initializing the remote host.
+  CONTROL_WORKER_SUBSTATE_INIT_REMOTE = 0x05,
   /// Control worker is configuring the remote host.
-  CONTROL_WORKER_SUBSTATE_CONF_REMOTE = 0x05,
+  CONTROL_WORKER_SUBSTATE_CONF_REMOTE = 0x06,
   /// Remote host is currently running.
-  CONTROL_WORKER_SUBSTATE_REMOTE_RUNNING = 0x06,
+  CONTROL_WORKER_SUBSTATE_REMOTE_RUNNING = 0x07,
   /// Remot host is currently stopped.
-  CONTROL_WORKER_SUBSTATE_REMOTE_STOPPED = 0x07
+  CONTROL_WORKER_SUBSTATE_REMOTE_STOPPED = 0x08
 };
 
 /**

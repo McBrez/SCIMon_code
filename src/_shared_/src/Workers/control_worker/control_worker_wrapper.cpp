@@ -36,7 +36,7 @@ ControlWorkerWrapper::ControlWorkerWrapper(int messageDistributorInterval,
           UserId(), this->controlWorker->getUserId(), nullptr)));
 }
 
-void ControlWorkerWrapper::start() {
+void ControlWorkerWrapper::startStateQuery() {
   // Start the periodic actions thread.
   this->periodicActionsThread.reset(
       new std::thread(&ControlWorkerWrapper::periodicActionsWorker, this));
@@ -158,3 +158,7 @@ void ControlWorkerWrapper::startConfig() {
 
   this->controlWorker->startConfig(initPayload, configPayload);
 }
+
+void ControlWorkerWrapper::start() { this->controlWorker->start(); }
+
+void ControlWorkerWrapper::stop() { this->controlWorker->stop(); }

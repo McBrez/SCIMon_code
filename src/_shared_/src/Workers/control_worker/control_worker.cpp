@@ -24,12 +24,38 @@ bool ControlWorker::start() {
   if (this->workerState != DeviceStatus::IDLE ||
       this->controlWorkerSubState !=
           ControlWorkerSubState::CONTROL_WORKER_SUBSTATE_REMOTE_STOPPED) {
+
+    // Send the start message to the remote end and adjust status.
+    this->controlWorkerSubState =
+        ControlWorkerSubState::CONTROL_WORKER_SUBSTATE_REMOTE_RUNNING;
+    this->pushMessageQueue(std::shared_ptr<DeviceMessage>(
+        new WriteDeviceMessage(this->getUserId(), this->getSentryId(),
+                               WriteDeviceTopic::WRITE_TOPIC_RUN)));
+
+    return true;
   }
 
   return false;
 }
 
-bool ControlWorker::stop() { return false; }
+bool ControlWorker::stop() {
+  // Check if control worker is in correct state.
+  if (this->workerState != DeviceStatus::IDLE ||
+      this->controlWorkerSubState !=
+          ControlWorkerSubState::CONTROL_WORKER_SUBSTATE_REMOTE_RUNNING) {
+
+    // Send the start message to the remote end and adjust status.
+    this->controlWorkerSubState =
+        ControlWorkerSubState::CONTROL_WORKER_SUBSTATE_REMOTE_STOPPED;
+    this->pushMessageQueue(std::shared_ptr<DeviceMessage>(
+        new WriteDeviceMessage(this->getUserId(), this->getSentryId(),
+                               WriteDeviceTopic::WRITE_TOPIC_STOP)));
+
+    return true;
+  }
+
+  return false;
+}
 
 bool ControlWorker::initialize(std::shared_ptr<InitPayload> initPayload) {
   LOG(INFO) << "Control Worker is initializing";
@@ -93,6 +119,9 @@ bool ControlWorker::handleResponse(
     std::shared_ptr<ReadDeviceMessage> response) {
 
   if (DeviceStatus::IDLE == this->workerState) {
+    // Handle the status of the remote end.
+    this->handleStatusPayload(response);
+
     if (CONTROL_WORKER_SUBSTATE_CONNECTING == this->controlWorkerSubState) {
       // Is the response from the network worker?
       if (response->getSource() != this->networkWorkerId) {
@@ -135,7 +164,6 @@ bool ControlWorker::handleResponse(
         }
         return true;
       }
-
     }
 
     else if (ControlWorkerSubState::CONTROL_WORKER_SUBSTATE_CONF_EXPLORE ==
@@ -170,13 +198,10 @@ bool ControlWorker::handleResponse(
         // All remote ids are resolved. Adjust state and send init and config
         // message.
         this->controlWorkerSubState =
-            ControlWorkerSubState::CONTROL_WORKER_SUBSTATE_CONF_REMOTE;
+            ControlWorkerSubState::CONTROL_WORKER_SUBSTATE_INIT_REMOTE;
         this->pushMessageQueue(std::shared_ptr<DeviceMessage>(
             new InitDeviceMessage(this->getUserId(), this->getSentryId(),
                                   this->remoteInitPayload)));
-        this->pushMessageQueue(std::shared_ptr<DeviceMessage>(
-            new ConfigDeviceMessage(this->getUserId(), this->getSentryId(),
-                                    this->remoteConfigPayload)));
 
         // Start the query remote state worker.
         this->doQueryState = false;
@@ -191,9 +216,30 @@ bool ControlWorker::handleResponse(
       return true;
     }
 
+    else if (ControlWorkerSubState::CONTROL_WORKER_SUBSTATE_INIT_REMOTE ==
+             this->controlWorkerSubState) {
+      // Wait until the remote end has initialized. Then send the config
+      // message.
+      // Is the response from the sentry?
+      if (response->getSource() == this->getSentryId()) {
+        auto statusPayload =
+            dynamic_pointer_cast<StatusPayload>(response->getReadPaylod());
+        if (!statusPayload) {
+          return true;
+        }
+
+        if (statusPayload->getDeviceStatus() == DeviceStatus::INITIALIZED) {
+          this->pushMessageQueue(std::shared_ptr<DeviceMessage>(
+              new ConfigDeviceMessage(this->getUserId(), this->getSentryId(),
+                                      this->remoteConfigPayload)));
+
+          return true;
+        }
+      }
+    }
+
     else if (ControlWorkerSubState::CONTROL_WORKER_SUBSTATE_CONF_REMOTE ==
              this->controlWorkerSubState) {
-      this->handleStatusPayload(response);
     }
 
     else {
@@ -294,7 +340,8 @@ UserId ControlWorker::getSentryId() {
 void ControlWorker::queryRemoteStateWorker() {
   while (this->doQueryState) {
     // Check if worker is still in the correct state.
-    if (this->controlWorkerSubState == CONTROL_WORKER_SUBSTATE_CONF_REMOTE ||
+    if (this->controlWorkerSubState == CONTROL_WORKER_SUBSTATE_INIT_REMOTE ||
+        this->controlWorkerSubState == CONTROL_WORKER_SUBSTATE_CONF_REMOTE ||
         this->controlWorkerSubState == CONTROL_WORKER_SUBSTATE_REMOTE_RUNNING ||
         this->controlWorkerSubState == CONTROL_WORKER_SUBSTATE_REMOTE_STOPPED) {
 
