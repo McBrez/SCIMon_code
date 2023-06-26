@@ -8,9 +8,10 @@ namespace Workers {
 
 WorkerId Worker::workerIdCounter = 0;
 
-Worker::Worker()
+Worker::Worker(Utilities::DataManagerType dataManagerType)
     : workerId(++Worker::workerIdCounter),
-      workerState(DeviceStatus::UNKNOWN_DEVICE_STATUS) {}
+      workerState(DeviceStatus::UNKNOWN_DEVICE_STATUS),
+    dataManager(DataManager::getDataManager(dataManagerType)) {}
 
 Worker::~Worker() {}
 

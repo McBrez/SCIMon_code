@@ -67,6 +67,7 @@ add_library(scimon_message STATIC)
 target_include_directories(scimon_message PUBLIC
     ${INCLUDE_DIR}/Core
     ${INCLUDE_DIR}/Utilities
+    ${INCLUDE_DIR}/Utilities/data_manager
     ${INCLUDE_DIR}/Devices
     ${INCLUDE_DIR}/Devices/isx3
     ${INCLUDE_DIR}/Devices/elveflow_ob1
@@ -87,6 +88,8 @@ target_sources(scimon_message PUBLIC
     ${INCLUDE_DIR}/Core/common.hpp
     ${INCLUDE_DIR}/Utilities/utilities.hpp
     ${INCLUDE_DIR}/Utilities/socket_wrapper.hpp
+    ${INCLUDE_DIR}/Utilities/data_manager/data_manager.hpp
+    ${INCLUDE_DIR}/Utilities/data_manager/data_manager_hdf.hpp
     ${INCLUDE_DIR}/Messages/message_factory.hpp
     ${INCLUDE_DIR}/Messages/message_interface.hpp
     ${INCLUDE_DIR}/Messages/device_message.hpp
@@ -115,14 +118,6 @@ target_sources(scimon_message PUBLIC
     ${INCLUDE_DIR}/Devices/set_device_status_payload.hpp
     ${INCLUDE_DIR}/Devices/payload_decoder.hpp
     ${INCLUDE_DIR}/Devices/builtin_payload_decoder.hpp
-    ${INCLUDE_DIR}/Workers/worker.hpp
-    ${INCLUDE_DIR}/Workers/network_worker/network_worker.hpp
-    ${INCLUDE_DIR}/Workers/network_worker/network_worker_init_payload.hpp
-    ${INCLUDE_DIR}/Workers/sentry_worker/sentry_worker.hpp
-    ${INCLUDE_DIR}/Workers/sentry_worker/sentry_payload_decoder.hpp
-    ${INCLUDE_DIR}/Workers/sentry_worker/sentry_init_payload.hpp
-    ${INCLUDE_DIR}/Workers/sentry_worker/sentry_config_payload.hpp
-    ${INCLUDE_DIR}/Workers/control_worker/control_worker.hpp
     ${INCLUDE_DIR}/Devices/isx3/com_interface_codec.hpp
     ${INCLUDE_DIR}/Devices/isx3/device_isx3.hpp
     ${INCLUDE_DIR}/Devices/isx3/isx3_ack_payload.hpp
@@ -138,10 +133,20 @@ target_sources(scimon_message PUBLIC
     ${INCLUDE_DIR}/Devices/elveflow_ob1/ob1_init_payload.hpp
     ${INCLUDE_DIR}/Devices/elveflow_ob1/ob1_conf_payload.hpp
     ${INCLUDE_DIR}/Devices/elveflow_ob1/ob1_payload_decoder.hpp
+    ${INCLUDE_DIR}/Workers/worker.hpp
+    ${INCLUDE_DIR}/Workers/network_worker/network_worker.hpp
+    ${INCLUDE_DIR}/Workers/network_worker/network_worker_init_payload.hpp
+    ${INCLUDE_DIR}/Workers/sentry_worker/sentry_worker.hpp
+    ${INCLUDE_DIR}/Workers/sentry_worker/sentry_payload_decoder.hpp
+    ${INCLUDE_DIR}/Workers/sentry_worker/sentry_init_payload.hpp
+    ${INCLUDE_DIR}/Workers/sentry_worker/sentry_config_payload.hpp
+    ${INCLUDE_DIR}/Workers/control_worker/control_worker.hpp
 
     ${SOURCE_DIR}/Utilities/utilities.cpp
     ${SOURCE_DIR}/Utilities/socket_wrapper.cpp
     ${SOURCE_DIR}/Utilities/win_socket.cpp
+    ${SOURCE_DIR}/Utilities/data_manager/data_manager.cpp
+    ${SOURCE_DIR}/Utilities/data_manager/data_manager_hdf.cpp
     ${SOURCE_DIR}/Messages/message_distributor.cpp
     ${SOURCE_DIR}/Messages/message_factory.cpp
     ${SOURCE_DIR}/Messages/message_interface.cpp
@@ -167,14 +172,6 @@ target_sources(scimon_message PUBLIC
     ${SOURCE_DIR}/Devices/request_data_payload.cpp
     ${SOURCE_DIR}/Devices/set_device_status_payload.cpp
     ${SOURCE_DIR}/Devices/builtin_payload_decoder.cpp
-    ${SOURCE_DIR}/Workers/worker.cpp
-    ${SOURCE_DIR}/Workers/network_worker/network_worker.cpp
-    ${SOURCE_DIR}/Workers/network_worker/network_worker_init_payload.cpp
-    ${SOURCE_DIR}/Workers/sentry_worker/sentry_worker.cpp
-    ${SOURCE_DIR}/Workers/sentry_worker/sentry_payload_decoder.cpp
-    ${SOURCE_DIR}/Workers/sentry_worker/sentry_init_payload.cpp
-    ${SOURCE_DIR}/Workers/sentry_worker/sentry_config_payload.cpp
-    ${SOURCE_DIR}/Workers/control_worker/control_worker.cpp
     ${SOURCE_DIR}/Devices/isx3/com_interface_codec.cpp
     ${SOURCE_DIR}/Devices/isx3/isx3_ack_payload.cpp
     ${SOURCE_DIR}/Devices/isx3/isx3_command_buffer.cpp
@@ -186,6 +183,14 @@ target_sources(scimon_message PUBLIC
     ${SOURCE_DIR}/Devices/elveflow_ob1/ob1_conf_payload.cpp
     ${SOURCE_DIR}/Devices/elveflow_ob1/ob1_payload_decoder.cpp
     ${SOURCE_DIR}/Devices/elveflow_ob1/device_ob1.cpp
+    ${SOURCE_DIR}/Workers/worker.cpp
+    ${SOURCE_DIR}/Workers/network_worker/network_worker.cpp
+    ${SOURCE_DIR}/Workers/network_worker/network_worker_init_payload.cpp
+    ${SOURCE_DIR}/Workers/sentry_worker/sentry_worker.cpp
+    ${SOURCE_DIR}/Workers/sentry_worker/sentry_payload_decoder.cpp
+    ${SOURCE_DIR}/Workers/sentry_worker/sentry_init_payload.cpp
+    ${SOURCE_DIR}/Workers/sentry_worker/sentry_config_payload.cpp
+    ${SOURCE_DIR}/Workers/control_worker/control_worker.cpp
 
     ${3RDPARTY_DIR}/flatbuffers/include/flatbuffers/flatbuffers.h
     ${3RDPARTY_DIR}/easyloggingpp/src/easylogging++.h

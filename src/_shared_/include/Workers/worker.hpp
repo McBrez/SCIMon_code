@@ -7,6 +7,7 @@
 // Project includes
 #include <message_interface.hpp>
 #include <status_payload.hpp>
+#include <data_manager.hpp>
 
 using namespace Messages;
 using namespace Utilities;
@@ -23,7 +24,7 @@ public:
   /**
    * @brief Constructs a new Worker object
    */
-  Worker();
+    Worker(Utilities::DataManagerType dataManagerType = DataManagerType::DATAMANAGER_TYPE_HDF);
 
   /**
    * @brief Destroys the Worker object
@@ -90,6 +91,10 @@ protected:
 
   /// The state of the worker.
   DeviceStatus workerState;
+
+  /// Pointer to the data manager.
+  std::shared_ptr<DataManager> dataManager;
+
 };
 } // namespace Workers
 
