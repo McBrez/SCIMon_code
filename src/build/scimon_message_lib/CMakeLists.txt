@@ -214,6 +214,7 @@ endif()
 add_dependencies(scimon_message scimon_message_lib_fb_headers)
 target_link_libraries(scimon_message
     PUBLIC flatbuffers
+    PUBLIC HighFive
 )
 
 # Enforce C++20

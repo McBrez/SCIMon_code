@@ -114,8 +114,6 @@ private:
   std::list<std::shared_ptr<IsPayload>> isPayloadCache;
   std::mutex isPayloadCacheMutex;
   Duration workerThreadInterval;
-
-  std::shared_ptr<>
 };
 } // namespace Workers
 

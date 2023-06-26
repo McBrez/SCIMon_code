@@ -15,25 +15,25 @@ namespace Utilities {
  * @brief The type of the data manager.
  */
 enum DataManagerType {
-    /// Invalid data manager type
-    DATAMANAGER_TYPE_INVALID = 0x00,
-    /// Data manager with HDF backend.
-    DATAMANAGER_TYPE_HDF = 0x01,
+  /// Invalid data manager type
+  DATAMANAGER_TYPE_INVALID = 0x00,
+  /// Data manager with HDF backend.
+  DATAMANAGER_TYPE_HDF = 0x01,
 };
 
 /**
  * @brief Identifies the supported data types.
  */
 enum DataManagerDataType {
-    DATAMANAGER_DATA_TYPE_INVALID = 0x00,
+  DATAMANAGER_DATA_TYPE_INVALID = 0x00,
 
-    DATAMANAGER_DATA_TYPE_INT = 0x01,
+  DATAMANAGER_DATA_TYPE_INT = 0x01,
 
-    DATAMANAGER_DATA_TYPE_DOUBLE = 0x02,
+  DATAMANAGER_DATA_TYPE_DOUBLE = 0x02,
 
-    DATAMANAGER_DATA_TYPE_COMPLEX = 0x03,
+  DATAMANAGER_DATA_TYPE_COMPLEX = 0x03,
 
-    DATAMANAGER_DATA_TYPE_STRING = 0x04
+  DATAMANAGER_DATA_TYPE_STRING = 0x04
 };
 
 /// @brief Shortcut to a type that defines a mapping between a a data key name
@@ -61,8 +61,7 @@ public:
    * @param value WIll contain the value.
    * @return TRUE if data has been retrieved succesfully. FALSE otherwise.
    */
-  virtual bool read(TimePoint timestamp, std::string key,
-                    Value &value) = 0;
+  virtual bool read(TimePoint timestamp, std::string key, Value &value) = 0;
 
   /**
    * @brief Queries the data manager with the given time frame and key.
@@ -138,9 +137,11 @@ public:
   /**
    * @brief Returns a data manager with the given type.
    * @param dataManagerType The type of the data manager.
-   * @return Pointer to the data manager.
+   * @return Pointer to the data manager. May return nullptr, if the given type
+   * is not available.
    */
-  static std::shared_ptr<DataManager> getDataManager(DataManagerType dataManagerType);
+  static std::shared_ptr<DataManager>
+  getDataManager(DataManagerType dataManagerType);
 
 protected:
   /// Flag that indicates, whether the underlying data base has been opened.

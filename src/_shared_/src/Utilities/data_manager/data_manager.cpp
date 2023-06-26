@@ -6,12 +6,15 @@ using namespace Utilities;
 
 DataManager::~DataManager() {}
 
-bool DataManager::isOpen() { return this->openFlag; }
+bool DataManager::isOpen() const { return this->openFlag; }
 
-KeyMapping DataManager::getKeyMapping() { return this->keyMapping; }
+KeyMapping DataManager::getKeyMapping() const { return this->typeMapping; }
 
-std::shared_ptr<DataManager> getDataManager(DataManagerType dataManagerType) {
-    if(DataManagerType::DATAMANAGER_TYPE_HDF == dataManagerType) {
-        return std::shared_ptr<DataManager>(new DataManagerHdf());
-    }
+std::shared_ptr<DataManager>
+DataManager::getDataManager(DataManagerType dataManagerType) {
+  if (DataManagerType::DATAMANAGER_TYPE_HDF == dataManagerType) {
+    return std::shared_ptr<DataManager>(new DataManagerHdf());
+  } else {
+    return std::shared_ptr<DataManager>();
+  }
 }

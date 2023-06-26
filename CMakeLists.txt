@@ -21,11 +21,16 @@ set(SCIMON_MOCK_DEVICE_OB1
 
 # ------------------------------------------------------------ Pre-requisites --
 
+# Flatbuffers
 add_subdirectory(
     ${3RDPARTY_DIR}/flatbuffers
     ${CMAKE_CURRENT_BINARY_DIR}/flatbuffers-build
 )
 target_compile_definitions(flatbuffers PUBLIC NOMINMAX=1)
+
+# HighFive
+set(HIGHFIVE_USE_BOOST Off)
+add_subdirectory(${3RDPARTY_DIR}/HighFive)
 
 # --------------------------------------------------------- Project Libraries --
 
