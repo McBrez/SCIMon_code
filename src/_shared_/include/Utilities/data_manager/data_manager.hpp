@@ -61,7 +61,8 @@ public:
    * @param value WIll contain the value.
    * @return TRUE if data has been retrieved succesfully. FALSE otherwise.
    */
-  virtual bool read(TimePoint timestamp, std::string key, Value &value) = 0;
+  virtual bool read(TimePoint timestamp, const std::string &key,
+                    Value &value) = 0;
 
   /**
    * @brief Queries the data manager with the given time frame and key.
@@ -72,8 +73,8 @@ public:
    * @param value Will contain the value.
    * @return TRUE if data has been retrieved succesfully. FALSE otherwise.
    */
-  virtual bool read(TimePoint from, TimePoint to, std::string key,
-                    Value &value) = 0;
+  virtual bool read(TimePoint from, TimePoint to, const std::string &key,
+                    std::vector<Value> &value) = 0;
 
   /**
    * @brief Writes the given data to the underlying data base.
@@ -83,7 +84,7 @@ public:
    * @param value The value that shall be stored.
    * @return TRUE if write operation was succesfull. False otherwise.
    */
-  virtual bool write(TimePoint timestamp, std::string key,
+  virtual bool write(TimePoint timestamp, const std::string &key,
                      const Value &value) = 0;
 
   /**

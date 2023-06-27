@@ -26,7 +26,7 @@ public:
    * @param value WIll contain the value.
    * @return TRUE if data has been retrieved succesfully. FALSE otherwise.
    */
-  virtual bool read(TimePoint timestamp, std::string key,
+  virtual bool read(TimePoint timestamp, const std::string &key,
                     Value &value) override;
 
   /**
@@ -38,8 +38,8 @@ public:
    * @param value Will contain the value.
    * @return TRUE if data has been retrieved succesfully. FALSE otherwise.
    */
-  virtual bool read(TimePoint from, TimePoint to, std::string key,
-                    Value &value) override;
+  virtual bool read(TimePoint from, TimePoint to, const std::string &key,
+                    std::vector<Value> &value) override;
 
   /**
    * @brief Writes the given data to the underlying data base.
@@ -49,7 +49,7 @@ public:
    * @param value The value that shall be stored.
    * @return TRUE if write operation was succesfull. False otherwise.
    */
-  virtual bool write(TimePoint timestamp, std::string key,
+  virtual bool write(TimePoint timestamp, const std::string &key,
                      const Value &value) override;
 
   /**
@@ -82,11 +82,29 @@ public:
 
   /**
    * @brief Returns the type of the data manager.
-   * @return The data manager type.
-   */
+   * @return The data manager type.   */
   virtual DataManagerType getDataManagerType() const override;
 
 private:
+  /**
+   * @brief Extends the given dataset by the given count of elements.
+   * @param name The name of the dataset that shall be extended.
+   * @param count The count of elements the dataset shall be extended by.
+   * @return The size of the extended dataset.
+   */
+  size_t extendDataSet(const std::string &name, int count);
+
+  /**
+   * @brief Helper, that writes the datum to the given dataset and automatically
+   * extends the datasets.
+   * @param timestamp The timestamp of the datum.
+   * @param key The key of the datum.
+   * @param value the value of the datum.
+   * @return TRUE if write was succesfull. FALSE otherwise.
+   */
+  bool extendingWrite(TimePoint timestamp, const std::string &key,
+                      const Value &value);
+
   // Pointer to the file.
   std::unique_ptr<HighFive::File> hdfFile;
 };
