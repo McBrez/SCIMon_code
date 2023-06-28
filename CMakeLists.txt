@@ -49,6 +49,7 @@ add_subdirectory(${TEST_DIR}/test_epix)
 add_subdirectory(${TEST_DIR}/test_message_distributor)
 add_subdirectory(${TEST_DIR}/test_message_factory)
 add_subdirectory(${TEST_DIR}/test_network_worker)
+add_subdirectory(${TEST_DIR}/test_data_manager)
 
 enable_testing()
 add_test(NAME build_test_utility COMMAND test_utility)

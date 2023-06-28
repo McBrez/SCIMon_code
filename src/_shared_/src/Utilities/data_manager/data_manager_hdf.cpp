@@ -24,9 +24,37 @@ bool DataManagerHdf::read(TimePoint timestamp, const std::string &key,
     TimePoint timestampRead =
         TimePoint(std::chrono::milliseconds(timestampLongRead));
     if (timestampRead == timestamp) {
-      DataSet datasetValues = this->hdfFile->getDataSet("data/values/" + key);
-      datasetTimestamps.select({i}, {1}).read();
-      return true;
+      DataManagerDataType dataType = this->typeMapping[key];
+      if (DATAMANAGER_DATA_TYPE_INT == dataType) {
+        DataSet datasetValues = this->hdfFile->getDataSet("data/values/" + key);
+        value = datasetValues.select({i}, {1}).read<int>();
+
+        return true;
+      } else if (DATAMANAGER_DATA_TYPE_DOUBLE == dataType) {
+        DataSet datasetValues = this->hdfFile->getDataSet("data/values/" + key);
+        value = datasetValues.select({i}, {1}).read<double>();
+
+        return true;
+      } else if (DATAMANAGER_DATA_TYPE_COMPLEX == dataType) {
+        DataSet datasetValuesImag =
+            this->hdfFile->getDataSet("data/values/" + key + "_imag");
+        DataSet datasetValuesReal =
+            this->hdfFile->getDataSet("data/values/" + key + "_real");
+        Impedance impedance(datasetValuesReal.select({i}, {1}).read<double>(),
+                            datasetValuesImag.select({i}, {1}).read<double>());
+        value = impedance;
+
+        return true;
+
+      } else if (DATAMANAGER_DATA_TYPE_STRING == dataType) {
+        DataSet datasetValues = this->hdfFile->getDataSet("data/values/" + key);
+        value = datasetValues.select({i}, {1}).read<std::string>();
+
+        return true;
+
+      } else {
+        return false;
+      }
     }
   }
 
@@ -34,12 +62,122 @@ bool DataManagerHdf::read(TimePoint timestamp, const std::string &key,
 }
 
 bool DataManagerHdf::read(TimePoint from, TimePoint to, const std::string &key,
+                          std::vector<TimePoint> &timestamps,
                           std::vector<Value> &value) {
 
   if (!this->isOpen()) {
     return false;
   }
   if (!this->typeMapping.contains(key)) {
+    return false;
+  }
+
+  DataSet datasetTimestamps =
+      this->hdfFile->getDataSet("data/timestamps/" + key);
+
+  // Iterate over the whole dataset and find the index margins of the requested
+  // time frame.
+  size_t idxFrom = -1;
+  size_t idxTo = -1;
+  for (size_t i = 0; i < datasetTimestamps.getElementCount(); i++) {
+    long long timestampLongRead;
+    datasetTimestamps.select({i}, {1}).read(timestampLongRead);
+    TimePoint timestampCurrent((std::chrono::milliseconds(timestampLongRead)));
+    if (timestampCurrent >= from && idxFrom == -1) {
+      idxFrom = i;
+      continue;
+    }
+    if (timestampCurrent >= to && idxTo == -1) {
+      idxTo = i;
+      break;
+    }
+  }
+
+  // Check if the indices have been found. idxFrom has to greater or equal 0.
+  // idxTo optionally needs to be greater or equal 0. An idxTo of -1 means, that
+  // the idx would lie beyond the range of the dataset. In that case, just take
+  // the last element as idxTo.
+  if (idxFrom == -1) {
+    // Return empty vector.
+    value = std::vector<Value>();
+
+    return true;
+  }
+  if (idxTo == -1) {
+    idxTo = datasetTimestamps.getElementCount() - 1;
+  }
+
+  // Get the timestamps and construct a std::vector<TimePoints>.
+  std::vector<long long> timestampsRaw;
+  datasetTimestamps.select({idxFrom}, {idxTo - idxFrom}).read(timestampsRaw);
+  timestamps.reserve(timestampsRaw.size());
+  for (auto timestampsRawValue : timestampsRaw) {
+    timestamps.emplace_back(
+        TimePoint(std::chrono::milliseconds(timestampsRawValue)));
+  }
+
+  // Read from the data set and construct a std::vector<Value>.
+  DataManagerDataType dataType = this->typeMapping[key];
+  if (DATAMANAGER_DATA_TYPE_INT == dataType) {
+    DataSet datasetValues = this->hdfFile->getDataSet("data/values/" + key);
+    std::vector<int> rawVector =
+        datasetValues.select({idxFrom}, {idxTo - idxFrom})
+            .read<std::vector<int>>();
+    value.reserve(rawVector.size());
+    for (auto rawVectorValue : rawVector) {
+      value.emplace_back(Value(rawVectorValue));
+    }
+
+    return true;
+  }
+
+  else if (DATAMANAGER_DATA_TYPE_DOUBLE == dataType) {
+    DataSet datasetValues = this->hdfFile->getDataSet("data/values/" + key);
+    std::vector<double> rawVector =
+        datasetValues.select({idxFrom}, {idxTo - idxFrom})
+            .read<std::vector<double>>();
+    value.reserve(rawVector.size());
+    for (auto rawVectorValue : rawVector) {
+      value.emplace_back(Value(rawVectorValue));
+    }
+
+    return true;
+  }
+
+  else if (DATAMANAGER_DATA_TYPE_COMPLEX == dataType) {
+    DataSet datasetValuesImag =
+        this->hdfFile->getDataSet("data/values/" + key + "_imag");
+    DataSet datasetValuesReal =
+        this->hdfFile->getDataSet("data/values/" + key + "_real");
+    std::vector<double> rawRealValues =
+        datasetValuesReal.select({idxFrom}, {idxTo - idxFrom})
+            .read<std::vector<double>>();
+    std::vector<double> rawImagValues =
+        datasetValuesImag.select({idxFrom}, {idxTo - idxFrom})
+            .read<std::vector<double>>();
+
+    value.reserve(rawRealValues.size());
+    for (int i = 0; i < rawRealValues.size(); i++) {
+      value.emplace_back(Impedance(rawRealValues[i], rawImagValues[i]));
+    }
+
+    return true;
+  }
+
+  else if (DATAMANAGER_DATA_TYPE_STRING == dataType) {
+    DataSet datasetValues = this->hdfFile->getDataSet("data/values/" + key);
+    std::vector<std::string> rawVector =
+        datasetValues.select({idxFrom}, {idxTo - idxFrom})
+            .read<std::vector<std::string>>();
+    value.reserve(rawVector.size());
+    for (auto rawVectorValue : rawVector) {
+      value.emplace_back(Value(rawVectorValue));
+    }
+
+    return true;
+  }
+
+  else {
     return false;
   }
 }
@@ -254,6 +392,14 @@ bool DataManagerHdf::extendingWrite(TimePoint timestamp, const std::string &key,
   }
 
   else {
+    return false;
+  }
+
+  return true;
+}
+
+bool DataManagerHdf::createKey(std::string key, DataManagerDataType dataType) {
+  if (this->typeMapping.contains(key)) {
     return false;
   }
 

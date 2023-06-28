@@ -70,10 +70,13 @@ public:
    * @param from The start of the time frame, that shall be queried.
    * @param to The end of the time frame, that shall be queried.
    * @param key The key that shall be queried.
+   * @param timestamps Will contain the timestamps that correspond to the
+   * values..
    * @param value Will contain the value.
    * @return TRUE if data has been retrieved succesfully. FALSE otherwise.
    */
   virtual bool read(TimePoint from, TimePoint to, const std::string &key,
+                    std::vector<TimePoint> &timestamps,
                     std::vector<Value> &value) = 0;
 
   /**
@@ -143,6 +146,14 @@ public:
    */
   static std::shared_ptr<DataManager>
   getDataManager(DataManagerType dataManagerType);
+
+  /**
+   * @brief Creates a key with the given name and data type.
+   * @param key The name of the key.
+   * @param dataType The datatype this key is associated with.
+   * @return Whether the creation of the key succeded.
+   */
+  virtual bool createKey(std::string key, DataManagerDataType dataType) = 0;
 
 protected:
   /// Flag that indicates, whether the underlying data base has been opened.
