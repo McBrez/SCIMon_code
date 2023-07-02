@@ -56,6 +56,18 @@ public:
                      const Value &value) override;
 
   /**
+   * @brief Writes the given data to the underlying data base.
+   *
+   * @param timestamp The timestamp that shall be stored with the given data.
+   * @param key The under which the data shall be stored.
+   * @param value The value that shall be stored.
+   * @return TRUE if write operation was succesfull. False otherwise.
+   */
+  virtual bool write(const std::vector<TimePoint> &timestamp,
+                     const std::string &key,
+                     const std::vector<Value> &value) override;
+
+  /**
    * @brief Tries to open an already existing data base.
    *F
    * @param name The name of the data base, that shall be opened.
@@ -97,6 +109,14 @@ public:
   virtual bool createKey(std::string key,
                          DataManagerDataType dataType) override;
 
+protected:
+  /**
+   * @brief Sets up the details of a spectrum.
+   * @return TRUE if setup was successfull. False otherwise.
+   */
+  virtual bool setupSpectrumSpecific(std::string key,
+                                     std::vector<double> frequencies) override;
+
 private:
   /**
    * @brief Extends the given dataset by the given count of elements.
@@ -114,8 +134,28 @@ private:
    * @param value the value of the datum.
    * @return TRUE if write was succesfull. FALSE otherwise.
    */
-  bool extendingWrite(TimePoint timestamp, const std::string &key,
-                      const Value &value);
+  bool extendingWrite(const std::vector<TimePoint> &timestamp,
+                      const std::string &key, const std::vector<Value> &value);
+
+  /**
+   * @brief Transforms the value vector into a more specific form.
+   * @param origVec The Vector that shall be transformed.
+   * @param transformedVec Will contain the transformed vector.
+   * @return TRUE if transformation was succesfull. FALSE otherwise.
+   */
+  template <class T>
+  bool transformValueVector(const std::vector<Value> &origVec,
+                            std::vector<T> &transformedVec);
+
+  /**
+   * @brief Transforms the timestamp vector into a vector that can more easily
+   * be written to a file.
+   * @param origVec The Vector that shall be transformed.
+   * @param transformedVec Will contain the transformed vector.
+   * @return TRUE if transformation was succesfull. FALSE otherwise.
+   */
+  bool transformTimestampVector(const std::vector<TimePoint> &origVec,
+                                std::vector<long long> &transformedVec);
 
   // Pointer to the file.
   std::unique_ptr<HighFive::File> hdfFile;

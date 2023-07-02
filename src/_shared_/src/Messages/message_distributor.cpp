@@ -2,6 +2,7 @@
 #include <easylogging++.h>
 
 // Project includes
+#include <common.hpp>
 #include <message_distributor.hpp>
 
 namespace Messages {
@@ -70,7 +71,7 @@ std::list<std::shared_ptr<StatusPayload>> MessageDistributor::getStatus() {
 void MessageDistributor::run() {
   while (this->doRun) {
     // Get the current time.
-    TimePoint now(std::chrono::system_clock::now());
+    TimePoint now(Core::getNow());
 
     // Get all messages from the participants.
     for (auto participant : this->participants) {
@@ -119,7 +120,7 @@ void MessageDistributor::run() {
     this->messageCache.splice(messageCache.end(), this->failedResponseCache);
 
     TimePoint nextTimepoint = now + this->loopInterval;
-    TimePoint newNow = std::chrono::system_clock::now();
+    TimePoint newNow = Core::getNow();
     if (nextTimepoint < newNow) {
       LOG(WARNING) << "Can not keep up. Next loop iteration is scheduled at "
                    << nextTimepoint << " but the current time is " << newNow
@@ -132,8 +133,6 @@ void MessageDistributor::run() {
 
 void MessageDistributor::stop() { this->doRun = false; }
 
-bool MessageDistributor::isRunning() const {
-  return this->doRun;
-}
+bool MessageDistributor::isRunning() const { return this->doRun; }
 
 } // namespace Messages

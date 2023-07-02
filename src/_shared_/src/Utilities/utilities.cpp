@@ -33,6 +33,30 @@ std::vector<std::string> split(const std::string &str, unsigned char token) {
   return retVal;
 }
 
+void splitImpedanceSpectrum(
+    const std::vector<ImpedanceSpectrum> &isSpectrum,
+    std::vector<std::vector<std::vector<double>>> &array) {
+
+  if (isSpectrum.size() == 0) {
+    return;
+  }
+
+  size_t frequencyCount = isSpectrum[0].size();
+  if (frequencyCount == 0) {
+    return;
+  }
+
+  for (auto &spectrum : isSpectrum) {
+    array.emplace_back(std::vector<std::vector<double>>());
+    for (auto &impedancePoint : spectrum) {
+      array.back().emplace_back(std::vector<double>());
+      double real = std::get<Impedance>(impedancePoint).real();
+      double imag = std::get<Impedance>(impedancePoint).imag();
+      array.back().back() = {real, imag};
+    }
+  }
+}
+
 void splitImpedanceSpectrum(const ImpedanceSpectrum &isSpectrum,
                             std::vector<double> &frequencies,
                             std::vector<Impedance> &impedance) {
@@ -41,6 +65,49 @@ void splitImpedanceSpectrum(const ImpedanceSpectrum &isSpectrum,
   for (auto impedancePoint : isSpectrum) {
     frequencies.push_back(get<0>(impedancePoint));
     impedance.push_back(get<1>(impedancePoint));
+  }
+}
+
+void splitImpedance(const std::vector<Impedance> &impedanceVec,
+                    std::vector<double> &realVec,
+                    std::vector<double> &imagVec) {
+  realVec.reserve(impedanceVec.size());
+  imagVec.reserve(impedanceVec.size());
+
+  for (auto impedance : impedanceVec) {
+    realVec.push_back(impedance.real());
+    imagVec.push_back(impedance.imag());
+  }
+}
+
+void joinImpedanceSpectrum(
+    const std::vector<std::vector<std::vector<double>>> &array,
+    const std::vector<double> &spectrumMapping,
+    std::vector<ImpedanceSpectrum> &impedanceSpectrums) {
+
+  impedanceSpectrums.reserve(array.size());
+  size_t frequencyCount = spectrumMapping.size();
+
+  for (size_t timeIdx = 0; timeIdx < array.size(); timeIdx++) {
+    impedanceSpectrums.emplace_back(ImpedanceSpectrum());
+    for (size_t frequencyIdx = 0; frequencyIdx < frequencyCount;
+         frequencyIdx++) {
+
+      double real = array[timeIdx][frequencyIdx][0];
+      double imag = array[timeIdx][frequencyIdx][1];
+      impedanceSpectrums[timeIdx].emplace_back(
+          ImpedancePoint(spectrumMapping[frequencyIdx], Impedance(real, imag)));
+    }
+  }
+}
+
+void joinImpedanceSpectrum(const std::vector<double> &frequencies,
+                           const std::vector<Impedance> &impedances,
+                           ImpedanceSpectrum &impedanceSpectrum) {
+
+  for (int i = 0; i < frequencies.size(); i++) {
+    impedanceSpectrum.emplace_back(
+        ImpedancePoint(frequencies[i], impedances[i]));
   }
 }
 

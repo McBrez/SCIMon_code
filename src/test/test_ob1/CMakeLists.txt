@@ -4,6 +4,7 @@ set(3RDPARTY_DIR ../../3rd_party)
 
 include_directories(
     ${INCLUDE_DIR}
+    ${INCLUDE_DIR}/Core
     ${INCLUDE_DIR}/Devices
     ${INCLUDE_DIR}/Devices/elveflow_ob1
     ${INCLUDE_DIR}/Messages
@@ -19,6 +20,7 @@ add_executable(test_ob1
 
     test_ob1.cpp
 
+    ${INCLUDE_DIR}/Core/common.hpp
     ${INCLUDE_DIR}/Devices/device.hpp
     ${INCLUDE_DIR}/Devices/configuration_payload.hpp
     ${INCLUDE_DIR}/Devices/init_payload.hpp
@@ -39,6 +41,7 @@ add_executable(test_ob1
     ${INCLUDE_DIR}/Messages/init_device_message.hpp
     ${INCLUDE_DIR}/Utilities/utilities.hpp
 
+    ${SOURCE_DIR}/Core/common.cpp
     ${SOURCE_DIR}/Devices/device.cpp
     ${SOURCE_DIR}/Devices/status_payload.cpp
     ${SOURCE_DIR}/Devices/read_payload.cpp

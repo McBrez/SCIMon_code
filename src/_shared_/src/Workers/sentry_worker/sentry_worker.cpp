@@ -46,7 +46,7 @@ void SentryWorker::work(TimePoint timestamp) {
     else if (SentryWorkerMode::SENTRY_WORKER_MODE_TIMER ==
              this->configPayload->sentryWorkerMode) {
       if (this->threadWaiting) {
-        if (std::chrono::system_clock::now() > waitUntil) {
+        if (Core::getNow() > waitUntil) {
           LOG(INFO) << "Enabling pump and deactivating impedance measurement.";
 
           // Enable the pump ...
@@ -78,7 +78,7 @@ void SentryWorker::work(TimePoint timestamp) {
                                    WriteDeviceTopic::WRITE_TOPIC_RUN)));
 
         // Print out measurement results until on time passes.
-        TimePoint now = std::chrono::system_clock::now();
+        TimePoint now = Core::getNow();
         TimePoint until = now + this->configPayload->offTime;
         while (now < until) {
 
@@ -91,7 +91,7 @@ void SentryWorker::work(TimePoint timestamp) {
           this->isPayloadCacheMutex.unlock();
 
           std::this_thread::sleep_for(std::chrono::milliseconds(100));
-          now = std::chrono::system_clock::now();
+          now = Core::getNow();
         }
 
         this->threadWaiting = true;
@@ -366,8 +366,8 @@ bool SentryWorker::start() {
 
   // Start the worker.
   this->runThread = true;
-  this->workerThread.reset(new std::thread(&SentryWorker::work, this,
-                                           std::chrono::system_clock::now()));
+  this->workerThread.reset(
+      new std::thread(&SentryWorker::work, this, Core::getNow()));
   this->workerState = DeviceStatus::OPERATING;
 
   return true;

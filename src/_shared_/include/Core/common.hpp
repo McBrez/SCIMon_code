@@ -21,8 +21,17 @@ typedef std::tuple<double, Impedance> ImpedancePoint;
 /// Shortcut to the definition of a discrete impedance spectrum.
 typedef std::list<ImpedancePoint> ImpedanceSpectrum;
 
+/// Defines a time span.
+using Duration = std::chrono::duration<long long, std::milli>;
+
 /// @brief shortcut to a type that enables timestamping.
-using TimePoint = std::chrono::time_point<std::chrono::system_clock>;
+using TimePoint = std::chrono::time_point<std::chrono::system_clock, Duration>;
+
+/**
+ * @brief Returns a timepoint object that represents the current time.
+ * @return A timepoint object that represents the current time.
+ */
+TimePoint getNow();
 
 const std::string NETWORK_WORKER_TYPE_NAME = "Network Worker";
 const std::string OB1_DEVICE_TYPE_NAME = "Elveflow OB1";

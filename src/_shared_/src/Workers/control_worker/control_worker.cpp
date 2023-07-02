@@ -2,6 +2,7 @@
 #include <easylogging++.h>
 
 // Project includes
+#include <common.hpp>
 #include <control_worker.hpp>
 #include <message_distributor.hpp>
 #include <network_worker_init_payload.hpp>
@@ -121,7 +122,7 @@ bool ControlWorker::handleResponse(
         return true;
       } else {
         // Connection has not been established yet. Has the time out elapsed?
-        if ((std::chrono::system_clock::now() - this->connectionTimeout) >
+        if ((Core::getNow() - this->connectionTimeout) >
             std::chrono::seconds(10)) {
           // Time out has elapsed. Revert to previous state.
           this->controlWorkerSubState = ControlWorkerSubState::
@@ -233,7 +234,7 @@ bool ControlWorker::startConnect(std::string ip, int port) {
                              WriteDeviceTopic::WRITE_TOPIC_RUN)));
   // Begin querying the state of the network worker, in order to check if the
   // connection is successfull.
-  this->connectionTimeout = std::chrono::system_clock::now();
+  this->connectionTimeout = Core::getNow();
   this->pushMessageQueue(std::shared_ptr<DeviceMessage>(
       new WriteDeviceMessage(this->getUserId(), this->networkWorkerId,
                              WriteDeviceTopic::WRITE_TOPIC_QUERY_STATE)));

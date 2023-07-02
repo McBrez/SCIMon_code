@@ -3,7 +3,10 @@
 #include <functional>
 
 // Project includes
+#include <common.hpp>
 #include <user_id.hpp>
+
+using namespace Core;
 
 namespace Messages {
 
@@ -23,7 +26,7 @@ size_t UserId::generateUserId(MessageInterface *messageInterface) {
   static int currentId = 0;
   currentId++;
 
-  auto now = std::chrono::system_clock::now().time_since_epoch();
+  auto now = Core::getNow().time_since_epoch();
   long nowInt = now.count();
   long long pointerVal = (long long)messageInterface;
 

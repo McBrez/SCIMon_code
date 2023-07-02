@@ -142,6 +142,7 @@ target_sources(scimon_message PUBLIC
     ${INCLUDE_DIR}/Workers/sentry_worker/sentry_config_payload.hpp
     ${INCLUDE_DIR}/Workers/control_worker/control_worker.hpp
 
+    ${SOURCE_DIR}/Core/common.cpp
     ${SOURCE_DIR}/Utilities/utilities.cpp
     ${SOURCE_DIR}/Utilities/socket_wrapper.cpp
     ${SOURCE_DIR}/Utilities/win_socket.cpp

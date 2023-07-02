@@ -33,14 +33,20 @@ enum DataManagerDataType {
 
   DATAMANAGER_DATA_TYPE_COMPLEX = 0x03,
 
-  DATAMANAGER_DATA_TYPE_STRING = 0x04
+  DATAMANAGER_DATA_TYPE_STRING = 0x04,
+
+  DATAMANAGER_DATA_TYPE_SPECTRUM = 0x05
 };
 
 /// @brief Shortcut to a type that defines a mapping between a a data key name
 /// and the data type.
 typedef std::map<std::string, DataManagerDataType> KeyMapping;
 /// Used to pass values to the data manager.
-typedef std::variant<int, double, std::complex<double>, std::string> Value;
+typedef std::variant<int, double, std::complex<double>, std::string,
+                     ImpedanceSpectrum>
+    Value;
+/// Maps from a key name to a vector, containing the spectrum frequencies.
+typedef std::map<std::string, std::vector<double>> SpectrumMapping;
 
 /**
  * @brief Class interface to a class that manages data read and write operations
@@ -89,6 +95,18 @@ public:
    */
   virtual bool write(TimePoint timestamp, const std::string &key,
                      const Value &value) = 0;
+
+  /**
+   * @brief Writes the given data to the underlying data base.
+   *
+   * @param timestamp The timestamp that shall be stored with the given data.
+   * @param key The under which the data shall be stored.
+   * @param value The value that shall be stored.
+   * @return TRUE if write operation was succesfull. False otherwise.
+   */
+  virtual bool write(const std::vector<TimePoint> &timestamp,
+                     const std::string &key,
+                     const std::vector<Value> &value) = 0;
 
   /**
    * @brief Tries to open an already existing data base.
@@ -155,11 +173,49 @@ public:
    */
   virtual bool createKey(std::string key, DataManagerDataType dataType) = 0;
 
+  /**
+   * @brief setupSpectrum
+   * @param key
+   * @param frequencies
+   * @return
+   */
+  bool setupSpectrum(std::string key, std::vector<double> frequencies);
+
+  /**
+   * @brief Returns the spectrum mapping.
+   * @return The Spectrum mapping.
+   */
+  SpectrumMapping getSpectrumMapping() const;
+
+  /**
+   * @brief Returns whether the given spectrum is set up and ready.
+   * @return Whether the given spectrum is set up and ready.
+   */
+  bool isSpectrumSetup(std::string key);
+
 protected:
+  /**
+   * @brief Calculates the absolute time difference between two timepoints.
+   * Other than operator-() the result of this method is always positive.
+   * @param a The first timepoint.
+   * @param b The second timepoint.
+   * @return Duration between a and b. Always positive.
+   */
+  Duration timePointDiff(TimePoint a, TimePoint b);
+
+  /**
+   * @brief Sets up the details of a spectrum.
+   * @return TRUE if setup was successfull. False otherwise.
+   */
+  virtual bool setupSpectrumSpecific(std::string key,
+                                     std::vector<double> frequencies) = 0;
+
   /// Flag that indicates, whether the underlying data base has been opened.
   bool openFlag;
   /// Holds the mapping betwenn key and data type.
   KeyMapping typeMapping;
+  /// Holds the mapping from keys to the spectrum frequencies.
+  SpectrumMapping spectrumMapping;
 };
 } // namespace Utilities
 
