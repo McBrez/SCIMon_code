@@ -65,14 +65,17 @@ bool DataManagerHdf::read(TimePoint timestamp, const std::string &key,
       } else if (DATAMANAGER_DATA_TYPE_SPECTRUM == dataType) {
         DataSet datasetValues =
             this->hdfFile->getDataSet("/data/" + key + "/values");
+        size_t frequencyCount = this->spectrumMapping[key].size();
         auto spectrumArray =
-            datasetValues.select({i, 0, 0}, {1, 1, 2})
+            datasetValues.select({i, 0, 0}, {1, frequencyCount, 2})
                 .read<std::vector<std::vector<std::vector<double>>>>();
         std::vector<ImpedanceSpectrum> isSpectrum;
         Utilities::joinImpedanceSpectrum(
             spectrumArray, this->spectrumMapping[key], isSpectrum);
 
         value = isSpectrum.front();
+
+        return true;
       }
 
       else {
@@ -199,6 +202,26 @@ bool DataManagerHdf::read(TimePoint from, TimePoint to, const std::string &key,
             .read<std::vector<std::string>>();
     value.reserve(rawVector.size());
     for (auto rawVectorValue : rawVector) {
+      value.emplace_back(Value(rawVectorValue));
+    }
+
+    return true;
+  }
+
+  else if (DATAMANAGER_DATA_TYPE_SPECTRUM == dataType) {
+    DataSet datasetValues =
+        this->hdfFile->getDataSet("/data/" + key + "/values");
+    size_t frequencyCount = this->spectrumMapping[key].size();
+    auto spectrumArray =
+        datasetValues
+            .select({idxFrom, 0, 0}, {idxTo - idxFrom + 1, frequencyCount, 2})
+            .read<std::vector<std::vector<std::vector<double>>>>();
+    std::vector<ImpedanceSpectrum> isSpectrum;
+    Utilities::joinImpedanceSpectrum(spectrumArray, this->spectrumMapping[key],
+                                     isSpectrum);
+
+    value.reserve(isSpectrum.size());
+    for (auto &rawVectorValue : isSpectrum) {
       value.emplace_back(Value(rawVectorValue));
     }
 
@@ -469,11 +492,11 @@ bool DataManagerHdf::extendingWrite(const std::vector<TimePoint> &timestamp,
     DataSet dataset = this->hdfFile->getDataSet("/data/" + key + "/values");
     std::vector<ImpedanceSpectrum> valueVector;
     this->transformValueVector(value, valueVector);
-    std::vector<std::vector<std::vector<double>>> impedanceSpectrumArray;
-    Utilities::splitImpedanceSpectrum(valueVector, impedanceSpectrumArray);
+    std::vector<std::vector<std::vector<double>>> valuesArray;
+    Utilities::splitImpedanceSpectrum(valueVector, valuesArray);
     size_t frequencyCount = this->spectrumMapping[key].size();
     dataset.select({newIdx, 0, 0}, {extendSize, frequencyCount, 2})
-        .write(impedanceSpectrumArray);
+        .write(valuesArray);
   }
 
   else {
@@ -583,17 +606,23 @@ bool DataManagerHdf::setupSpectrumSpecific(std::string key,
 
   // Create the dataset for the spectrum.
   size_t frequencyCount = frequencies.size();
+  DataSetCreateProps propsValues;
+  propsValues.add(Chunking(std::vector<hsize_t>{1, frequencyCount, 2}));
   DataSpace dataspaceSpectrum = DataSpace(
       {0, frequencyCount, 2}, {DataSpace::UNLIMITED, frequencyCount, 2});
   this->hdfFile->createDataSet("/data/" + key + "/values", dataspaceSpectrum,
-                               create_datatype<double>());
+                               create_datatype<double>(), propsValues);
   // Create the dataset for the timestamps.
+  DataSetCreateProps propsTimestamps;
+  propsTimestamps.add(Chunking(std::vector<hsize_t>{1024, 1}));
   DataSpace dataspaceTimestamps = DataSpace({0, 1}, {DataSpace::UNLIMITED, 1});
-  this->hdfFile->createDataSet("/data/" + key + "/values", dataspaceTimestamps,
-                               create_datatype<long long>());
+  this->hdfFile->createDataSet("/data/" + key + "/timestamps",
+                               dataspaceTimestamps,
+                               create_datatype<long long>(), propsTimestamps);
   // Create the dataset for the spectrum mapping.
   DataSet datasetSpectrumMapping = this->hdfFile->createDataSet(
-      "/data/" + key + "/spectrumMapping", DataSpace::From(frequencies));
+      "/data/" + key + "/spectrumMapping", DataSpace::From(frequencies),
+      create_datatype<double>());
 
   datasetSpectrumMapping.write(frequencies);
 

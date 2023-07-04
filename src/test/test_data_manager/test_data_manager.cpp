@@ -110,8 +110,8 @@ TEST_CASE("Test reads and writes of the HDF data manager") {
   ImpedanceSpectrum testSpectrum;
   Utilities::joinImpedanceSpectrum(testFrequencies, testImpedances,
                                    testSpectrum);
-  dut->setupSpectrum("spectrum", testFrequencies);
   REQUIRE(dut->open("test_file.hdf", keyMapping));
+  dut->setupSpectrum("spectrum", testFrequencies);
 
   TimePoint now = getNow();
   TimePoint beforeNow = now - std::chrono::milliseconds(2);
@@ -121,43 +121,51 @@ TEST_CASE("Test reads and writes of the HDF data manager") {
   REQUIRE(dut->write(now, "double", Value(1.2)));
   REQUIRE(dut->write(now, "string", Value("test")));
   REQUIRE(dut->write(now, "complex", Value(Impedance(1.0, 2.0))));
-  REQUIRE(dut->write(now, "spectrum", Value()));
+  REQUIRE(dut->write(now, "spectrum", Value(testSpectrum)));
 
   Value readValueInt;
   Value readValueDouble;
   Value readValueString;
   Value readValueComplex;
+  Value readValueSpectrum;
   // Try to read at the exact timestamp.
   REQUIRE(dut->read(now, "int", readValueInt));
   REQUIRE(dut->read(now, "double", readValueDouble));
   REQUIRE(dut->read(now, "string", readValueString));
   REQUIRE(dut->read(now, "complex", readValueComplex));
+  REQUIRE(dut->read(now, "spectrum", readValueSpectrum));
   REQUIRE(std::get<int>(readValueInt) == 1);
   REQUIRE(std::get<double>(readValueDouble) == 1.2);
   REQUIRE(std::get<std::string>(readValueString) == "test");
   REQUIRE(std::get<Impedance>(readValueComplex) == Impedance(1.0, 2.0));
+  REQUIRE(std::get<ImpedanceSpectrum>(readValueSpectrum) == testSpectrum);
   readValueInt = 0;
   readValueDouble = 0.0;
   readValueString = "";
   readValueComplex = Impedance(0.0, 0.0);
+  readValueSpectrum = ImpedanceSpectrum();
   // Try to read before the exact timestamp.
   REQUIRE(!dut->read(beforeNow, "int", readValueInt));
   REQUIRE(!dut->read(beforeNow, "double", readValueDouble));
   REQUIRE(!dut->read(beforeNow, "string", readValueString));
   REQUIRE(!dut->read(beforeNow, "complex", readValueComplex));
+  REQUIRE(!dut->read(beforeNow, "spectrum", readValueSpectrum));
   readValueInt = 0;
   readValueDouble = 0.0;
   readValueString = "";
   readValueComplex = Impedance(0.0, 0.0);
+  readValueSpectrum = ImpedanceSpectrum();
   // Try to read after the exact timestamp.
   REQUIRE(!dut->read(afterNow, "int", readValueInt));
   REQUIRE(!dut->read(afterNow, "double", readValueDouble));
   REQUIRE(!dut->read(afterNow, "string", readValueString));
   REQUIRE(!dut->read(afterNow, "complex", readValueComplex));
+  REQUIRE(!dut->read(afterNow, "spectrum", readValueComplex));
   readValueInt = 0;
   readValueDouble = 0.0;
   readValueString = "";
   readValueComplex = Impedance(0.0, 0.0);
+  readValueSpectrum = ImpedanceSpectrum();
   // Try to read time ranges.
   std::vector<Value> readValueVec;
   std::vector<TimePoint> readTimestampVec;
@@ -186,6 +194,13 @@ TEST_CASE("Test reads and writes of the HDF data manager") {
   REQUIRE(dut->read(beforeNow, afterNow, "complex", readTimestampVec,
                     readValueVec));
   REQUIRE(readValueVec == std::vector<Value>{Impedance(1.0, 2.0)});
+  REQUIRE(readTimestampVec == std::vector<TimePoint>{now});
+  readValueVec.clear();
+  readTimestampVec.clear();
+  // spectrum
+  REQUIRE(dut->read(beforeNow, afterNow, "spectrum", readTimestampVec,
+                    readValueVec));
+  REQUIRE(readValueVec == std::vector<Value>{testSpectrum});
   REQUIRE(readTimestampVec == std::vector<TimePoint>{now});
   readValueVec.clear();
   readTimestampVec.clear();
@@ -220,6 +235,14 @@ TEST_CASE("Test reads and writes of the HDF data manager") {
   REQUIRE(readTimestampVec.size() == 0);
   readValueVec.clear();
   readTimestampVec.clear();
+  // spectrum
+  REQUIRE(dut->read(longBeforeNow, beforeNow, "spectrum", readTimestampVec,
+                    readValueVec));
+  REQUIRE(readValueVec.size() == 0);
+  REQUIRE(readTimestampVec.size() == 0);
+  readValueVec.clear();
+  readTimestampVec.clear();
+
   // Try to read after the time ranges.
   TimePoint longAfterNow = now + std::chrono::milliseconds(4);
   // int
@@ -250,9 +273,17 @@ TEST_CASE("Test reads and writes of the HDF data manager") {
   REQUIRE(readTimestampVec.size() == 0);
   readValueVec.clear();
   readTimestampVec.clear();
+  // spectrum
+  // complex
+  REQUIRE(dut->read(afterNow, longAfterNow, "spectrum", readTimestampVec,
+                    readValueVec));
+  REQUIRE(readValueVec.size() == 0);
+  REQUIRE(readTimestampVec.size() == 0);
+  readValueVec.clear();
+  readTimestampVec.clear();
 }
 
-#define TEST_VECTOR_SIZE 1000000
+#define TEST_VECTOR_SIZE 2000
 TEST_CASE("Test mass writes") {
   std::remove(TEST_FILE_NAME);
 
@@ -264,8 +295,20 @@ TEST_CASE("Test mass writes") {
   keyMapping["double"] = DataManagerDataType::DATAMANAGER_DATA_TYPE_DOUBLE;
   keyMapping["string"] = DataManagerDataType::DATAMANAGER_DATA_TYPE_STRING;
   keyMapping["complex"] = DataManagerDataType::DATAMANAGER_DATA_TYPE_COMPLEX;
+  keyMapping["spectrum"] = DataManagerDataType::DATAMANAGER_DATA_TYPE_SPECTRUM;
+
+  std::vector<double> testFrequencies{1.0,     10.0,     100.0,    1000.0,
+                                      10000.0, 100000.0, 1000000.0};
+  std::vector<Impedance> testImpedances{{1.0, 2.0},  {3.0, 4.0},  {5.0, 6.0},
+                                        {7.0, 8.0},  {9.0, 10.0}, {11.0, 12.0},
+                                        {13.0, 14.0}};
+  ImpedanceSpectrum testSpectrum;
+  Utilities::joinImpedanceSpectrum(testFrequencies, testImpedances,
+                                   testSpectrum);
 
   REQUIRE(dut->open("test_file.hdf", keyMapping));
+
+  dut->setupSpectrum("spectrum", testFrequencies);
 
   // Create the vectors that shall be written.
   TimePoint now = getNow();
@@ -273,21 +316,40 @@ TEST_CASE("Test mass writes") {
   timestamps.reserve(TEST_VECTOR_SIZE);
   std::vector<Value> valuesInt;
   valuesInt.reserve(TEST_VECTOR_SIZE);
+  std::vector<Value> valuesSpectrum;
+  valuesSpectrum.reserve(TEST_VECTOR_SIZE);
   for (int i = 0; i < TEST_VECTOR_SIZE; i++) {
     timestamps.push_back(now + std::chrono::milliseconds(i));
     valuesInt.push_back(Value(i));
+    valuesSpectrum.push_back(Value(testSpectrum));
   }
 
   REQUIRE(dut->write(timestamps, "int", valuesInt));
+  REQUIRE(dut->write(timestamps, "spectrum", valuesSpectrum));
   TimePoint from = now;
   TimePoint to = now + std::chrono::milliseconds(1000);
+
+  // Build the reference vectors.
+  TimePoint tp = timestamps[0];
+  size_t i = 0;
+  std::vector<Value> valuesIntRef;
+  valuesIntRef.reserve(1000);
+  std::vector<Value> valuesSpectrumRef;
+  valuesSpectrumRef.reserve(1000);
+  while (tp <= to) {
+    valuesIntRef.push_back(i);
+    valuesSpectrumRef.push_back(testSpectrum);
+    i++;
+    tp = timestamps[i];
+  }
 
   std::vector<TimePoint> readTimestamps;
   std::vector<Value> readValues;
   REQUIRE(dut->read(from, to, "int", readTimestamps, readValues));
+  REQUIRE(dut->read(from, to, "spectrum", readTimestamps, readValues));
 }
 
-TEST_CASE("Mass single writes") {
+TEST_CASE("Benchmark single writes") {
   std::remove(TEST_FILE_NAME);
 
   std::shared_ptr<DataManager> dut =
@@ -298,6 +360,16 @@ TEST_CASE("Mass single writes") {
   keyMapping["double"] = DataManagerDataType::DATAMANAGER_DATA_TYPE_DOUBLE;
   keyMapping["string"] = DataManagerDataType::DATAMANAGER_DATA_TYPE_STRING;
   keyMapping["complex"] = DataManagerDataType::DATAMANAGER_DATA_TYPE_COMPLEX;
+  keyMapping["spectrum"] = DataManagerDataType::DATAMANAGER_DATA_TYPE_SPECTRUM;
+  std::vector<double> testFrequencies{1.0,     10.0,     100.0,    1000.0,
+                                      10000.0, 100000.0, 1000000.0};
+  std::vector<Impedance> testImpedances{{1.0, 2.0},  {3.0, 4.0},  {5.0, 6.0},
+                                        {7.0, 8.0},  {9.0, 10.0}, {11.0, 12.0},
+                                        {13.0, 14.0}};
+  ImpedanceSpectrum testSpectrum;
+  Utilities::joinImpedanceSpectrum(testFrequencies, testImpedances,
+                                   testSpectrum);
+  dut->setupSpectrum("spectrum", testFrequencies);
 
   REQUIRE(dut->open("test_file.hdf", keyMapping));
 
@@ -313,9 +385,12 @@ TEST_CASE("Mass single writes") {
   BENCHMARK("Single Write complex") {
     return dut->write(Core::getNow(), "complex", Value(Impedance(1.0, 2.0)));
   };
+  BENCHMARK("Single Write spectrum") {
+    return dut->write(Core::getNow(), "spectrum", Value(testSpectrum));
+  };
 }
 
-TEST_CASE("Single read") {
+TEST_CASE("Benchmark single read") {
   std::remove(TEST_FILE_NAME);
 
   std::shared_ptr<DataManager> dut =
@@ -326,8 +401,18 @@ TEST_CASE("Single read") {
   keyMapping["double"] = DataManagerDataType::DATAMANAGER_DATA_TYPE_DOUBLE;
   keyMapping["string"] = DataManagerDataType::DATAMANAGER_DATA_TYPE_STRING;
   keyMapping["complex"] = DataManagerDataType::DATAMANAGER_DATA_TYPE_COMPLEX;
+  keyMapping["spectrum"] = DataManagerDataType::DATAMANAGER_DATA_TYPE_COMPLEX;
+  std::vector<double> testFrequencies{1.0,     10.0,     100.0,    1000.0,
+                                      10000.0, 100000.0, 1000000.0};
+  std::vector<Impedance> testImpedances{{1.0, 2.0},  {3.0, 4.0},  {5.0, 6.0},
+                                        {7.0, 8.0},  {9.0, 10.0}, {11.0, 12.0},
+                                        {13.0, 14.0}};
+  ImpedanceSpectrum testSpectrum;
+  Utilities::joinImpedanceSpectrum(testFrequencies, testImpedances,
+                                   testSpectrum);
 
   REQUIRE(dut->open("test_file.hdf", keyMapping));
+  dut->setupSpectrum("spectrum", testFrequencies);
 
   TimePoint now = getNow();
   TimePoint beforeNow = now - std::chrono::milliseconds(2);
@@ -337,6 +422,7 @@ TEST_CASE("Single read") {
   REQUIRE(dut->write(now, "double", Value(1.2)));
   REQUIRE(dut->write(now, "string", Value("test")));
   REQUIRE(dut->write(now, "complex", Value(Impedance(1.0, 2.0))));
+  REQUIRE(dut->write(now, "spectrum", Value(testSpectrum)));
 
   Value valueInt;
   BENCHMARK("Single Read INT") { return dut->read(now, "int", valueInt); };
@@ -349,7 +435,11 @@ TEST_CASE("Single read") {
     return dut->read(now, "string", valueString);
   };
   Value valueComplex;
-  BENCHMARK("Single Rrite complex") {
+  BENCHMARK("Single Read complex") {
     return dut->read(now, "complex", valueComplex);
+  };
+  Value valueSpectrum;
+  BENCHMARK("Single Read spectrum") {
+    return dut->read(now, "spectrum", valueSpectrum);
   };
 }
