@@ -85,9 +85,6 @@ public:
   virtual std::string getWorkerName() override;
 
 private:
-  std::list<std::shared_ptr<ReadPayload>> getData(DeviceType deviceType,
-                                                  TimePoint from, TimePoint to);
-
   /// The payload with which this object has been initialized.
   std::shared_ptr<SentryInitPayload> initPayload;
 

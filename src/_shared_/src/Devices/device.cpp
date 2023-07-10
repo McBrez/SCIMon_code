@@ -2,16 +2,21 @@
 #include <easylogging++.h>
 
 // Project includes
+#include <data_response_payload.hpp>
 #include <device.hpp>
 #include <dummy_message.hpp>
+#include <request_data_payload.hpp>
 #include <status_payload.hpp>
+
+using namespace Utilities;
 
 namespace Devices {
 
-Device::Device(DeviceType deviceType)
+Device::Device(DeviceType deviceType, DataManagerType dataManagerType)
     : configurationFinished(false), initFinished(false),
       deviceState(DeviceStatus::UNKNOWN_DEVICE_STATUS), deviceType(deviceType),
-      startMessageCache(new Messages::DummyMessage()) {}
+      startMessageCache(new Messages::DummyMessage()),
+      dataManager(DataManager::getDataManager(dataManagerType)) {}
 
 Device::~Device() {}
 
@@ -53,6 +58,30 @@ bool Device::write(std::shared_ptr<WriteDeviceMessage> writeMsg) {
                           this->getDeviceTypeName()),
         writeMsg)));
     return true;
+  }
+
+  else if (WriteDeviceTopic::WRITE_TOPIC_REQUEST_DATA == writeMsg->getTopic()) {
+    // Data is requested. Try to cast down the payload.
+    auto requestedDataPayload =
+        dynamic_pointer_cast<RequestDataPayload>(writeMsg->getPayload());
+    if (!requestedDataPayload) {
+      LOG(ERROR)
+          << "Received malformed request data message. This will be ignored.";
+      return false;
+    }
+
+    // Ask the data manager for the requested data.
+    std::vector<TimePoint> timestamps;
+    std::vector<Value> values;
+    bool readSuccess = this->dataManager->read(
+        requestedDataPayload->from, requestedDataPayload->to,
+        requestedDataPayload->key, timestamps, values);
+
+    if (!readSuccess) {
+      LOG(ERROR) << "Read was not successfull. A message, that indicates this, "
+                    "will be returned.";
+    }
+
   }
 
   else {

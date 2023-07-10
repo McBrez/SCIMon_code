@@ -28,7 +28,9 @@ enum WriteDeviceTopic {
   /// The targeted device shall respond with its current state.
   WRITE_TOPIC_QUERY_STATE = 0x04,
   /// A device specific write topic.
-  WRITE_TOPIC_DEVICE_SPECIFIC = 0x05
+  WRITE_TOPIC_DEVICE_SPECIFIC = 0x05,
+/// Data is requested from the target device.
+    WRITE_TOPIC_REQUEST_DATA = 0x06
 };
 
 /**

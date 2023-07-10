@@ -109,30 +109,7 @@ bool SentryWorker::specificWrite(std::shared_ptr<WriteDeviceMessage> writeMsg) {
 
   // Get the payload and try to cast it down according to its magic number.
   std::shared_ptr<Payload> payload = writeMsg->getPayload();
-
-  if (MAGIC_NUMBER_REQUEST_DATA_PAYLOAD == payload->getMagicNumber()) {
-    auto requestDataPayload = dynamic_pointer_cast<RequestDataPayload>(payload);
-    if (!requestDataPayload) {
-      LOG(ERROR)
-          << "Sentry worker received malformed payload. This will be ignored.";
-      return false;
-    }
-
-    std::list<std::shared_ptr<ReadPayload>> dataList =
-        this->getData(requestDataPayload->deviceType, requestDataPayload->from,
-                      requestDataPayload->to);
-
-    for (auto data : dataList) {
-      this->pushMessageQueue(std::shared_ptr<DeviceMessage>(
-          new ReadDeviceMessage(this->getUserId(), writeMsg->getSource(),
-                                ReadDeviceTopic::READ_TOPIC_DEVICE_SPECIFIC_MSG,
-                                data, writeMsg)));
-    }
-
-    return true;
-  }
-
-  else if (MAGIC_NUMBER_SET_DEVICE_STATUS_PAYLOAD ==
+    if (MAGIC_NUMBER_SET_DEVICE_STATUS_PAYLOAD ==
            payload->getMagicNumber()) {
     auto setDeviceStatusPayload =
         dynamic_pointer_cast<SetDeviceStatusPayload>(payload);
@@ -491,23 +468,5 @@ bool SentryWorker::write(std::shared_ptr<HandshakeMessage> writeMsg) {
 
 std::string SentryWorker::getWorkerName() { return SENTRY_WORKER_TYPE_NAME; }
 
-std::list<std::shared_ptr<ReadPayload>>
-SentryWorker::getData(DeviceType deviceType, TimePoint from, TimePoint to) {
-
-  std::list<std::shared_ptr<ReadPayload>> filteredPayloads;
-
-  for (auto payload : this->isPayloadCache) {
-
-    auto castedPayload = dynamic_pointer_cast<IsPayload>(payload);
-    TimePoint timePointPayload(std::chrono::milliseconds(
-        static_cast<long long>(castedPayload->getTimestamp())));
-
-    if (timePointPayload > from && timePointPayload < to) {
-      filteredPayloads.push_back(payload);
-    }
-  }
-
-  return filteredPayloads;
-}
 
 } // namespace Workers

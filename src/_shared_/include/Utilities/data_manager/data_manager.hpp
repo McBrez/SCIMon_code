@@ -162,7 +162,7 @@ public:
    * @return Pointer to the data manager. May return nullptr, if the given type
    * is not available.
    */
-  static std::shared_ptr<DataManager>
+  static DataManager*
   getDataManager(DataManagerType dataManagerType);
 
   /**

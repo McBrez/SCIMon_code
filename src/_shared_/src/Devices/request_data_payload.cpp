@@ -9,9 +9,8 @@
 
 using namespace Devices;
 
-RequestDataPayload::RequestDataPayload(DeviceType deviceType, TimePoint from,
-                                       TimePoint to)
-    : deviceType(deviceType), from(from), to(to) {}
+RequestDataPayload::RequestDataPayload(TimePoint from, TimePoint to, const std::string &key)
+    : key(key), from(from), to(to) {}
 
 RequestDataPayload::~RequestDataPayload() {}
 
@@ -19,10 +18,9 @@ std::string RequestDataPayload::serialize() { return ""; }
 
 std::vector<unsigned char> RequestDataPayload::bytes() {
   Serialization::Devices::RequestDataPayloadT intermediateObject;
-  intermediateObject.deviceType =
-      static_cast<Serialization::Devices::DeviceType>(this->deviceType);
   intermediateObject.from = this->from.time_since_epoch().count();
-  intermediateObject.to = this->from.time_since_epoch().count();
+  intermediateObject.to = this->to.time_since_epoch().count();
+  intermediateObject.key = this->key;
 
   flatbuffers::FlatBufferBuilder builder;
   builder.Finish(Serialization::Devices::RequestDataPayload::Pack(

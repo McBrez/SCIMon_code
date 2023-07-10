@@ -17,8 +17,11 @@ class RequestDataPayload : public WritePayload {
 public:
   /**
    * @brief Construct a new ReadPayload object.
+   * @param from The start of the queried timeframe.
+   * @param to THe end of the queried timeframe.
+   * @param key The key that shall be queried.
    */
-  RequestDataPayload(DeviceType deviceType, TimePoint from, TimePoint to);
+    RequestDataPayload(TimePoint from, TimePoint to, const std::string &key);
 
   /**
    * @brief Destroy the ReadPayload object.
@@ -44,9 +47,12 @@ public:
    */
   virtual int getMagicNumber() override;
 
-  DeviceType deviceType;
+  /// The start of the queried time frame.
   TimePoint from;
+  /// THe end of the queried time frame.
   TimePoint to;
+  /// The key which is queried.
+  std::string key;
 };
 
 } // namespace Devices

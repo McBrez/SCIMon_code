@@ -10,12 +10,12 @@ bool DataManager::isOpen() const { return this->openFlag; }
 
 KeyMapping DataManager::getKeyMapping() const { return this->typeMapping; }
 
-std::shared_ptr<DataManager>
+DataManager*
 DataManager::getDataManager(DataManagerType dataManagerType) {
   if (DataManagerType::DATAMANAGER_TYPE_HDF == dataManagerType) {
-    return std::shared_ptr<DataManager>(new DataManagerHdf());
+    return new DataManagerHdf();
   } else {
-    return std::shared_ptr<DataManager>();
+    return nullptr;
   }
 }
 

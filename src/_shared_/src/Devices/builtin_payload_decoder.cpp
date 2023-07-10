@@ -87,9 +87,9 @@ WritePayload *BuiltinPayloadDecoder::decodeWritePayload(
         Serialization::Devices::GetRequestDataPayload(buffer)->UnPack();
 
     return new RequestDataPayload(
-        static_cast<DeviceType>(requestDataPayload->deviceType),
         TimePoint(std::chrono::milliseconds(requestDataPayload->from)),
-        TimePoint(std::chrono::milliseconds(requestDataPayload->to)));
+        TimePoint(std::chrono::milliseconds(requestDataPayload->to)),
+        requestDataPayload->key);
   }
 
   else if (MAGIC_NUMBER_SET_DEVICE_STATUS_PAYLOAD == magicNumber) {
