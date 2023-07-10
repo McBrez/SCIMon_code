@@ -2,6 +2,9 @@
 #include <common.hpp>
 #include <data_response_payload.hpp>
 
+// Generated includes.
+#include <data_response_payload_generated.h>
+
 using namespace Devices;
 using namespace Utilities;
 
@@ -12,19 +15,35 @@ DataResponsePayload::constructDataResponsePayload(
     const std::vector<Value> &values) {
 
   std::vector<std::shared_ptr<DataResponsePayload>> retVal;
-  auto timestampsIt = timestamps.begin();
+  bool atEnd = false;
+  do {
+    auto timestampsItBegin = timestamps.begin();
+    auto timestampsItEnd =
+        timestampsItBegin + SCIMON_RESPONSE_PAYLOAD_MAX_MESSAGE_LENGTH;
 
-  std::swap_ranges;
+    auto valuesItBegin = values.begin();
+    auto valuesItEnd =
+        valuesItBegin + SCIMON_RESPONSE_PAYLOAD_MAX_MESSAGE_LENGTH;
 
-  std::vector<> timestampsSlice
+    std::vector<TimePoint> timepointVec(timestampsItBegin, timestampsItEnd);
+    std::vector<Value> valueVec(valuesItBegin, valuesItEnd);
 
-      retVal.emplace_back(shared_ptr<DataResponsePayload>(
-          new DataResponsePayload(from, to, key)));
+    retVal.emplace_back(
+        std::shared_ptr<DataResponsePayload>(new DataResponsePayload(
+            from, to, key, timepointVec.size(), timepointVec, valueVec)));
+
+    atEnd = timestampsItEnd == timestamps.end();
+
+  } while (!atEnd);
+  return retVal;
 }
 
 std::string DataResponsePayload::serialize() { return ""; }
 
-std::vector<unsigned char> DataResponsePayload::DataResponsePayload::bytes() {}
+std::vector<unsigned char> DataResponsePayload::DataResponsePayload::bytes() {
+
+  return std::vector<unsigned char>();
+}
 
 int DataResponsePayload::getMagicNumber() {
   return MAGIC_NUMBER_DATA_RESPONSE_PAYLOAD;

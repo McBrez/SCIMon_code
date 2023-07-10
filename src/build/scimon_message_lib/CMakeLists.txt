@@ -23,6 +23,7 @@ set(
     ${RES_DIR}/flatbuffers/Devices/set_pressure_payload.fbs 
     ${RES_DIR}/flatbuffers/Devices/request_data_payload.fbs 
     ${RES_DIR}/flatbuffers/Devices/set_device_state_payload.fbs 
+    ${RES_DIR}/flatbuffers/Devices/data_response_payload.fbs 
 
     ${RES_DIR}/flatbuffers/Devices/elveflow/ob1/ob1_config_payload.fbs
     ${RES_DIR}/flatbuffers/Devices/elveflow/ob1/ob1_init_payload.fbs

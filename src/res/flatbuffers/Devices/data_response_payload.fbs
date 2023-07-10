@@ -1,0 +1,34 @@
+include "is_payload.fbs";
+
+namespace Serialization.Devices;
+
+table DataResponsePayloadValueInt {
+    value:int64;
+}
+
+table DataResponsePayloadValueFloat {
+    value:float64;
+}
+
+table DataResponsePayloadValueString {
+    value:string;
+}
+
+union DataResponsePayloadValue {
+    DataResponsePayloadValueInt,
+    DataResponsePayloadValueFloat,
+    complex,
+    DataResponsePayloadValueString,
+    IsPayload
+}
+
+table DataResponsePayload {
+    from:int64;
+    to:int64;
+    key:string;
+    count:int64;
+    timestamp:[int64];
+    values:[DataResponsePayloadValue];
+}
+
+root_type DataResponsePayload;
