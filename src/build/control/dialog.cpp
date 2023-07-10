@@ -39,7 +39,12 @@ Dialog::Dialog(QWidget *parent)
                    &ControlWorkerWrapper::remoteStateChanged, this,
                    &Dialog::onRemoteStatesChanged, Qt::QueuedConnection);
 
-  this->controlWorkerWrapper.start();
+  QObject::connect(this->ui->btn_start, &QPushButton::clicked,
+                   &this->controlWorkerWrapper, &ControlWorkerWrapper::start);
+  QObject::connect(this->ui->btn_stop, &QPushButton::clicked,
+                   &this->controlWorkerWrapper, &ControlWorkerWrapper::stop);
+
+  this->controlWorkerWrapper.startStateQuery();
 }
 
 Dialog::~Dialog() { delete ui; }

@@ -37,7 +37,10 @@ public:
   void periodicActionsWorker();
 
 public slots:
-  void start();
+  /**
+   * @brief Starts querying of the states of the underlying worker.
+   */
+  void startStateQuery();
 
   /**
    * @brief Shuts down the Control worker.
@@ -52,6 +55,16 @@ public slots:
   void startConnection(QString ip, int port);
 
   void startConfig();
+
+  /**
+   * @brief Sends a start command to the underlying worker.
+   */
+  void start();
+
+  /**
+   * @brief Sends s stop command to the underlying worker.
+   */
+  void stop();
 
   /**
    * @brief Converts the given enum value to a QString.
