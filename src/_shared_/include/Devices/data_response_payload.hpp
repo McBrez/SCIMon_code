@@ -14,6 +14,7 @@ namespace Devices {
 #define SCIMON_RESPONSE_PAYLOAD_MAX_MESSAGE_LENGTH 1024
 
 class DataResponsePayload : public ReadPayload {
+public:
   /**
    * @brief Constructs response payloads from the given data vectors. The data
    * vectors are splitted into multiple response payloads, so that no payload
@@ -26,10 +27,25 @@ class DataResponsePayload : public ReadPayload {
    * @param values The values that shall be held by the payload.
    * @return Vector of pointers to the response payloads.
    */
-  std::vector<std::shared_ptr<DataResponsePayload>>
+  static std::vector<std::shared_ptr<DataResponsePayload>>
   constructDataResponsePayload(TimePoint from, TimePoint to, std::string key,
                                const std::vector<TimePoint> &timestamps,
                                const std::vector<Value> &values);
+
+  /**
+   * @brief Constructs a single data response payload. The timestamp/value
+   * pairs, that are used in the creation of the repsonse payload are cut from
+   * the passed vectors.
+   * @param from The start of the queried time frame.
+   * @param to The end of the queried
+   * @param key The key that has been queried
+   * @param timestamps The timestamps that shall be held by the payload
+   * @param values The values that shall be held by the payload.
+   * @return Vector of pointers to the response payloads.
+   */
+  static DataResponsePayload *constructSingleDataResponsePayload(
+      TimePoint from, TimePoint to, std::string key,
+      std::vector<TimePoint> &timestamps, std::vector<Value> &values);
 
   /**
    * @brief Serializes the payload into a human readable string.

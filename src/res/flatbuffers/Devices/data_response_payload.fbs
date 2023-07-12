@@ -27,7 +27,7 @@ table DataResponsePayload {
     to:int64;
     key:string;
     count:int64;
-    timestamp:[int64];
+    timestamps:[int64];
     values:[DataResponsePayloadValue];
 }
 

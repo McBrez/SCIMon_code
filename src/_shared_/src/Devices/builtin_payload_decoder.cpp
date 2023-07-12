@@ -1,6 +1,7 @@
 // Project includes
 #include <builtin_payload_decoder.hpp>
 #include <common.hpp>
+#include <data_response_payload.hpp>>
 #include <generic_read_payload.hpp>
 #include <request_data_payload.hpp>
 #include <set_device_status_payload.hpp>
@@ -9,6 +10,7 @@
 #include <user_id.hpp>
 
 // Generated includes
+#include <data_response_payload_generated.h>>
 #include <generic_read_payload_generated.h>
 #include <is_payload_generated.h>
 #include <request_data_payload_generated.h>
@@ -63,7 +65,53 @@ BuiltinPayloadDecoder::decodeReadPayload(const std::vector<unsigned char> &data,
 
     return new StatusPayload(deviceId, deviceStatus, proxyIds, deviceType,
                              deviceName);
-  } else {
+  }
+
+  else if (MAGIC_NUMBER_DATA_RESPONSE_PAYLOAD == magicNumber) {
+    const Serialization::Devices::DataResponsePayloadT *dataResponsePayload =
+        Serialization::Devices::GetDataResponsePayload(buffer)->UnPack();
+
+    TimePoint from =
+        TimePoint(std::chrono::milliseconds(dataResponsePayload->from));
+    TimePoint to =
+        TimePoint(std::chrono::milliseconds(dataResponsePayload->to));
+    std::string key = dataResponsePayload->key;
+    size_t count = dataResponsePayload->count;
+    std::vector<TimePoint> timestamps;
+    timestamps.reserve(dataResponsePayload->count);
+    for (auto timestamp : dataResponsePayload->timestamps) {
+      timestamps.push_back(TimePoint(std::chrono::milliseconds(timestamp)));
+    }
+
+    std::vector<Value> values;
+    values.reserve(count);
+    for (auto valueUnion : dataResponsePayload->values) {
+      Value value;
+      if (Serialization::Devices::DataResponsePayloadValue::
+              DataResponsePayloadValue_DataResponsePayloadValueInt ==
+          valueUnion.type) {
+        value = Value(valueUnion.AsDataResponsePayloadValueInt()->value);
+      } else if (Serialization::Devices::DataResponsePayloadValue::
+                     DataResponsePayloadValue_DataResponsePayloadValueFloat ==
+                 valueUnion.type) {
+        value = Value(valueUnion.AsDataResponsePayloadValueFloat()->value);
+      } else if (Serialization::Devices::DataResponsePayloadValue::
+                     DataResponsePayloadValue_DataResponsePayloadValueString ==
+                 valueUnion.type) {
+        value = Value(valueUnion.AsDataResponsePayloadValueString()->value);
+      } else if (Serialization::Devices::DataResponsePayloadValue::
+                     DataResponsePayloadValue_complex == valueUnion.type) {
+        value = Value(valueUnion.AsDataResponsePayloadValueString()->value);
+      }
+
+      values.push_back(value);
+    }
+
+    return DataResponsePayload::constructSingleDataResponsePayload(
+        from, to, key, timestamps, values);
+  }
+
+  else {
     return nullptr;
   }
 }
