@@ -8,7 +8,9 @@ enum ReadDeviceTopic : ubyte {
     /// The target device could not be reached.
     READ_TOPIC_FAILED_RESPONSE = 2,
     /// A device specific message.
-    READ_TOPIC_DEVICE_SPECIFIC_MSG = 3
+    READ_TOPIC_DEVICE_SPECIFIC_MSG = 3,
+    /// Response that contains previously requested data.
+    READ_TOPIC_DATA_RESPONSE = 4
 }
 
 table ReadDeviceMessageContent {

@@ -8,13 +8,13 @@
 using namespace Devices;
 using namespace Utilities;
 
-std::vector<std::shared_ptr<DataResponsePayload>>
+std::vector<DataResponsePayload *>
 DataResponsePayload::constructDataResponsePayload(
     TimePoint from, TimePoint to, std::string key,
     const std::vector<TimePoint> &timestamps,
     const std::vector<Value> &values) {
 
-  std::vector<std::shared_ptr<DataResponsePayload>> retVal;
+  std::vector<DataResponsePayload *> retVal;
   bool atEnd = false;
   do {
     auto timestampsItBegin = timestamps.begin();
@@ -28,9 +28,8 @@ DataResponsePayload::constructDataResponsePayload(
     std::vector<TimePoint> timepointVec(timestampsItBegin, timestampsItEnd);
     std::vector<Value> valueVec(valuesItBegin, valuesItEnd);
 
-    retVal.emplace_back(
-        std::shared_ptr<DataResponsePayload>(new DataResponsePayload(
-            from, to, key, timepointVec.size(), timepointVec, valueVec)));
+    retVal.emplace_back(new DataResponsePayload(
+        from, to, key, timepointVec.size(), timepointVec, valueVec));
 
     atEnd = timestampsItEnd == timestamps.end();
 
