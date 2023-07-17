@@ -101,7 +101,30 @@ BuiltinPayloadDecoder::decodeReadPayload(const std::vector<unsigned char> &data,
         value = Value(valueUnion.AsDataResponsePayloadValueString()->value);
       } else if (Serialization::Devices::DataResponsePayloadValue::
                      DataResponsePayloadValue_complex == valueUnion.type) {
-        value = Value(valueUnion.AsDataResponsePayloadValueString()->value);
+
+        Serialization::Devices::complex *valueComplex = valueUnion.Ascomplex();
+        value =
+            Value(Impedance(valueComplex->real(), valueComplex->imaginary()));
+      } else if (Serialization::Devices::DataResponsePayloadValue::
+                     DataResponsePayloadValue_IsPayload == valueUnion.type) {
+
+        Serialization::Devices::IsPayloadT *isPayload =
+            valueUnion.AsIsPayload();
+        std::vector<double> frequencies = isPayload->frequencies;
+        std::vector<Serialization::Devices::complex> complexValues =
+            isPayload->impedances;
+        std::vector<Impedance> impedances;
+        impedances.reserve(complexValues.size());
+        for (auto &complexValue : complexValues) {
+          impedances.emplace_back(
+              Impedance(complexValue.real(), complexValue.imaginary()));
+        }
+
+        ImpedanceSpectrum impedanceSpectrum;
+        Utilities::joinImpedanceSpectrum(frequencies, impedances,
+                                         impedanceSpectrum);
+
+        value = Value(impedanceSpectrum);
       }
 
       values.push_back(value);
