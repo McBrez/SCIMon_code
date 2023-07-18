@@ -38,7 +38,6 @@ bool DeviceOb1Win::initialize(std::shared_ptr<InitPayload> initPayload) {
 
   char *deviceName = new char[ob1InitPayload->getDeviceName().length() + 1];
   strcpy(deviceName, ob1InitPayload->getDeviceName().c_str());
-
   int error = OB1_Initialization(
       deviceName, get<0>(ob1InitPayload->getChannelConfig()),
       get<1>(ob1InitPayload->getChannelConfig()),
@@ -51,6 +50,7 @@ bool DeviceOb1Win::initialize(std::shared_ptr<InitPayload> initPayload) {
     // It was.
     this->initFinished = true;
     this->deviceState = DeviceStatus::INITIALIZED;
+    this->ob1DeviceName = ob1InitPayload->getDeviceName();
     return true;
   } else {
     // It was not.
@@ -194,6 +194,9 @@ bool DeviceOb1Win::specificWrite(std::shared_ptr<WriteDeviceMessage> writeMsg) {
     // Unsupported write message received.
     return false;
   }
+}
+std::string DeviceOb1Win::getDeviceSerialNumber() {
+  return this->ob1DeviceName;
 }
 
 } // namespace Devices

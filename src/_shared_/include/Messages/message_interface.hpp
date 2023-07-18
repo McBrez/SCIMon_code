@@ -208,6 +208,16 @@ protected:
   void pushMessageQueue(const std::vector<std::shared_ptr<DeviceMessage>> &msg);
 
   /**
+   * @brief Hook that is called after initialization has succesfully finished.
+   * Has to be called by the sub class after succesfull initialization.
+   * @param dataManagerFileName The file name for the data manager.
+   * @param keyMapping The key mapping that shall be used when opening the data
+   * manager.
+   */
+  void onInitialized(const std::string &dataManagerFileName,
+                     const KeyMapping &keyMapping);
+
+  /**
    * @brief Pops a message from the internal message queue.
    * @return Pointer to a message. May be a nullptr, if there was no message in
    * the queue.
@@ -219,6 +229,9 @@ protected:
    * @return True if internal message queue is empty. False otherwise.
    */
   bool messageQueueEmpty();
+
+  /// Pointer to the data manager.
+  std::unique_ptr<DataManager> dataManager;
 
 private:
   /// The unique id of the object that implements this interface.
@@ -232,12 +245,6 @@ private:
 
   /// Mutex that guards the messageOut queue.
   std::mutex messageOutMutex;
-
-  /// Pointer to the data manager.
-  std::unique_ptr<DataManager> dataManager;
-
-  /// The data manager type , that is used by the message interface.
-  DataManagerType dataManagerType;
 };
 
 } // namespace Messages

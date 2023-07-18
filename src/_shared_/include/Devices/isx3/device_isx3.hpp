@@ -116,6 +116,14 @@ public:
    */
   virtual bool stop() override;
 
+  /**
+   * @brief Returns the serial number of the device. This is a string that
+   * identifies a physical device. For instance, this can be a device serial
+   * number, a static network adress, etc.
+   * @return The serial number of the device.
+   */
+  virtual std::string getDeviceSerialNumber() override;
+
 private:
   /**
    * @brief Worker function for the communication thread.
@@ -225,8 +233,11 @@ private:
   /// Caches the sent commands and whether they have been acknowledged.
   std::list<std::shared_ptr<Isx3CmdAckStruct>> sentFramesCache;
 
-  // Guards the acknowledgement cache.
+  /// Guards the acknowledgement cache.
   std::mutex sentFramesCacheMutex;
+
+  /// The serial number of the device.
+  std::string deviceSerialNumber;
 };
 } // namespace Devices
 

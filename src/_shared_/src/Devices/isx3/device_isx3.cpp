@@ -6,6 +6,7 @@
 
 // Project includes
 #include <common.hpp>
+#include <data_manager.hpp>>
 #include <device_isx3.hpp>
 #include <is_configuration.hpp>
 #include <isx3_ack_payload.hpp>
@@ -456,6 +457,10 @@ bool DeviceIsx3::initialize(std::shared_ptr<InitPayload> initPayload) {
   bool positiveAck = this->waitForAck(ackStruct);
   if (positiveAck) {
     this->deviceState = DeviceStatus::INITIALIZED;
+
+    this->onInitialized(this->getDeviceSerialNumber(), Utilities::KeyMapping{{
+                                                           "impedanceSpectra",
+                                                       }});
     return true;
   } else {
     this->deviceState = DeviceStatus::ERROR;
@@ -466,6 +471,10 @@ bool DeviceIsx3::initialize(std::shared_ptr<InitPayload> initPayload) {
 bool DeviceIsx3::handleResponse(std::shared_ptr<ReadDeviceMessage> response) {
   // Device does not expect responses. Just return true here.
   return true;
+}
+
+std::string DeviceIsx3::getDeviceSerialNumber() {
+  return this->deviceSerialNumber;
 }
 
 } // namespace Devices

@@ -6,8 +6,9 @@
 
 namespace Messages {
 
-MessageInterface::MessageInterface()
-    : id(UserId(this)), messageDistributor(nullptr) {}
+MessageInterface::MessageInterface(DataManagerType dataManagerType)
+    : id(UserId(this)), messageDistributor(nullptr),
+      dataManager(DataManager::getDataManager(dataManagerType)) {}
 
 UserId MessageInterface::getUserId() const { return this->id; }
 
@@ -152,7 +153,12 @@ std::shared_ptr<DeviceMessage> MessageInterface::popMessageQueue() {
 bool MessageInterface::messageQueueEmpty() { return this->messageOut.empty(); }
 
 DataManagerType MessageInterface::getDataManagerType() const {
-  return this->dataManagerType;
+  return this->dataManager->getDataManagerType();
+}
+
+void MessageInterface::onInitialized(const std::string &dataManagerFileName,
+                                     const KeyMapping &keyMapping) {
+  this->dataManager->open(dataManagerFileName, keyMapping);
 }
 
 } // namespace Messages

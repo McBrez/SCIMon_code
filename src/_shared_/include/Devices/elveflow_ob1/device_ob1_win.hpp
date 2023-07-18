@@ -77,6 +77,14 @@ public:
   virtual std::list<std::shared_ptr<DeviceMessage>>
   specificRead(TimePoint timestamp) override;
 
+  /**
+   * @brief Returns the serial number of the device. This is a string that
+   * identifies a physical device. For instance, this can be a device serial
+   * number, a static network adress, etc.
+   * @return The serial number of the device.
+   */
+  virtual std::string getDeviceSerialNumber() override;
+
 private:
   /**
    * @brief Thread worker for the configuration process.
@@ -97,6 +105,9 @@ private:
   /// Cache for the channel pressures, used to restore the previous pressures,
   /// when start() is called.
   std::map<int, double> cachedPressures;
+
+  /// The name of the device.
+  std::string ob1DeviceName;
 };
 } // namespace Devices
 

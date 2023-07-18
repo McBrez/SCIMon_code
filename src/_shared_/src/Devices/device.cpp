@@ -16,7 +16,7 @@ Device::Device(DeviceType deviceType, DataManagerType dataManagerType)
     : configurationFinished(false), initFinished(false),
       deviceState(DeviceStatus::UNKNOWN_DEVICE_STATUS), deviceType(deviceType),
       startMessageCache(new Messages::DummyMessage()),
-      dataManager(DataManager::getDataManager(dataManagerType)) {}
+      MessageInterface(dataManagerType) {}
 
 Device::~Device() {}
 

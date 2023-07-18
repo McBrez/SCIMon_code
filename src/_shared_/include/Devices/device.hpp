@@ -91,6 +91,14 @@ public:
   DeviceType getDeviceType();
 
   /**
+   * @brief Returns the serial number of the device. This is a string that
+   * identifies a physical device. For instance, this can be a device serial
+   * number, a static network adress, etc.
+   * @return The serial number of the device.
+   */
+  virtual std::string getDeviceSerialNumber() = 0;
+
+  /**
    * @brief Returns the status of the device.
    * @return The status of the device.
    */
