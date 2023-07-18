@@ -9,6 +9,7 @@
 
 // Project includes
 #include <config_device_message.hpp>
+#include <data_manager.hpp>
 #include <handshake_message.hpp>
 #include <init_device_message.hpp>
 #include <read_device_message.hpp>
@@ -32,8 +33,11 @@ public:
 
   /**
    * @brief Construct the object with a automatically generated user id.
+   * @param dataManagerType The type of the underlying data manager, that shall
+   * be used.
    */
-  MessageInterface();
+  MessageInterface(
+      DataManagerType dataManagerType = DataManagerType::DATAMANAGER_TYPE_HDF);
 
   /**
    * @brief Writes an initialization message to the device.
@@ -155,6 +159,12 @@ public:
    */
   virtual std::shared_ptr<StatusPayload> constructStatus() = 0;
 
+  /**
+   * @brief Returns the used data manager type.
+   * @return The used data manager type.
+   */
+  DataManagerType getDataManagerType() const;
+
 protected:
   /// Reference to the message distributor this object belongs to. Is set when
   /// the message interface object is added to the distributor as participant.
@@ -215,7 +225,14 @@ private:
 
   /// Mutex that guards the messageOut queue.
   std::mutex messageOutMutex;
+
+  /// Pointer to the data manager.
+  std::unique_ptr<DataManager> dataManager;
+
+  /// The data manager type , that is used by the message interface.
+  DataManagerType dataManagerType;
 };
+
 } // namespace Messages
 
 #endif

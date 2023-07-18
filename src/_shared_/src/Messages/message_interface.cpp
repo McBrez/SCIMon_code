@@ -142,4 +142,8 @@ std::shared_ptr<DeviceMessage> MessageInterface::popMessageQueue() {
 
 bool MessageInterface::messageQueueEmpty() { return this->messageOut.empty(); }
 
+DataManagerType MessageInterface::getDataManagerType() const {
+  return this->dataManagerType;
+}
+
 } // namespace Messages

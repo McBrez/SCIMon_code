@@ -162,8 +162,7 @@ public:
    * @return Pointer to the data manager. May return nullptr, if the given type
    * is not available.
    */
-  static DataManager*
-  getDataManager(DataManagerType dataManagerType);
+  static DataManager *getDataManager(DataManagerType dataManagerType);
 
   /**
    * @brief Creates a key with the given name and data type.
@@ -216,6 +215,8 @@ protected:
   KeyMapping typeMapping;
   /// Holds the mapping from keys to the spectrum frequencies.
   SpectrumMapping spectrumMapping;
+  /// Guard for writes to the data manager.
+  std::mutex dataManagerMutex;
 };
 } // namespace Utilities
 

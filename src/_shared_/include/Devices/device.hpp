@@ -8,9 +8,9 @@
 
 // Project includes
 #include <configuration_payload.hpp>
+
 #include <message_interface.hpp>
 #include <status_payload.hpp>
-#include <data_manager.hpp>
 
 using namespace Messages;
 using namespace Utilities;
@@ -30,7 +30,8 @@ public:
    * @param deviceType The device type of the constructed object.
    * @param dataManagerType The type of datamanager that shall be used.
    */
-    Device(DeviceType deviceType, DataManagerType dataManagerType = DataManagerType::DATAMANAGER_TYPE_HDF);
+  Device(DeviceType deviceType, DataManagerType dataManagerType =
+                                    DataManagerType::DATAMANAGER_TYPE_HDF);
 
   /**
    * Destroys the device object.
@@ -169,9 +170,6 @@ protected:
   /// The id of the response message interface. If this device is started,
   /// messages shall be sent to this object.
   UserId responseId;
-  /// Pointer to the data manager.
-  std::unique_ptr<DataManager> dataManager;
-
 };
 } // namespace Devices
 

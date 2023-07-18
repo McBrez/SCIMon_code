@@ -439,6 +439,8 @@ bool DataManagerHdf::extendingWrite(const std::vector<TimePoint> &timestamp,
     return false;
   }
 
+  this->dataManagerMutex.lock();
+
   size_t extendSize = timestamp.size();
 
   // Extend the dataset, depending on the held data type.
@@ -500,9 +502,11 @@ bool DataManagerHdf::extendingWrite(const std::vector<TimePoint> &timestamp,
   }
 
   else {
+    this->dataManagerMutex.unlock();
     return false;
   }
 
+  this->dataManagerMutex.unlock();
   return true;
 }
 
