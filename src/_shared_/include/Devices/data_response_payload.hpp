@@ -27,7 +27,7 @@ public:
    * @param values The values that shall be held by the payload.
    * @return Vector of pointers to the response payloads.
    */
-  static std::vector<std::shared_ptr<DataResponsePayload>>
+  static std::vector<DataResponsePayload *>
   constructDataResponsePayload(TimePoint from, TimePoint to, std::string key,
                                const std::vector<TimePoint> &timestamps,
                                const std::vector<Value> &values);

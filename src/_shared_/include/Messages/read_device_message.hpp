@@ -24,7 +24,10 @@ enum ReadDeviceTopic {
   READ_TOPIC_FAILED_RESPONSE = 0x02,
 
   /// A device specific message.
-  READ_TOPIC_DEVICE_SPECIFIC_MSG = 0x03
+  READ_TOPIC_DEVICE_SPECIFIC_MSG = 0x03,
+
+  /// Response that contains previously requested data.
+  READ_TOPIC_DATA_RESPONSE = 0x04
 };
 
 /**

@@ -78,10 +78,28 @@ bool Device::write(std::shared_ptr<WriteDeviceMessage> writeMsg) {
         requestedDataPayload->key, timestamps, values);
 
     if (!readSuccess) {
-      LOG(ERROR) << "Read was not successfull. A message, that indicates this, "
-                    "will be returned.";
+
+      LOG(ERROR) << "Read from data manager was not successfull.";
+      return false;
     }
 
+    // Construct payloads from the gathered data.
+    std::vector<DataResponsePayload *> dataResponsePayloads =
+        DataResponsePayload::constructDataResponsePayload(
+            requestedDataPayload->from, requestedDataPayload->to,
+            requestedDataPayload->key, timestamps, values);
+    // Construct messages from the payloads.
+    std::vector<std::shared_ptr<DeviceMessage>> dataResponseMessages;
+    dataResponseMessages.reserve(dataResponsePayloads.size());
+    for (auto responsePayload : dataResponsePayloads) {
+      dataResponseMessages.emplace_back(std::shared_ptr<DeviceMessage>(
+          new ReadDeviceMessage(this->getUserId(), writeMsg->getSource(),
+                                ReadDeviceTopic::READ_TOPIC_DATA_RESPONSE,
+                                responsePayload, writeMsg)));
+    }
+    this->pushMessageQueue(dataResponseMessages);
+
+    return true;
   }
 
   else {

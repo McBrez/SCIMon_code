@@ -1,3 +1,4 @@
+
 #ifndef MESSAGE_INTERFACE_HPP
 #define MESSAGE_INTERFACE_HPP
 
@@ -199,6 +200,12 @@ protected:
    * @param msg The message that shall be pushed to the outgoing message queue.
    */
   void pushMessageQueue(std::shared_ptr<DeviceMessage> msg);
+
+  /**
+   * @brief Pushes multiple messages to the outgoing queue.
+   * @param msg The messages that shall be pushed to the outgoing message queue.
+   */
+  void pushMessageQueue(const std::vector<std::shared_ptr<DeviceMessage>> &msg);
 
   /**
    * @brief Pops a message from the internal message queue.

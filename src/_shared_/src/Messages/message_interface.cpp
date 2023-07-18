@@ -126,6 +126,15 @@ void MessageInterface::pushMessageQueue(std::shared_ptr<DeviceMessage> msg) {
   this->messageOutMutex.unlock();
 }
 
+void MessageInterface::pushMessageQueue(
+    const std::vector<std::shared_ptr<DeviceMessage>> &msg) {
+  this->messageOutMutex.lock();
+  for (auto &singleMsg : msg) {
+    this->messageOut.push(singleMsg);
+  }
+  this->messageOutMutex.unlock();
+}
+
 std::shared_ptr<DeviceMessage> MessageInterface::popMessageQueue() {
   this->messageOutMutex.lock();
   if (!messageQueueEmpty()) {
