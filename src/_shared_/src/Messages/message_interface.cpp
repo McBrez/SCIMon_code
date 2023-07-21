@@ -156,9 +156,49 @@ DataManagerType MessageInterface::getDataManagerType() const {
   return this->dataManager->getDataManagerType();
 }
 
-void MessageInterface::onInitialized(const std::string &dataManagerFileName,
-                                     const KeyMapping &keyMapping) {
-  this->dataManager->open(dataManagerFileName, keyMapping);
+bool MessageInterface::onInitialized(const std::string &dataManagerFileName,
+                                     const KeyMapping &keyMapping,
+                                     const SpectrumMapping &spectrumMapping) {
+  bool openSuccess = this->dataManager->open(dataManagerFileName, keyMapping);
+
+  if (!openSuccess) {
+    return false;
+  }
+
+  for (auto keyValuePair : spectrumMapping) {
+    bool setupSpectrumSuccess = this->dataManager->setupSpectrum(
+        keyValuePair.first, keyValuePair.second);
+    if (!setupSpectrumSuccess) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+bool MessageInterface::onConfigured(const KeyMapping &keyMapping,
+                                    const SpectrumMapping &spectrumMapping) {
+  // Do some sanity checks.
+  if (!this->dataManager->isOpen()) {
+    return false;
+  }
+
+  for (auto keyValuePair : keyMapping) {
+    bool createKeySuccess =
+        this->dataManager->createKey(keyValuePair.first, keyValuePair.second);
+    if (!createKeySuccess) {
+      return false;
+    }
+  }
+  for (auto keyValuePair : spectrumMapping) {
+    bool setupSpectrumSuccess = this->dataManager->setupSpectrum(
+        keyValuePair.first, keyValuePair.second);
+    if (!setupSpectrumSuccess) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 } // namespace Messages

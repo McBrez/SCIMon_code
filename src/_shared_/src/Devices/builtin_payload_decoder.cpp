@@ -90,7 +90,8 @@ BuiltinPayloadDecoder::decodeReadPayload(const std::vector<unsigned char> &data,
       if (Serialization::Devices::DataResponsePayloadValue::
               DataResponsePayloadValue_DataResponsePayloadValueInt ==
           valueUnion.type) {
-        value = Value(valueUnion.AsDataResponsePayloadValueInt()->value);
+        value = Value(static_cast<int>(
+            valueUnion.AsDataResponsePayloadValueInt()->value));
       } else if (Serialization::Devices::DataResponsePayloadValue::
                      DataResponsePayloadValue_DataResponsePayloadValueFloat ==
                  valueUnion.type) {

@@ -458,9 +458,10 @@ bool DeviceIsx3::initialize(std::shared_ptr<InitPayload> initPayload) {
   if (positiveAck) {
     this->deviceState = DeviceStatus::INITIALIZED;
 
-    this->onInitialized(this->getDeviceSerialNumber(), Utilities::KeyMapping{{
-                                                           "impedanceSpectra",
-                                                       }});
+    // Init complete. Call the hook. Do not create any keys yet.
+    this->onInitialized(this->getDeviceSerialNumber(), Utilities::KeyMapping(),
+                        Utilities::SpectrumMapping());
+
     return true;
   } else {
     this->deviceState = DeviceStatus::ERROR;

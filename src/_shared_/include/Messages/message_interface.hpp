@@ -210,12 +210,34 @@ protected:
   /**
    * @brief Hook that is called after initialization has succesfully finished.
    * Has to be called by the sub class after succesfull initialization.
+   * Following actions are executed by onInitialized:
+   * * A datamanager is opened with the given parameters.
    * @param dataManagerFileName The file name for the data manager.
    * @param keyMapping The key mapping that shall be used when opening the data
    * manager.
+   * @param specturmMapping In case a spectrum datatype has been chosen with
+   * keyMapping, spectrumMapping is used to initialize it.
+   * @return TRUE if all actions have been handled successfully. FALSE
+   * otherwise.
    */
-  void onInitialized(const std::string &dataManagerFileName,
-                     const KeyMapping &keyMapping);
+  bool onInitialized(const std::string &dataManagerFileName,
+                     const KeyMapping &keyMapping,
+                     const SpectrumMapping &spectrumMapping);
+
+  /**
+   * @brief Hook that is called after configuration has successfully finished.
+   * Has to be called by the sub class after successfull configuration.
+   * Following actions are executed by onConfigured:
+   * * The dota manager that has been opened with onInitalized() will create
+   * additional keys, that are specified with the given parameters.
+   * @param keyMapping The keys that shall be added to the data manager.
+   * @param spectrumMapping In case keyMapping specified a spectrum datatype,
+   * spectrumMapping has to contain the configuration for it.
+   * @return TRUE if all actions have been handled successfully. FALSE
+   * otherwise.
+   */
+  bool onConfigured(const KeyMapping &keyMapping,
+                    const SpectrumMapping &spectrumMapping);
 
   /**
    * @brief Pops a message from the internal message queue.
