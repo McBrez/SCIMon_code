@@ -38,6 +38,13 @@ public:
    */
   int getMagicNumber() override;
 
+  /**
+   * @brief Builds the data manager key mapping for an isx3 Device. A single key
+   * will be generated in the format "measurement_<timestamp>".
+   * @return
+   */
+  static KeyMapping buildDataManagerKey();
+
   /// maps from channel function to channel number
   std::map<ChannelFunction, int> channel;
   const IsScale scale;

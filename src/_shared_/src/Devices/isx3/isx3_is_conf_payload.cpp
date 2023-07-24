@@ -70,4 +70,14 @@ int Isx3IsConfPayload::getMagicNumber() {
   return MAGIC_NUMBER_ISX3_IS_CONF_PAYLOAD;
 }
 
+KeyMapping buildDataManagerKey() {
+  KeyMapping retVal;
+
+  std::string key = "measurment_" + Core::getTimestampString(Core::getNow());
+
+  retVal[key] = DataManagerDataType::DATAMANAGER_DATA_TYPE_SPECTRUM;
+
+  return retVal;
+}
+
 } // namespace Devices

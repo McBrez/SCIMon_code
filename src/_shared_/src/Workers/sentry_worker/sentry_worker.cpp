@@ -109,8 +109,7 @@ bool SentryWorker::specificWrite(std::shared_ptr<WriteDeviceMessage> writeMsg) {
 
   // Get the payload and try to cast it down according to its magic number.
   std::shared_ptr<Payload> payload = writeMsg->getPayload();
-    if (MAGIC_NUMBER_SET_DEVICE_STATUS_PAYLOAD ==
-           payload->getMagicNumber()) {
+  if (MAGIC_NUMBER_SET_DEVICE_STATUS_PAYLOAD == payload->getMagicNumber()) {
     auto setDeviceStatusPayload =
         dynamic_pointer_cast<SetDeviceStatusPayload>(payload);
     if (!setDeviceStatusPayload) {
@@ -296,6 +295,8 @@ bool SentryWorker::handleResponse(std::shared_ptr<ReadDeviceMessage> response) {
         // accordingly.
         this->initSubState = InitSubState::INIT_SUB_STATE_READY;
         this->workerState = DeviceStatus::INITIALIZED;
+        this->onInitialized(SENTRY_WORKER_TYPE_NAME, Utilities::KeyMapping(),
+                            Utilities::SpectrumMapping());
 
         return true;
       }
@@ -455,6 +456,7 @@ bool SentryWorker::configure(
 
   this->configPayload = sentryConfigPayload;
   this->workerState = DeviceStatus::IDLE;
+  this->onConfigured(Utilities::KeyMapping(), Utilities::SpectrumMapping());
 
   return true;
 }
@@ -467,6 +469,5 @@ bool SentryWorker::write(std::shared_ptr<HandshakeMessage> writeMsg) {
 }
 
 std::string SentryWorker::getWorkerName() { return SENTRY_WORKER_TYPE_NAME; }
-
 
 } // namespace Workers

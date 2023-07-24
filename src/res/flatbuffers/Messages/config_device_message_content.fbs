@@ -61,8 +61,34 @@ union ConfigurationPayload {
     Ob1ConfPayload
 }
 
+enum DataManagerDataType:ubyte {
+  DATAMANAGER_DATA_TYPE_INVALID = 0x00,
+
+  DATAMANAGER_DATA_TYPE_INT = 0x01,
+
+  DATAMANAGER_DATA_TYPE_DOUBLE = 0x02,
+
+  DATAMANAGER_DATA_TYPE_COMPLEX = 0x03,
+
+  DATAMANAGER_DATA_TYPE_STRING = 0x04,
+
+  DATAMANAGER_DATA_TYPE_SPECTRUM = 0x05
+}
+
+table KeyMappingEntry {
+  keys:string;
+  dataTypes:DataManagerDataType;
+}
+
+table SpectrumMappingEntry {
+  key:string;
+  frequencies:[float64];
+}
+
 table ConfigDeviceMessageContent {
     magicNumber:uint;
     responseId:uint;
+    keyMapping:[KeyMappingEntry];
+    spectrumMapping:[SpectrumMappingEntry];
     configurationPayload:[uint8];
 }

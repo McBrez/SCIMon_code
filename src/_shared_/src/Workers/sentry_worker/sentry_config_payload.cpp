@@ -12,7 +12,7 @@ using namespace Workers;
 
 SentryConfigPayload::SentryConfigPayload(SentryWorkerMode sentryWorkerMode,
                                          Duration onTime, Duration offTime)
-    : ConfigurationPayload(DeviceType::UNSPECIFIED),
+    : ConfigurationPayload(DeviceType::UNSPECIFIED, keyMapping),
       sentryWorkerMode(sentryWorkerMode), onTime(onTime), offTime(offTime) {}
 
 std::vector<unsigned char> SentryConfigPayload::bytes() {

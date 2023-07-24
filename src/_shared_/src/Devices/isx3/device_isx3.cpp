@@ -220,7 +220,9 @@ bool DeviceIsx3::configure(
 
   this->configurationFinished = true;
   this->deviceState = DeviceStatus::IDLE;
-  return true;
+
+  return this->onConfigured(deviceConfiguration->getKeyMapping(),
+                            deviceConfiguration->getSpectrumMapping());
 }
 
 bool DeviceIsx3::waitForAck(std::shared_ptr<Isx3CmdAckStruct> ackStruct,

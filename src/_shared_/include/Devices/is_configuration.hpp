@@ -16,6 +16,14 @@ enum IsScale { LINEAR_SCALE = 0x00, LOGARITHMIC_SCALE = 0x01 };
  */
 class IsConfiguration : public ConfigurationPayload {
 public:
+  /**
+   * @brief IsConfiguration
+   * @param frequencyFrom
+   * @param frequencyTo
+   * @param measurementPoints
+   * @param repetitions
+   * @param keyMapping
+   */
   IsConfiguration(double frequencyFrom, double frequencyTo,
                   int measurementPoints, int repetitions);
 
@@ -43,6 +51,12 @@ public:
    * has to be unique among all payload types.
    */
   virtual int getMagicNumber() override;
+
+  /**
+   * @brief Constructs a spectrumMapping from the held data.
+   * @return A spectrum mapping that represents the held configuration data.
+   */
+  SpectrumMapping constructSpectrumMapping() const;
 };
 } // namespace Devices
 

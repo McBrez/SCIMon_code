@@ -2,10 +2,12 @@
 #define CONFIGURATION_PAYLOAD_HPP
 
 // Project includes
+#include <data_manager.hpp>>
 #include <payload.hpp>
 #include <user_id.hpp>
 
 using namespace Messages;
+using namespace Utilities;
 
 namespace Devices {
 /**
@@ -34,11 +36,10 @@ public:
    * @brief Construct a new Device Configuration object
    *
    * @param deviceType The device type this configuration is targeting.
-   * @param targetId The id of the target message interface. This is the message
-   * interface the configured device shall sent messages to, when the device is
-   * started.
    */
-  ConfigurationPayload(DeviceType deviceType);
+  ConfigurationPayload(
+      DeviceType deviceType, const KeyMapping &keyMapping = KeyMapping(),
+      const SpectrumMapping &spectrumMapping = SpectrumMapping());
 
   /**
    * @brief Destroy the Device Configuration object
@@ -51,9 +52,36 @@ public:
    */
   DeviceType getDeviceType();
 
+  KeyMapping getKeyMapping();
+
+  /**
+   * @brief Returns the held spectrum mapping.
+   * @return
+   */
+  SpectrumMapping getSpectrumMapping();
+
+  /**
+   * @brief Sets the specturm mapping, that shall be used when the data manager
+   * of the targeted device is configured.
+   * @param spectrumMapping The spectrum mapping that shall be set.
+   */
+  void setSpectrumMapping(const SpectrumMapping &spectrumMapping);
+
+  /**
+   * @brief Sets the key mapping, that shall be used when the data manager of
+   * the targeted device is configured.
+   * @param keyMapping The key mapping that shall be set.
+   */
+  void setKeyMapping(const KeyMapping &keyMapping);
+
 protected:
   /// The device type this object is targeting.
   DeviceType deviceType;
+  /// Keys for the data manager of the target to be created.
+  KeyMapping keyMapping;
+  /// In case keyMapping specifies an spectrum, this has to hold the spectrum
+  /// configuration.
+  SpectrumMapping spectrumMapping;
 };
 
 } // namespace Devices

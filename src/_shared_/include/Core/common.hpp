@@ -33,6 +33,12 @@ using TimePoint = std::chrono::time_point<std::chrono::system_clock, Duration>;
  */
 TimePoint getNow();
 
+/**
+ * @brief Formats the given timepoint into a string.
+ * @return String representing the given timepoint.
+ */
+std::string getTimestampString(TimePoint timepoints);
+
 const std::string NETWORK_WORKER_TYPE_NAME = "Network Worker";
 const std::string OB1_DEVICE_TYPE_NAME = "Elveflow OB1";
 const std::string ISX3_DEVICE_TYPE_NAME = "Sciospec ISX3";

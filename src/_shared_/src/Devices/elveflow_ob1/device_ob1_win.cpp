@@ -51,11 +51,15 @@ bool DeviceOb1Win::initialize(std::shared_ptr<InitPayload> initPayload) {
     this->initFinished = true;
     this->deviceState = DeviceStatus::INITIALIZED;
     this->ob1DeviceName = ob1InitPayload->getDeviceName();
+    this->onInitialized(this->getDeviceSerialNumber(), Utilities::KeyMapping(),
+                        Utilities::SpectrumMapping());
+
     return true;
   } else {
     // It was not.
     this->initFinished = false;
     this->deviceState = DeviceStatus::UNKNOWN_DEVICE_STATUS;
+
     return false;
   }
 }
@@ -71,6 +75,9 @@ void DeviceOb1Win::configureWorker(
     LOG(INFO) << "Finished calibration of OB1 successfully.";
     this->configurationFinished = true;
     this->deviceState = DeviceStatus::IDLE;
+    this->onConfigured(this->deviceConfiguration->getKeyMapping(),
+                       this->deviceConfiguration->getSpectrumMapping());
+
     return;
   } else {
     LOG(INFO) << "Finished calibration of OB1 with an error.";

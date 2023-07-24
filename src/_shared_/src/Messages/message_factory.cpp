@@ -146,7 +146,37 @@ MessageFactory::encodeMessage(std::shared_ptr<DeviceMessage> msg) {
                 configMsg->getConfiguration()->bytes();
             configDeviceMessageContent.magicNumber =
                 configMsg->getConfiguration()->getMagicNumber();
+            // Parse the key mapping.
+            configDeviceMessageContent.keyMapping.reserve(
+                configMsg->getConfiguration()->getKeyMapping().size());
+            for (auto &keyValuePair :
+                 configMsg->getConfiguration()->getKeyMapping()) {
+              Serialization::Messages::KeyMappingEntryT *entry =
+                  new Serialization::Messages::KeyMappingEntryT();
+              entry->keys = keyValuePair.first;
+              entry->dataTypes =
+                  static_cast<Serialization::Messages::DataManagerDataType>(
+                      keyValuePair.second);
+              configDeviceMessageContent.keyMapping.emplace_back(
+                  std::unique_ptr<Serialization::Messages::KeyMappingEntryT>(
+                      entry));
+            }
+            // Parse the spectrum mapping.
+            configDeviceMessageContent.spectrumMapping.reserve(
+                configMsg->getConfiguration()->getSpectrumMapping().size());
+            for (auto &keyValuePair :
+                 configMsg->getConfiguration()->getSpectrumMapping()) {
+              Serialization::Messages::SpectrumMappingEntryT *entry =
+                  new Serialization::Messages::SpectrumMappingEntryT();
+              entry->key = keyValuePair.first;
+              entry->frequencies = keyValuePair.second;
+              configDeviceMessageContent.spectrumMapping.emplace_back(
+                  std::unique_ptr<
+                      Serialization::Messages::SpectrumMappingEntryT>(entry));
+            }
+
             intermediateObject.content.Set(configDeviceMessageContent);
+
           } else {
             LOG(ERROR)
                 << "Message factory was presented an Unsupported message type.";
@@ -437,13 +467,30 @@ std::shared_ptr<DeviceMessage> MessageFactory::translateMessageContent(
         *configDeviceContent,
     int magicNumber) {
 
-  // Try to parse the payload.
+  // Try to parse the payload ...
+  // ...first, parse the specific parts ...
   ConfigurationPayload *decodedPayload = this->decodeConfigurationPayload(
       configDeviceContent->configurationPayload, magicNumber);
   if (!decodedPayload) {
     // Was not able to decode a read payload from the buffer.
     return std::shared_ptr<DeviceMessage>();
   }
+
+  // ... now parse the more generic parts ...
+  // The key mapping.
+  KeyMapping keyMapping;
+  for (auto &keyMappingEntry : configDeviceContent->keyMapping) {
+    keyMapping[keyMappingEntry->keys] =
+        static_cast<DataManagerDataType>(keyMappingEntry->dataTypes);
+  }
+  decodedPayload->setKeyMapping(keyMapping);
+  // The spectrum mapping.
+  SpectrumMapping spectrumMapping;
+  for (auto &spectrumMappingEntry : configDeviceContent->spectrumMapping) {
+    spectrumMapping[spectrumMappingEntry->key] =
+        spectrumMappingEntry->frequencies;
+  }
+  decodedPayload->setSpectrumMapping(spectrumMapping);
 
   return std::shared_ptr<DeviceMessage>(
       new ConfigDeviceMessage(sourceId, destinationId, decodedPayload,
