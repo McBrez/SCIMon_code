@@ -304,15 +304,25 @@ bool DataManagerHdf::open(std::string name, KeyMapping keyMapping, bool force) {
   }
 
   // Try to create the file.
-  File *file;
+  File *file = nullptr;
   if (force) {
     file = new File(name, File::Truncate);
   } else {
-    file = new File(name, File::Create);
+    // Try to open an existing file.
+    try {
+      file = new File(name, File::ReadWrite);
+    } catch (HighFive::FileException e) {
+      // It seems that the file does not exist. Try to create it.
+      try {
+        file = new File(name, File::Create);
+      } catch (HighFive::FileException e) {
+        // File can not be opened and can not be created. Give up.
+      }
+    }
   }
 
   // Has the file been created?
-  if (!file->isValid()) {
+  if (file != nullptr && !file->isValid()) {
     // Creation has failed. Return here.
     this->openFlag = false;
     delete file;
@@ -364,9 +374,7 @@ bool DataManagerHdf::open(std::string name, KeyMapping keyMapping, bool force) {
                           create_datatype<std::string>(), props);
     } else if (keyValuePair.second == DATAMANAGER_DATA_TYPE_SPECTRUM) {
       // Nothing to do. Datasets will be created in setupSpectrumSpecific().
-    }
-
-    else {
+    } else {
       continue;
     }
 

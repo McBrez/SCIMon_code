@@ -161,4 +161,8 @@ bool DeviceOb1Win::specificWrite(std::shared_ptr<WriteDeviceMessage> writeMsg) {
   }
 }
 
+std::string DeviceOb1Win::getDeviceSerialNumber() {
+  return this->ob1DeviceName;
+}
+
 } // namespace Devices

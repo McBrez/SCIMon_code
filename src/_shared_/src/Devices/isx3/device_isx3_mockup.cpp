@@ -14,6 +14,27 @@
 
 namespace Devices {
 
+std::unique_ptr<std::thread> writeThread;
+bool doWriteThread = false;
+std::vector<double> frequencies;
+void writeThreadWorker(DataManager *dataManager) {
+
+  while (doWriteThread) {
+
+    std::vector<Impedance> impedances;
+    for (auto frequency : frequencies) {
+      impedances.push_back(Impedance(rand(), rand()));
+    }
+    ImpedanceSpectrum impedanceSpectrum;
+    Utilities::joinImpedanceSpectrum(frequencies, impedances,
+                                     impedanceSpectrum);
+    dataManager->write(Core::getNow(), "impedanceSpectrum",
+                       Value(impedanceSpectrum));
+
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+  }
+}
+
 DeviceIsx3::DeviceIsx3()
     : Device(DeviceType::IMPEDANCE_SPECTROMETER),
       socketWrapper(SocketWrapper::getSocketWrapper()),
@@ -23,6 +44,11 @@ DeviceIsx3::~DeviceIsx3() {
   this->doComm = false;
   this->commThread->join();
   this->socketWrapper->close();
+
+  if (doWriteThread) {
+    doWriteThread = false;
+    writeThread->join();
+  }
 };
 
 std::string DeviceIsx3::getDeviceTypeName() { return ISX3_DEVICE_TYPE_NAME; }
@@ -149,10 +175,18 @@ bool DeviceIsx3::configure(
   double frequencyIncrement =
       (isConfiguration->frequencyTo - isConfiguration->frequencyFrom) /
       isConfiguration->measurementPoints;
+  frequencies.clear();
+  frequencies.reserve(isConfiguration->measurementPoints);
   for (int i = 0; i < isConfiguration->measurementPoints; i++) {
     this->frequencyPointMap[i] =
         isConfiguration->frequencyFrom + frequencyIncrement * i;
+    frequencies.push_back(this->frequencyPointMap[i]);
   }
+
+  this->onConfigured(
+      Utilities::KeyMapping{
+          {"mockedImpedanceSpectrum", DATAMANAGER_DATA_TYPE_SPECTRUM}},
+      Utilities::SpectrumMapping{{"mockedImpedanceSpectrum", frequencies}});
 
   this->configurationFinished = true;
   this->deviceState = DeviceStatus::IDLE;
@@ -170,8 +204,14 @@ bool DeviceIsx3::start() {
     LOG(INFO) << "ISX3 started measurement successfully.";
     this->deviceState = DeviceStatus::OPERATING;
 
+    doWriteThread = true;
+    writeThread.reset(
+        new std::thread(Devices::writeThreadWorker, this->dataManager.get()));
+
     return true;
   }
+
+  return false;
 }
 
 bool DeviceIsx3::stop() {
@@ -180,8 +220,16 @@ bool DeviceIsx3::stop() {
     LOG(INFO) << "ISX3 stopped measurement successfully.";
     this->deviceState = DeviceStatus::IDLE;
 
+    doWriteThread = false;
+    if (writeThread) {
+      writeThread->join();
+    }
+    writeThread.reset(nullptr);
+
     return true;
   }
+
+  return false;
 }
 
 bool DeviceIsx3::specificWrite(std::shared_ptr<WriteDeviceMessage> writeMsg) {
@@ -318,6 +366,8 @@ bool DeviceIsx3::initialize(std::shared_ptr<InitPayload> initPayload) {
     return false;
   }
 
+  this->onInitialized("DeviceIsx3Mock.hdf", Utilities::KeyMapping(),
+                      Utilities::SpectrumMapping());
   this->deviceState = DeviceStatus::INITIALIZED;
 
   return true;
@@ -326,6 +376,10 @@ bool DeviceIsx3::initialize(std::shared_ptr<InitPayload> initPayload) {
 bool DeviceIsx3::handleResponse(std::shared_ptr<ReadDeviceMessage> response) {
   // Device does not expect responses. Just return true here.
   return true;
+}
+
+std::string DeviceIsx3::getDeviceSerialNumber() {
+  return this->deviceSerialNumber;
 }
 
 } // namespace Devices

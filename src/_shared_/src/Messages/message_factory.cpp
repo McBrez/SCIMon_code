@@ -11,6 +11,7 @@
 #include <message_factory.hpp>
 #include <read_device_message.hpp>
 #include <utilities.hpp>
+#include <utilities_flatbuffers.hpp>
 #include <write_device_message.hpp>
 
 // 3rd party includes
@@ -478,18 +479,13 @@ std::shared_ptr<DeviceMessage> MessageFactory::translateMessageContent(
 
   // ... now parse the more generic parts ...
   // The key mapping.
-  KeyMapping keyMapping;
-  for (auto &keyMappingEntry : configDeviceContent->keyMapping) {
-    keyMapping[keyMappingEntry->keys] =
-        static_cast<DataManagerDataType>(keyMappingEntry->dataTypes);
-  }
+  KeyMapping keyMapping = Utilities::buildKeyMappingFromFlatbuffers(
+      configDeviceContent->keyMapping);
   decodedPayload->setKeyMapping(keyMapping);
   // The spectrum mapping.
-  SpectrumMapping spectrumMapping;
-  for (auto &spectrumMappingEntry : configDeviceContent->spectrumMapping) {
-    spectrumMapping[spectrumMappingEntry->key] =
-        spectrumMappingEntry->frequencies;
-  }
+  SpectrumMapping spectrumMapping =
+      Utilities::buildSpectrumMappingFromFlatbuffers(
+          configDeviceContent->spectrumMapping);
   decodedPayload->setSpectrumMapping(spectrumMapping);
 
   return std::shared_ptr<DeviceMessage>(

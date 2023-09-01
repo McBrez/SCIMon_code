@@ -88,6 +88,7 @@ target_include_directories(scimon_message PUBLIC
 target_sources(scimon_message PUBLIC
     ${INCLUDE_DIR}/Core/common.hpp
     ${INCLUDE_DIR}/Utilities/utilities.hpp
+    ${INCLUDE_DIR}/Utilities/utilities_flatbuffers.hpp
     ${INCLUDE_DIR}/Utilities/socket_wrapper.hpp
     ${INCLUDE_DIR}/Utilities/data_manager/data_manager.hpp
     ${INCLUDE_DIR}/Utilities/data_manager/data_manager_hdf.hpp
@@ -146,6 +147,7 @@ target_sources(scimon_message PUBLIC
 
     ${SOURCE_DIR}/Core/common.cpp
     ${SOURCE_DIR}/Utilities/utilities.cpp
+    ${SOURCE_DIR}/Utilities/utilities_flatbuffers.cpp
     ${SOURCE_DIR}/Utilities/socket_wrapper.cpp
     ${SOURCE_DIR}/Utilities/win_socket.cpp
     ${SOURCE_DIR}/Utilities/data_manager/data_manager.cpp

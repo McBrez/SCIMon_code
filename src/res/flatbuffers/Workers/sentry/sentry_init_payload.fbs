@@ -1,7 +1,12 @@
+include "config_device_message_content.fbs";
+
 namespace Serialization.Workers;
 
 table NestedPayload {
     magicNumber:uint;
+    responseId:uint;
+    keyMapping:[Serialization.Messages.KeyMappingEntry];
+    spectrumMapping:[Serialization.Messages.SpectrumMappingEntry];
     payload:[uint8];
 }
 

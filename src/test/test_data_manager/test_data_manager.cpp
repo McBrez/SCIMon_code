@@ -401,7 +401,7 @@ TEST_CASE("Benchmark single read") {
   keyMapping["double"] = DataManagerDataType::DATAMANAGER_DATA_TYPE_DOUBLE;
   keyMapping["string"] = DataManagerDataType::DATAMANAGER_DATA_TYPE_STRING;
   keyMapping["complex"] = DataManagerDataType::DATAMANAGER_DATA_TYPE_COMPLEX;
-  keyMapping["spectrum"] = DataManagerDataType::DATAMANAGER_DATA_TYPE_COMPLEX;
+  keyMapping["spectrum"] = DataManagerDataType::DATAMANAGER_DATA_TYPE_SPECTRUM;
   std::vector<double> testFrequencies{1.0,     10.0,     100.0,    1000.0,
                                       10000.0, 100000.0, 1000000.0};
   std::vector<Impedance> testImpedances{{1.0, 2.0},  {3.0, 4.0},  {5.0, 6.0},

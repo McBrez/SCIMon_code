@@ -45,7 +45,7 @@ bool ControlWorker::stop() {
       this->controlWorkerSubState !=
           ControlWorkerSubState::CONTROL_WORKER_SUBSTATE_REMOTE_RUNNING) {
 
-    // Send the start message to the remote end and adjust status.
+    // Send the stop message to the remote end and adjust status.
     this->controlWorkerSubState =
         ControlWorkerSubState::CONTROL_WORKER_SUBSTATE_REMOTE_STOPPED;
     this->pushMessageQueue(std::shared_ptr<DeviceMessage>(

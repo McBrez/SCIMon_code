@@ -228,7 +228,7 @@ protected:
    * @brief Hook that is called after configuration has successfully finished.
    * Has to be called by the sub class after successfull configuration.
    * Following actions are executed by onConfigured:
-   * * The dota manager that has been opened with onInitalized() will create
+   * The dota manager that has been opened with onInitalized() will create
    * additional keys, that are specified with the given parameters.
    * @param keyMapping The keys that shall be added to the data manager.
    * @param spectrumMapping In case keyMapping specified a spectrum datatype,

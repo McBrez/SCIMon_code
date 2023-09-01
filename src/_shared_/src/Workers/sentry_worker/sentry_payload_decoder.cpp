@@ -4,6 +4,7 @@
 #include <sentry_config_payload.hpp>
 #include <sentry_init_payload.hpp>
 #include <sentry_payload_decoder.hpp>
+#include <utilities_flatbuffers.hpp>>
 
 // 3rd party includes
 #include <flatbuffers/flatbuffers.h>
@@ -35,6 +36,12 @@ SentryPayloadDecoder::decodeInitPayload(const std::vector<unsigned char> &data,
         MessageFactory::getInstace()->decodeConfigurationPayload(
             sentryInitPayload->pumpControllerConfPayload->payload,
             sentryInitPayload->pumpControllerConfPayload->magicNumber);
+    pumpControllerConfigPayload->setKeyMapping(
+        Utilities::buildKeyMappingFromFlatbuffers(
+            sentryInitPayload->pumpControllerConfPayload->keyMapping));
+    pumpControllerConfigPayload->setSpectrumMapping(
+        Utilities::buildSpectrumMappingFromFlatbuffers(
+            sentryInitPayload->pumpControllerConfPayload->spectrumMapping));
 
     InitPayload *isInitPayload =
         MessageFactory::getInstace()->decodeInitPayload(
@@ -44,6 +51,12 @@ SentryPayloadDecoder::decodeInitPayload(const std::vector<unsigned char> &data,
         MessageFactory::getInstace()->decodeConfigurationPayload(
             sentryInitPayload->impedanceSpectrometerConfPayload->payload,
             sentryInitPayload->impedanceSpectrometerConfPayload->magicNumber);
+    isConfigPayload->setKeyMapping(Utilities::buildKeyMappingFromFlatbuffers(
+        sentryInitPayload->impedanceSpectrometerConfPayload->keyMapping));
+    isConfigPayload->setSpectrumMapping(
+        Utilities::buildSpectrumMappingFromFlatbuffers(
+            sentryInitPayload->impedanceSpectrometerConfPayload
+                ->spectrumMapping));
 
     return new SentryInitPayload(isInitPayload, isConfigPayload,
                                  pumpControllerInitPayload,
