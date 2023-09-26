@@ -18,17 +18,17 @@ std::unique_ptr<std::thread> writeThread;
 bool doWriteThread = false;
 std::vector<double> frequencies;
 void writeThreadWorker(DataManager *dataManager) {
-
+  static double counter = 0.0;
   while (doWriteThread) {
 
     std::vector<Impedance> impedances;
     for (auto frequency : frequencies) {
-      impedances.push_back(Impedance(rand(), rand()));
+      impedances.push_back(Impedance(++counter, ++counter));
     }
     ImpedanceSpectrum impedanceSpectrum;
     Utilities::joinImpedanceSpectrum(frequencies, impedances,
                                      impedanceSpectrum);
-    dataManager->write(Core::getNow(), "impedanceSpectrum",
+    dataManager->write(Core::getNow(), "mockedImpedanceSpectrum",
                        Value(impedanceSpectrum));
 
     std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -88,66 +88,6 @@ DeviceIsx3::pushToSendBuffer(const std::vector<unsigned char> &bytes) {
   return ackStruct;
 }
 
-void DeviceIsx3::commThreadWorker() {
-
-  while (this->doComm) {
-    if (ISX3_COMM_THREAD_STATE_INVALID == this->isx3CommThreadState) {
-      LOG(ERROR) << "ISX3 Communication thread transitioned into invalid "
-                    "state. Communication thread is shutting down.";
-      this->doComm = false;
-    }
-
-    else if (ISX3_COMM_THREAD_STATE_INIT == this->isx3CommThreadState) {
-      LOG(INFO) << "Worker thread is initializing.";
-
-      // Clear all buffers and transition into init.
-      this->sendBuffer.clear();
-      this->socketWrapper->clear();
-      this->isx3CommThreadState = ISX3_COMM_THREAD_STATE_LISTENING;
-    }
-
-    else if (ISX3_COMM_THREAD_STATE_LISTENING == this->isx3CommThreadState) {
-      // If the device is currently started, generate an impedance spectrum.
-      if (this->deviceState == DeviceStatus::OPERATING) {
-
-        // Generate the impedance spectrum and the corresponding IsPayload.
-        ImpedanceSpectrum isSpectrum;
-        auto isConfig =
-            dynamic_pointer_cast<IsConfiguration>(this->deviceConfiguration);
-        double stepSize = (isConfig->frequencyTo - isConfig->frequencyFrom) /
-                          isConfig->measurementPoints;
-        for (int i = 0; i < isConfig->measurementPoints; i++) {
-          double freq = isConfig->frequencyFrom + i * stepSize;
-          isSpectrum.push_back(
-              std::make_tuple(freq, Impedance(5000.0, 5000.0)));
-        }
-
-        std::shared_ptr<ReadPayload> isPayload(new IsPayload(
-            1,
-            static_cast<double>(
-                std::chrono::system_clock::now().time_since_epoch().count()),
-            isSpectrum));
-
-        this->pushMessageQueue(
-            std::shared_ptr<DeviceMessage>(new ReadDeviceMessage(
-                this->getUserId(), this->responseId,
-                ReadDeviceTopic::READ_TOPIC_DEVICE_SPECIFIC_MSG, isPayload,
-                this->startMessageCache)));
-      }
-    }
-
-    else {
-      // Unknown state. Transition back to ISX3_COMM_THREAD_STATE_INVALID.
-      LOG(ERROR)
-          << "Unknown worker thread state. Worker thred is shutting down.";
-      this->isx3CommThreadState = ISX3_COMM_THREAD_STATE_INVALID;
-    }
-  }
-
-  LOG(INFO) << "Worker thread is shutting down.";
-  this->isx3CommThreadState = ISX3_COMM_THREAD_STATE_CLOSED;
-}
-
 bool DeviceIsx3::configure(
     std::shared_ptr<ConfigurationPayload> deviceConfiguration) {
 
@@ -190,6 +130,8 @@ bool DeviceIsx3::configure(
 
   this->configurationFinished = true;
   this->deviceState = DeviceStatus::IDLE;
+  this->deviceConfiguration = deviceConfiguration;
+
   return true;
 }
 
@@ -225,6 +167,8 @@ bool DeviceIsx3::stop() {
       writeThread->join();
     }
     writeThread.reset(nullptr);
+
+    this->dataManager->close();
 
     return true;
   }
@@ -339,32 +283,6 @@ bool DeviceIsx3::initialize(std::shared_ptr<InitPayload> initPayload) {
 
   this->initPayload = isx3InitPayload;
   this->deviceState = DeviceStatus::INITIALIZING;
-
-  // Initialize thread.
-  this->isx3CommThreadState = ISX3_COMM_THREAD_STATE_INIT;
-  this->doComm = true;
-  this->commThread = std::unique_ptr<std::thread>(
-      new std::thread(&DeviceIsx3::commThreadWorker, this));
-
-  // Wait until communication thread is std::listening.
-  int retryCounter = 0;
-  bool threadInitialized = false;
-  while (retryCounter < 100) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    if (this->isx3CommThreadState == ISX3_COMM_THREAD_STATE_LISTENING) {
-      threadInitialized = true;
-      break;
-    }
-    retryCounter++;
-  }
-  if (!threadInitialized) {
-    // Thread was not able to initialize. Abort here.
-    this->doComm = false;
-    this->socketWrapper->close();
-    this->deviceState = DeviceStatus::ERROR;
-    LOG(ERROR) << "ISX3 COMM thread was not able to initialize.";
-    return false;
-  }
 
   this->onInitialized("DeviceIsx3Mock.hdf", Utilities::KeyMapping(),
                       Utilities::SpectrumMapping());

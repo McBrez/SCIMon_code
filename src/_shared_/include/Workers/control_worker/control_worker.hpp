@@ -33,7 +33,7 @@ enum ControlWorkerSubState {
   CONTROL_WORKER_SUBSTATE_CONF_REMOTE = 0x06,
   /// Remote host is currently running.
   CONTROL_WORKER_SUBSTATE_REMOTE_RUNNING = 0x07,
-  /// Remot host is currently stopped.
+  /// Remote host is currently stopped.
   CONTROL_WORKER_SUBSTATE_REMOTE_STOPPED = 0x08
 };
 
@@ -132,6 +132,14 @@ public:
    * @return A list containing the states of the remote workers.
    */
   std::list<std::shared_ptr<StatusPayload>> getRemoteStatus();
+
+  /**
+   * @brief Sets the enabled state of an remote device/worker.
+   * @param remoteId The id of the remote device/worker.
+   * @param state The state that shall be set.
+   * @return Whether the corresponding message has been sent.
+   */
+  bool setRemoteWorkerState(UserId remoteId, bool state);
 
 private:
   /**

@@ -38,13 +38,13 @@ set_target_properties(control PROPERTIES
 set_property(TARGET sentry PROPERTY CXX_STANDARD 20)
 
 # Add some defines
-#target_compile_definitions(control
+target_compile_definitions(control
     # Undefine a WIN function, that would otherwise clash with flatbuffers.
-    # PUBLIC NOMINMAX=1  
+    PUBLIC NOMINMAX=1
     # Make easylogging++ thread safe
-    # PUBLIC ELPP_THREAD_SAFE  
-    # PUBLIC ELPP_FORCE_USE_STD_THREAD
-# )
+    PUBLIC ELPP_THREAD_SAFE
+    PUBLIC ELPP_FORCE_USE_STD_THREAD
+)
 
 
 # Enforce C++20

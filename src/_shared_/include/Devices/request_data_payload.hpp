@@ -11,7 +11,7 @@ using namespace Utilities;
 namespace Devices {
 
 /**
- * @brief Base class for a write data package.
+ * @brief A payload that requests data from a message interface.
  */
 class RequestDataPayload : public WritePayload {
 public:
@@ -21,7 +21,7 @@ public:
    * @param to THe end of the queried timeframe.
    * @param key The key that shall be queried.
    */
-    RequestDataPayload(TimePoint from, TimePoint to, const std::string &key);
+  RequestDataPayload(TimePoint from, TimePoint to, const std::string &key);
 
   /**
    * @brief Destroy the ReadPayload object.

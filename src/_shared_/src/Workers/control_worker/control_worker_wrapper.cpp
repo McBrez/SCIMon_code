@@ -162,3 +162,59 @@ void ControlWorkerWrapper::startConfig() {
 void ControlWorkerWrapper::start() { this->controlWorker->start(); }
 
 void ControlWorkerWrapper::stop() { this->controlWorker->stop(); }
+
+void ControlWorkerWrapper::start_isx3() {
+  // Find the ISX3 device.
+  std::list<std::shared_ptr<StatusPayload>> statusList =
+      this->controlWorker->getRemoteStatus();
+
+  for (auto it : statusList) {
+    if (it->getDeviceType() == DeviceType::IMPEDANCE_SPECTROMETER) {
+      this->controlWorker->setRemoteWorkerState(it->getDeviceId(), true);
+
+      return;
+    }
+  }
+}
+
+void ControlWorkerWrapper::stop_isx3() {
+  // Find the ISX3 device.
+  std::list<std::shared_ptr<StatusPayload>> statusList =
+      this->controlWorker->getRemoteStatus();
+
+  for (auto it : statusList) {
+    if (it->getDeviceType() == DeviceType::IMPEDANCE_SPECTROMETER) {
+      this->controlWorker->setRemoteWorkerState(it->getDeviceId(), false);
+
+      return;
+    }
+  }
+}
+
+void ControlWorkerWrapper::start_ob1() {
+  // Find the OB1 device.
+  std::list<std::shared_ptr<StatusPayload>> statusList =
+      this->controlWorker->getRemoteStatus();
+
+  for (auto it : statusList) {
+    if (it->getDeviceType() == DeviceType::PUMP_CONTROLLER) {
+      this->controlWorker->setRemoteWorkerState(it->getDeviceId(), true);
+
+      return;
+    }
+  }
+}
+
+void ControlWorkerWrapper::stop_ob1() {
+  // Find the OB1 device.
+  std::list<std::shared_ptr<StatusPayload>> statusList =
+      this->controlWorker->getRemoteStatus();
+
+  for (auto it : statusList) {
+    if (it->getDeviceType() == DeviceType::PUMP_CONTROLLER) {
+      this->controlWorker->setRemoteWorkerState(it->getDeviceId(), false);
+
+      return;
+    }
+  }
+}

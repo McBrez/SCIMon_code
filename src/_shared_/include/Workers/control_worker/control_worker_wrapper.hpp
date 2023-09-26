@@ -66,6 +66,14 @@ public slots:
    */
   void stop();
 
+  void start_isx3();
+
+  void stop_isx3();
+
+  void start_ob1();
+
+  void stop_ob1();
+
   /**
    * @brief Converts the given enum value to a QString.
    * @param subState The enum value that shall be converted to a string.

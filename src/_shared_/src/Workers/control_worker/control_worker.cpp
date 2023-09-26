@@ -22,13 +22,14 @@ void ControlWorker::work(TimePoint timestamp) {}
 
 bool ControlWorker::start() {
   // Check if control worker is in correct state.
-  if (this->workerState != DeviceStatus::IDLE ||
-      this->controlWorkerSubState !=
-          ControlWorkerSubState::CONTROL_WORKER_SUBSTATE_REMOTE_STOPPED) {
+  if (this->workerState == DeviceStatus::IDLE &&
+      this->controlWorkerSubState ==
+          ControlWorkerSubState::CONTROL_WORKER_SUBSTATE_CONF_REMOTE) {
 
     // Send the start message to the remote end and adjust status.
     this->controlWorkerSubState =
         ControlWorkerSubState::CONTROL_WORKER_SUBSTATE_REMOTE_RUNNING;
+    this->workerState = DeviceStatus::OPERATING;
     this->pushMessageQueue(std::shared_ptr<DeviceMessage>(
         new WriteDeviceMessage(this->getUserId(), this->getSentryId(),
                                WriteDeviceTopic::WRITE_TOPIC_RUN)));
@@ -41,13 +42,11 @@ bool ControlWorker::start() {
 
 bool ControlWorker::stop() {
   // Check if control worker is in correct state.
-  if (this->workerState != DeviceStatus::IDLE ||
-      this->controlWorkerSubState !=
-          ControlWorkerSubState::CONTROL_WORKER_SUBSTATE_REMOTE_RUNNING) {
-
+  if (this->workerState == DeviceStatus::OPERATING) {
     // Send the stop message to the remote end and adjust status.
     this->controlWorkerSubState =
         ControlWorkerSubState::CONTROL_WORKER_SUBSTATE_REMOTE_STOPPED;
+    this->workerState = DeviceStatus::IDLE;
     this->pushMessageQueue(std::shared_ptr<DeviceMessage>(
         new WriteDeviceMessage(this->getUserId(), this->getSentryId(),
                                WriteDeviceTopic::WRITE_TOPIC_STOP)));
@@ -95,11 +94,11 @@ bool ControlWorker::configure(
     return false;
   }
 
-  LOG(INFO) << "Control Worker is configuring";
-  this->workerState = DeviceStatus::CONFIGURING;
+  LOG(INFO) << "Control Worker has been configured";
+  this->workerState = DeviceStatus::IDLE;
   this->controlWorkerSubState = CONTROL_WORKER_SUBSTATE_WAITING_FOR_CONNECTION;
 
-  return false;
+  return true;
 }
 
 bool ControlWorker::write(std::shared_ptr<HandshakeMessage> writeMsg) {
@@ -233,6 +232,8 @@ bool ControlWorker::handleResponse(
           this->pushMessageQueue(std::shared_ptr<DeviceMessage>(
               new ConfigDeviceMessage(this->getUserId(), this->getSentryId(),
                                       this->remoteConfigPayload)));
+          this->controlWorkerSubState =
+              ControlWorkerSubState::CONTROL_WORKER_SUBSTATE_CONF_REMOTE;
 
           return true;
         }
@@ -241,6 +242,8 @@ bool ControlWorker::handleResponse(
 
     else if (ControlWorkerSubState::CONTROL_WORKER_SUBSTATE_CONF_REMOTE ==
              this->controlWorkerSubState) {
+      // Handle the status response.
+      this->handleStatusPayload(response);
     }
 
     else {
@@ -248,6 +251,10 @@ bool ControlWorker::handleResponse(
           << "Control worker does not expect responses in the current state.";
       return false;
     }
+  }
+
+  else if (DeviceStatus::OPERATING == this->workerState) {
+    this->handleStatusPayload(response);
   }
 
   else {
@@ -376,8 +383,8 @@ bool ControlWorker::handleStatusPayload(
     return false;
   }
 
-  // If device, the status payload originates from, is already known, replace
-  // the entry, otherwise add an entry.
+  // If the device, the status payload originates from, is already known,
+  // replace the entry, otherwise add an entry.
   auto it = std::find_if(
       this->remoteStatus.begin(), this->remoteStatus.end(),
       [statusPayload](std::shared_ptr<StatusPayload> currRemoteStatus) {
@@ -390,5 +397,15 @@ bool ControlWorker::handleStatusPayload(
     *it = statusPayload;
   }
 
+  return true;
+}
+
+bool ControlWorker::setRemoteWorkerState(UserId remoteId, bool state) {
+  // TODO: Do some sanity checks here.
+
+  WriteDeviceTopic enableState = state ? WriteDeviceTopic::WRITE_TOPIC_RUN
+                                       : WriteDeviceTopic::WRITE_TOPIC_STOP;
+  this->pushMessageQueue(std::shared_ptr<DeviceMessage>(
+      new WriteDeviceMessage(this->getUserId(), remoteId, enableState)));
   return true;
 }

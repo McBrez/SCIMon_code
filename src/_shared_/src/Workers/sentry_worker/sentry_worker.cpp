@@ -39,7 +39,6 @@ void SentryWorker::work(TimePoint timestamp) {
     // Decide what to do, according to the configured state.
     if (SentryWorkerMode::SENTRY_WORKER_MODE_MANUAL ==
         this->configPayload->sentryWorkerMode) {
-
       // Nothing to do.
     }
 

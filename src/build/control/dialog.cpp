@@ -43,6 +43,18 @@ Dialog::Dialog(QWidget *parent)
                    &this->controlWorkerWrapper, &ControlWorkerWrapper::start);
   QObject::connect(this->ui->btn_stop, &QPushButton::clicked,
                    &this->controlWorkerWrapper, &ControlWorkerWrapper::stop);
+  QObject::connect(this->ui->btn_start_isx3, &QPushButton::clicked,
+                   &this->controlWorkerWrapper,
+                   &ControlWorkerWrapper::start_isx3);
+  QObject::connect(this->ui->btn_stop_isx3, &QPushButton::clicked,
+                   &this->controlWorkerWrapper,
+                   &ControlWorkerWrapper::stop_isx3);
+  QObject::connect(this->ui->btn_start_ob1, &QPushButton::clicked,
+                   &this->controlWorkerWrapper,
+                   &ControlWorkerWrapper::start_ob1);
+  QObject::connect(this->ui->btn_stop_ob1, &QPushButton::clicked,
+                   &this->controlWorkerWrapper,
+                   &ControlWorkerWrapper::stop_ob1);
 
   this->controlWorkerWrapper.startStateQuery();
 }

@@ -1,4 +1,8 @@
-#include <easylogging++.h>>
+// Standard includes
+#include <filesystem>
+
+// 3rd-party includes
+#include <easylogging++.h>
 
 // Project includes
 #include <data_manager_hdf.hpp>
@@ -305,23 +309,35 @@ bool DataManagerHdf::open(std::string name, KeyMapping keyMapping, bool force) {
 
   // Try to create the file.
   File *file = nullptr;
+  bool createdFile = false;
   if (force) {
+    // Just truncate the file.
     file = new File(name, File::Truncate);
+    createdFile = true;
   } else {
-    // Try to open an existing file.
-    try {
-      file = new File(name, File::ReadWrite);
-    } catch (HighFive::FileException e) {
-      // It seems that the file does not exist. Try to create it.
+
+    if (std::filesystem::exists(name)) {
+      // The file exists. Try to open the file.
       try {
-        file = new File(name, File::Create);
+        file = new File(name, File::ReadWrite);
+        createdFile = false;
       } catch (HighFive::FileException e) {
-        // File can not be opened and can not be created. Give up.
+        // For some reason, the file could not be opened. Rename the existing
+        // file and create a new one.
+        std::filesystem::rename(name,
+                                std::format("{:%Y%m%d%H%M}", Core::getNow()) +
+                                    "_broken_" + name);
+        file = new File(name, File::Create);
+        createdFile = true;
       }
+    } else {
+      // Create the file.
+      file = new File(name, File::Create);
+      createdFile = true;
     }
   }
 
-  // Has the file been created?
+  // Has the file been created successfully?
   if (file != nullptr && !file->isValid()) {
     // Creation has failed. Return here.
     this->openFlag = false;
@@ -333,63 +349,84 @@ bool DataManagerHdf::open(std::string name, KeyMapping keyMapping, bool force) {
   this->hdfFile.reset(file);
   this->openFlag = true;
 
-  // Create the hierarchy. First, create the struture that holds the values ...
-  // Use chunking
-  DataSetCreateProps props;
-  props.add(Chunking(std::vector<hsize_t>{1024, 1}));
-  // ... now iterate over the typemapping to create the structures for the data
-  // fields and to write into the key/types fields.
-  std::vector<std::string> keys;
-  std::vector<int> types;
-  for (auto keyValuePair : keyMapping) {
-    // Create the dataset for the data.
-    if (keyValuePair.second == DATAMANAGER_DATA_TYPE_INVALID) {
-      continue;
-    } else if (keyValuePair.second == DATAMANAGER_DATA_TYPE_INT) {
-      DataSpace dataspace = DataSpace({0, 1}, {DataSpace::UNLIMITED, 1});
-      file->createDataSet("/data/" + keyValuePair.first + "/timestamps",
-                          dataspace, create_datatype<long long>(), props);
-      file->createDataSet("/data/" + keyValuePair.first + "/values", dataspace,
-                          create_datatype<int>(), props);
-    } else if (keyValuePair.second == DATAMANAGER_DATA_TYPE_DOUBLE) {
-      DataSpace dataspace = DataSpace({0, 1}, {DataSpace::UNLIMITED, 1});
-      file->createDataSet("/data/" + keyValuePair.first + "/timestamps",
-                          dataspace, create_datatype<long long>(), props);
-      file->createDataSet("/data/" + keyValuePair.first + "/values", dataspace,
-                          create_datatype<double>(), props);
-    } else if (keyValuePair.second == DATAMANAGER_DATA_TYPE_COMPLEX) {
-      DataSpace dataspaceTimestamps =
-          DataSpace({0, 1}, {DataSpace::UNLIMITED, 1});
-      DataSpace dataspaceValue = DataSpace({0, 2}, {DataSpace::UNLIMITED, 2});
-      file->createDataSet("/data/" + keyValuePair.first + "/timestamps",
-                          dataspaceTimestamps, create_datatype<long long>(),
-                          props);
-      file->createDataSet("/data/" + keyValuePair.first + "/values",
-                          dataspaceValue, create_datatype<double>(), props);
-    } else if (keyValuePair.second == DATAMANAGER_DATA_TYPE_STRING) {
-      DataSpace dataspace = DataSpace({0, 1}, {DataSpace::UNLIMITED, 1});
-      file->createDataSet("/data/" + keyValuePair.first + "/timestamps",
-                          dataspace, create_datatype<long long>(), props);
-      file->createDataSet("/data/" + keyValuePair.first + "/values", dataspace,
-                          create_datatype<std::string>(), props);
-    } else if (keyValuePair.second == DATAMANAGER_DATA_TYPE_SPECTRUM) {
-      // Nothing to do. Datasets will be created in setupSpectrumSpecific().
-    } else {
-      continue;
+  // If the file has been newely created, the hierarchy has to be created.
+  // Otherwise, the key mapping has to be read from the file.
+  if (createdFile) {
+    // Create the hierarchy. First, create the struture that holds the values
+    // ... Use chunking
+    DataSetCreateProps props;
+    props.add(Chunking(std::vector<hsize_t>{1024, 1}));
+    // ... now iterate over the typemapping to create the structures for the
+    // data fields and to write into the key/types fields.
+    std::vector<std::string> keys;
+    std::vector<int> types;
+    for (auto keyValuePair : keyMapping) {
+      // Create the dataset for the data.
+      if (keyValuePair.second == DATAMANAGER_DATA_TYPE_INVALID) {
+        continue;
+      } else if (keyValuePair.second == DATAMANAGER_DATA_TYPE_INT) {
+        DataSpace dataspace = DataSpace({0, 1}, {DataSpace::UNLIMITED, 1});
+        file->createDataSet("/data/" + keyValuePair.first + "/timestamps",
+                            dataspace, create_datatype<long long>(), props);
+        file->createDataSet("/data/" + keyValuePair.first + "/values",
+                            dataspace, create_datatype<int>(), props);
+      } else if (keyValuePair.second == DATAMANAGER_DATA_TYPE_DOUBLE) {
+        DataSpace dataspace = DataSpace({0, 1}, {DataSpace::UNLIMITED, 1});
+        file->createDataSet("/data/" + keyValuePair.first + "/timestamps",
+                            dataspace, create_datatype<long long>(), props);
+        file->createDataSet("/data/" + keyValuePair.first + "/values",
+                            dataspace, create_datatype<double>(), props);
+      } else if (keyValuePair.second == DATAMANAGER_DATA_TYPE_COMPLEX) {
+        DataSpace dataspaceTimestamps =
+            DataSpace({0, 1}, {DataSpace::UNLIMITED, 1});
+        DataSpace dataspaceValue = DataSpace({0, 2}, {DataSpace::UNLIMITED, 2});
+        file->createDataSet("/data/" + keyValuePair.first + "/timestamps",
+                            dataspaceTimestamps, create_datatype<long long>(),
+                            props);
+        file->createDataSet("/data/" + keyValuePair.first + "/values",
+                            dataspaceValue, create_datatype<double>(), props);
+      } else if (keyValuePair.second == DATAMANAGER_DATA_TYPE_STRING) {
+        DataSpace dataspace = DataSpace({0, 1}, {DataSpace::UNLIMITED, 1});
+        file->createDataSet("/data/" + keyValuePair.first + "/timestamps",
+                            dataspace, create_datatype<long long>(), props);
+        file->createDataSet("/data/" + keyValuePair.first + "/values",
+                            dataspace, create_datatype<std::string>(), props);
+      } else if (keyValuePair.second == DATAMANAGER_DATA_TYPE_SPECTRUM) {
+        // Nothing to do. Datasets will be created in setupSpectrumSpecific().
+      } else {
+        continue;
+      }
+
+      keys.push_back(keyValuePair.first);
+      types.push_back(static_cast<int>(keyValuePair.second));
     }
 
-    keys.push_back(keyValuePair.first);
-    types.push_back(static_cast<int>(keyValuePair.second));
-  }
+    // Write the mapping entry.
+    DataSet dataSetKeys = file->createDataSet(
+        "/struct/keys", DataSpace::From(keys), create_datatype<std::string>());
+    dataSetKeys.write(keys);
+    DataSet dataSetTypes = file->createDataSet(
+        "/struct/types", DataSpace::From(types), create_datatype<int>());
+    dataSetTypes.write(types);
+    this->typeMapping = keyMapping;
 
-  // Write the mapping entry.
-  DataSet dataSetKeys = file->createDataSet(
-      "/struct/keys", DataSpace::From(keys), create_datatype<std::string>());
-  dataSetKeys.write(keys);
-  DataSet dataSetTypes = file->createDataSet(
-      "/struct/types", DataSpace::From(types), create_datatype<int>());
-  dataSetTypes.write(types);
-  this->typeMapping = keyMapping;
+  } else {
+    // Read the structure.
+    DataSet dataSetKeys = file->getDataSet("/struct/keys");
+    std::vector<std::string> keys;
+    dataSetKeys.read(keys);
+    DataSet dataSetTypes = file->getDataSet("/struct/types");
+    std::vector<int> types;
+    dataSetTypes.read(types);
+
+    if (keys.size() != types.size()) {
+      return false;
+    }
+
+    for (int i = 0; i < keys.size(); i++) {
+      this->typeMapping[keys[i]] = static_cast<DataManagerDataType>(types[i]);
+    }
+  }
 
   return true;
 }
@@ -515,6 +552,7 @@ bool DataManagerHdf::extendingWrite(const std::vector<TimePoint> &timestamp,
   }
 
   this->dataManagerMutex.unlock();
+  this->hdfFile->flush();
   return true;
 }
 
@@ -582,6 +620,7 @@ bool DataManagerHdf::createKey(std::string key, DataManagerDataType dataType) {
   typeDataset.read(types);
   types.push_back(static_cast<int>(dataType));
   typeDataset.write(types);
+  this->hdfFile->flush();
 
   return true;
 }
@@ -637,6 +676,7 @@ bool DataManagerHdf::setupSpectrumSpecific(std::string key,
       create_datatype<double>());
 
   datasetSpectrumMapping.write(frequencies);
+  this->hdfFile->flush();
 
   return true;
 }

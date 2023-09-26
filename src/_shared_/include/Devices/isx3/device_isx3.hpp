@@ -126,11 +126,6 @@ public:
 
 private:
   /**
-   * @brief Worker function for the communication thread.
-   */
-  void commThreadWorker();
-
-  /**
    * @brief Pushes the given COM Interface dataframe to the send buffer.
    * @param bytes The bytes that shall be pushed to the send buffer.
    * @return A reference to the sent frame.
