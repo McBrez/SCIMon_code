@@ -310,29 +310,31 @@ bool DataManagerHdf::open(std::string name, KeyMapping keyMapping, bool force) {
   // Try to create the file.
   File *file = nullptr;
   bool createdFile = false;
+  std::string nameExtension = name + ".hdf";
   if (force) {
     // Just truncate the file.
-    file = new File(name, File::Truncate);
+    file = new File(nameExtension, File::Truncate);
     createdFile = true;
   } else {
 
-    if (std::filesystem::exists(name)) {
+    if (std::filesystem::exists(nameExtension)) {
       // The file exists. Try to open the file.
       try {
-        file = new File(name, File::ReadWrite);
+        file = new File(nameExtension, File::ReadWrite);
         createdFile = false;
       } catch (HighFive::FileException e) {
         // For some reason, the file could not be opened. Rename the existing
         // file and create a new one.
-        std::filesystem::rename(name,
+        // TODO: Attempt repair here.
+        std::filesystem::rename(nameExtension,
                                 std::format("{:%Y%m%d%H%M}", Core::getNow()) +
-                                    "_broken_" + name);
-        file = new File(name, File::Create);
+                                    "_broken_" + nameExtension);
+        file = new File(nameExtension, File::Create);
         createdFile = true;
       }
     } else {
       // Create the file.
-      file = new File(name, File::Create);
+      file = new File(nameExtension, File::Create);
       createdFile = true;
     }
   }

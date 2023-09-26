@@ -70,7 +70,8 @@ public:
   /**
    * @brief Tries to open an already existing data base.
    *F
-   * @param name The name of the data base, that shall be opened.
+   * @param name The name of the data base, that shall be opened (without file
+   * extension).
    * @return TRUE if a database has been opened. False otherwise.
    */
   virtual bool open(std::string name) override;
@@ -78,7 +79,8 @@ public:
   /**
    * @brief Creates a new database and opens it.
    *
-   * @param name The name of the database, that shall be opened.
+   * @param name The name of the database, that shall be opened (without file
+   * extension).
    * @param keyMapping The Key mapping that shall be used.
    * @param force Specifies, whether an already existing database, with the same
    * name, shall be overwritten.

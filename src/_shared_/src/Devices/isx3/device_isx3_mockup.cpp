@@ -123,10 +123,11 @@ bool DeviceIsx3::configure(
     frequencies.push_back(this->frequencyPointMap[i]);
   }
 
+  std::string key =
+      std::format("{:%Y%m%d%H%M}", Core::getNow()) + "_impedanceMeasurement";
   this->onConfigured(
-      Utilities::KeyMapping{
-          {"mockedImpedanceSpectrum", DATAMANAGER_DATA_TYPE_SPECTRUM}},
-      Utilities::SpectrumMapping{{"mockedImpedanceSpectrum", frequencies}});
+      Utilities::KeyMapping{{key, DATAMANAGER_DATA_TYPE_SPECTRUM}},
+      Utilities::SpectrumMapping{{key, frequencies}});
 
   this->configurationFinished = true;
   this->deviceState = DeviceStatus::IDLE;
@@ -284,7 +285,7 @@ bool DeviceIsx3::initialize(std::shared_ptr<InitPayload> initPayload) {
   this->initPayload = isx3InitPayload;
   this->deviceState = DeviceStatus::INITIALIZING;
 
-  this->onInitialized("DeviceIsx3Mock.hdf", Utilities::KeyMapping(),
+  this->onInitialized("isx3mockup", Utilities::KeyMapping(),
                       Utilities::SpectrumMapping());
   this->deviceState = DeviceStatus::INITIALIZED;
 

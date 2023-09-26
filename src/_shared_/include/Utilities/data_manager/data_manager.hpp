@@ -119,7 +119,8 @@ public:
   /**
    * @brief Creates a new database and opens it.
    *
-   * @param name The name of the database, that shall be opened.
+   * @param name The name of the database, that shall be opened (without file
+   * extensions).
    * @param keyMapping The Key mapping that shall be used.
    * @param force Specifies, whether an already existing database, with the same
    * name, shall be overwritten.
