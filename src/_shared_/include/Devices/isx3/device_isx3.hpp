@@ -124,6 +124,12 @@ public:
    */
   virtual std::string getDeviceSerialNumber() override;
 
+  /**
+   * @brief Returns the key for the impedance spectrum that is currently used.
+   * @return The key for the impedance spectrum that is currently used.
+   */
+  std::string getCurrentSpectrumKey() const;
+
 private:
   /**
    * @brief Pushes the given COM Interface dataframe to the send buffer.
@@ -233,6 +239,9 @@ private:
 
   /// The serial number of the device.
   std::string deviceSerialNumber;
+
+  /// The name of the current spectrum key.
+  std::string currentSpectrumKey;
 };
 } // namespace Devices
 

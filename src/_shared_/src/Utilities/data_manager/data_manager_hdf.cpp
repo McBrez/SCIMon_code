@@ -404,13 +404,20 @@ bool DataManagerHdf::open(std::string name, KeyMapping keyMapping, bool force) {
     }
 
     // Write the mapping entry.
+    DataSpace dataSpaceKeys =
+        DataSpace({keys.size(), 1}, {DataSpace::UNLIMITED, 1});
     DataSet dataSetKeys = file->createDataSet(
-        "/struct/keys", DataSpace::From(keys), create_datatype<std::string>());
+        "/struct/keys", dataSpaceKeys, create_datatype<std::string>(), props);
     dataSetKeys.write(keys);
-    DataSet dataSetTypes = file->createDataSet(
-        "/struct/types", DataSpace::From(types), create_datatype<int>());
+
+    DataSpace dataSpaceTypes =
+        DataSpace({types.size(), 1}, {DataSpace::UNLIMITED, 1});
+    DataSet dataSetTypes = file->createDataSet("/struct/types", dataSpaceTypes,
+                                               create_datatype<int>(), props);
     dataSetTypes.write(types);
     this->typeMapping = keyMapping;
+
+    this->hdfFile->flush();
 
   } else {
     // Read the structure.
@@ -568,7 +575,7 @@ bool DataManagerHdf::createKey(std::string key, DataManagerDataType dataType) {
 
   this->typeMapping[key] = dataType;
 
-  // Create the hierarchy. First, create the struture that holds the values ...
+  // Create the hierarchy. First, create the structure that holds the values ...
   // Use chunking
   DataSetCreateProps props;
   props.add(Chunking(std::vector<hsize_t>{1024, 1}));
@@ -615,13 +622,16 @@ bool DataManagerHdf::createKey(std::string key, DataManagerDataType dataType) {
   std::vector<std::string> keys;
   keyDataset.read(keys);
   keys.push_back(key);
+  this->extendDataSet("/struct/keys", 1);
   keyDataset.write(keys);
 
   DataSet typeDataset = this->hdfFile->getDataSet("/struct/types");
   std::vector<int> types;
   typeDataset.read(types);
   types.push_back(static_cast<int>(dataType));
+  this->extendDataSet("/struct/types", 1);
   typeDataset.write(types);
+
   this->hdfFile->flush();
 
   return true;

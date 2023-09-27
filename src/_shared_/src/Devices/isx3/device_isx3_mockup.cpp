@@ -17,7 +17,7 @@ namespace Devices {
 std::unique_ptr<std::thread> writeThread;
 bool doWriteThread = false;
 std::vector<double> frequencies;
-void writeThreadWorker(DataManager *dataManager) {
+void writeThreadWorker(DataManager *dataManager, DeviceIsx3 *device) {
   static double counter = 0.0;
   while (doWriteThread) {
 
@@ -28,7 +28,7 @@ void writeThreadWorker(DataManager *dataManager) {
     ImpedanceSpectrum impedanceSpectrum;
     Utilities::joinImpedanceSpectrum(frequencies, impedances,
                                      impedanceSpectrum);
-    dataManager->write(Core::getNow(), "mockedImpedanceSpectrum",
+    dataManager->write(Core::getNow(), device->getCurrentSpectrumKey(),
                        Value(impedanceSpectrum));
 
     std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -123,11 +123,12 @@ bool DeviceIsx3::configure(
     frequencies.push_back(this->frequencyPointMap[i]);
   }
 
-  std::string key =
+  this->currentSpectrumKey =
       std::format("{:%Y%m%d%H%M}", Core::getNow()) + "_impedanceMeasurement";
   this->onConfigured(
-      Utilities::KeyMapping{{key, DATAMANAGER_DATA_TYPE_SPECTRUM}},
-      Utilities::SpectrumMapping{{key, frequencies}});
+      Utilities::KeyMapping{
+          {this->currentSpectrumKey, DATAMANAGER_DATA_TYPE_SPECTRUM}},
+      Utilities::SpectrumMapping{{this->currentSpectrumKey, frequencies}});
 
   this->configurationFinished = true;
   this->deviceState = DeviceStatus::IDLE;
@@ -148,8 +149,8 @@ bool DeviceIsx3::start() {
     this->deviceState = DeviceStatus::OPERATING;
 
     doWriteThread = true;
-    writeThread.reset(
-        new std::thread(Devices::writeThreadWorker, this->dataManager.get()));
+    writeThread.reset(new std::thread(Devices::writeThreadWorker,
+                                      this->dataManager.get(), this));
 
     return true;
   }
@@ -299,6 +300,10 @@ bool DeviceIsx3::handleResponse(std::shared_ptr<ReadDeviceMessage> response) {
 
 std::string DeviceIsx3::getDeviceSerialNumber() {
   return this->deviceSerialNumber;
+}
+
+std::string DeviceIsx3::getCurrentSpectrumKey() const {
+  return this->currentSpectrumKey;
 }
 
 } // namespace Devices
