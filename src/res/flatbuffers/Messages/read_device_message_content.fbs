@@ -1,16 +1,24 @@
 namespace Serialization.Messages;
 
 enum ReadDeviceTopic : ubyte {
-    /// Invalid topic
-    READ_TOPIC_INVALID = 0,
-    /// The message contains the status of the device.
-    READ_TOPIC_DEVICE_STATUS = 1,
-    /// The target device could not be reached.
-    READ_TOPIC_FAILED_RESPONSE = 2,
-    /// A device specific message.
-    READ_TOPIC_DEVICE_SPECIFIC_MSG = 3,
-    /// Response that contains previously requested data.
-    READ_TOPIC_DATA_RESPONSE = 4
+  /// Invalid topic
+  READ_TOPIC_INVALID = 0x00,
+
+  /// The message contains the status of the device.
+  READ_TOPIC_DEVICE_STATUS = 0x01,
+
+  /// The target device could not be reached.
+  READ_TOPIC_FAILED_RESPONSE = 0x02,
+
+  /// A device specific message.
+  READ_TOPIC_DEVICE_SPECIFIC_MSG = 0x03,
+
+  /// Response that contains previously requested data.
+  READ_TOPIC_DATA_RESPONSE = 0x04,
+
+  /// Response to a request keys message. Message contains the data keys of the
+  /// object.
+  READ_TOPIC_KEY_RESPONSE = 0x05
 }
 
 table ReadDeviceMessageContent {

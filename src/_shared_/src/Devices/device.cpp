@@ -5,6 +5,7 @@
 #include <data_response_payload.hpp>
 #include <device.hpp>
 #include <dummy_message.hpp>
+#include <key_response_payload.hpp>>
 #include <request_data_payload.hpp>
 #include <status_payload.hpp>
 
@@ -102,6 +103,23 @@ bool Device::write(std::shared_ptr<WriteDeviceMessage> writeMsg) {
     return true;
   }
 
+  else if (WriteDeviceTopic::WRITE_TOPIC_REQUEST_KEYS == writeMsg->getTopic()) {
+
+    KeyResponsePayload *keyResponsePayload =
+        new KeyResponsePayload(this->dataManager->getKeyMapping(),
+                               this->dataManager->getSpectrumMapping());
+
+    std::shared_ptr<DeviceMessage> responseMsg(
+        new ReadDeviceMessage(this->getUserId(), writeMsg->getSource(),
+                              ReadDeviceTopic::READ_TOPIC_KEY_RESPONSE,
+                              keyResponsePayload, writeMsg));
+
+    this->pushMessageQueue(responseMsg);
+
+    return true;
+
+  }
+
   else {
     // Could not identify the topic of the message. Return false.
     LOG(ERROR) << "Could not identify the topic of the message.";
@@ -115,7 +133,7 @@ std::list<std::shared_ptr<DeviceMessage>> Device::read(TimePoint timestamp) {
       this->specificRead(timestamp);
   // Append the message, if it was not empty.
   if (!readMessages.empty()) {
-    for (auto message : readMessages) {
+    for (auto &message : readMessages) {
       this->pushMessageQueue(message);
     }
   }

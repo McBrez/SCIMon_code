@@ -12,6 +12,16 @@ WriteDeviceMessage::WriteDeviceMessage(UserId source, UserId destination,
     : DeviceMessage(source, destination), topic(topic),
       additionalData(additionalData) {}
 
+WriteDeviceMessage::WriteDeviceMessage(UserId source, UserId destination,
+                                       WriteDeviceTopic topic,
+                                       WritePayload *payload)
+    : DeviceMessage(source, destination), payload(payload), topic(topic) {}
+
+WriteDeviceMessage::WriteDeviceMessage(UserId source, UserId destination,
+                                       WriteDeviceTopic topic,
+                                       std::shared_ptr<WritePayload> payload)
+    : DeviceMessage(source, destination), payload(payload), topic(topic) {}
+
 AdditionalData WriteDeviceMessage::getAdditionalData() {
   return this->additionalData;
 }

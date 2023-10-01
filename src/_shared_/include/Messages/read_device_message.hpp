@@ -27,7 +27,11 @@ enum ReadDeviceTopic {
   READ_TOPIC_DEVICE_SPECIFIC_MSG = 0x03,
 
   /// Response that contains previously requested data.
-  READ_TOPIC_DATA_RESPONSE = 0x04
+  READ_TOPIC_DATA_RESPONSE = 0x04,
+
+  /// Response to a request keys message. Message contains the data keys of the
+  /// object.
+  READ_TOPIC_KEY_RESPONSE = 0x05
 };
 
 /**

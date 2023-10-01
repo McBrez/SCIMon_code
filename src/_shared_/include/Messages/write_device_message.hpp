@@ -6,7 +6,7 @@
 
 // Project includes
 #include <device_message.hpp>
-#include <payload.hpp>
+#include <write_payload.hpp>
 
 using namespace Devices;
 using AdditionalData = std::variant<bool, int, float, std::string>;
@@ -29,8 +29,10 @@ enum WriteDeviceTopic {
   WRITE_TOPIC_QUERY_STATE = 0x04,
   /// A device specific write topic.
   WRITE_TOPIC_DEVICE_SPECIFIC = 0x05,
-/// Data is requested from the target device.
-    WRITE_TOPIC_REQUEST_DATA = 0x06
+  /// Data is requested from the target device.
+  WRITE_TOPIC_REQUEST_DATA = 0x06,
+  /// Data keys are requested from the target.
+  WRITE_TOPIC_REQUEST_KEYS = 0x07
 };
 
 /**
@@ -45,6 +47,28 @@ public:
    * @param topic The topic of the message.
    */
   WriteDeviceMessage(UserId source, UserId destination, WriteDeviceTopic topic);
+
+  /**
+   * @brief Creates a message with the given topic.
+   * @param source Reference to the source of this message.
+   * @param destination Reference to the destination of this message.
+   * @param topic The topic of the message.
+   * @param payload The payload that shall be held by this message. Message
+   * takes ownership of the pointer.
+   */
+  WriteDeviceMessage(UserId source, UserId destination, WriteDeviceTopic topic,
+                     WritePayload *payload);
+
+  /**
+   * @brief Creates a message with the given topic.
+   * @param source Reference to the source of this message.
+   * @param destination Reference to the destination of this message.
+   * @param topic The topic of the message.
+   * @param payload The payload that shall be held by this message.
+   */
+  WriteDeviceMessage(UserId source, UserId destination, WriteDeviceTopic topic,
+                     std::shared_ptr<WritePayload> payload);
+
   /**
    * @brief Creates a message with the given topic and appends additional data.
    * @param source Reference to the source of this message.
@@ -86,7 +110,7 @@ private:
   /// The topic of the message.
   WriteDeviceTopic topic;
   /// May hold a payload.
-  std::shared_ptr<Payload> payload;
+  std::shared_ptr<WritePayload> payload;
 };
 } // namespace Messages
 

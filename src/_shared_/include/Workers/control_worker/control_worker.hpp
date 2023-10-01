@@ -31,10 +31,12 @@ enum ControlWorkerSubState {
   CONTROL_WORKER_SUBSTATE_INIT_REMOTE = 0x05,
   /// Control worker is configuring the remote host.
   CONTROL_WORKER_SUBSTATE_CONF_REMOTE = 0x06,
+  /// Control worker fetches the remote data keys.
+  CONTROL_WORKER_SUBSTATE_CONF_GET_DATA_KEYS = 0x07,
   /// Remote host is currently running.
-  CONTROL_WORKER_SUBSTATE_REMOTE_RUNNING = 0x07,
+  CONTROL_WORKER_SUBSTATE_REMOTE_RUNNING = 0x08,
   /// Remote host is currently stopped.
-  CONTROL_WORKER_SUBSTATE_REMOTE_STOPPED = 0x08
+  CONTROL_WORKER_SUBSTATE_REMOTE_STOPPED = 0x09
 };
 
 /**
@@ -150,6 +152,22 @@ private:
   UserId getSentryId();
 
   /**
+   * @brief Returns the User id of the remote pump controller from the remote id
+   * mapper.
+   * @return The user id of the remote pump controller. May return invalid user
+   * id, if id of the pump controller has not yet been resolved.
+   */
+  UserId getPumpControllerId();
+
+  /**
+   * @brief Returns the User id of the remote spectrometer from the remote id
+   * mapper.
+   * @return The user id of the remote spectrometer. May return invalid user
+   * id, if id of the spectrometer has not yet been resolved.
+   */
+  UserId getSpectrometerId();
+
+  /**
    * @brief Checks if the given read device message contains a status payload
    * and caches the status payloads, that are received due to the periodic
    * status queries from the query state worker.
@@ -159,6 +177,11 @@ private:
    * handled. FALSE otherwise.
    */
   bool handleStatusPayload(std::shared_ptr<ReadDeviceMessage> msg);
+
+  /**
+   * @brief Worker that queries data from remote devices periodically.
+   */
+  void dataQueryWorker();
 
   /// The id of the network worker.
   UserId networkWorkerId;
@@ -171,6 +194,8 @@ private:
   /// containing worker/device name, the device type and a flag that indicates,
   /// whether the device name and type have already been resolved..
   std::map<size_t, std::tuple<bool, std::string, DeviceType>> remoteHostIds;
+  /// Holds the remote data keys. Maps from UserId to a tuple.
+  std::map<size_t, std::tuple<KeyMapping, SpectrumMapping>> remoteDataKeys;
   /// The init payload, that shall be sent to the remote host, during
   /// configuration.
   std::shared_ptr<SentryInitPayload> remoteInitPayload;
@@ -183,6 +208,14 @@ private:
   std::unique_ptr<std::thread> queryRemoteStateThread;
   /// List containing pointers to the remote status.
   std::list<std::shared_ptr<StatusPayload>> remoteStatus;
+  /// Pointer to the data query thread.
+  std::unique_ptr<std::thread> dataQueryThread;
+  /// The timestamp of the last data query.
+  TimePoint lastDataQuery;
+  /// The intervall with which the remote end is queried for data.
+  Duration dataQueryInterval;
+  /// Execution flag for the remote data remote data query thread.
+  bool doQueryData;
 };
 } // namespace Workers
 

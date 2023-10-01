@@ -4,8 +4,11 @@
 // Project includes
 #include <common.hpp>
 #include <control_worker.hpp>
+#include <data_response_payload.hpp>
+#include <key_response_payload.hpp>
 #include <message_distributor.hpp>
 #include <network_worker_init_payload.hpp>
+#include <request_data_payload.hpp>
 
 using namespace Workers;
 
@@ -14,7 +17,8 @@ const std::string ControlWorker::UnknownDeviceSpecifier = "UNKNOWN DEVICE";
 ControlWorker::ControlWorker()
     : controlWorkerSubState(
           ControlWorkerSubState::CONTROL_WORKER_SUBSTATE_IVALID),
-      doQueryState(false) {}
+      doQueryState(false), dataQueryInterval(std::chrono::seconds(5)),
+      doQueryData(false) {}
 
 ControlWorker::~ControlWorker() {}
 
@@ -82,6 +86,8 @@ bool ControlWorker::initialize(std::shared_ptr<InitPayload> initPayload) {
   LOG(INFO) << "Control Worker found the network worker.";
   this->workerState = DeviceStatus::IDLE;
 
+  this->onInitialized(this->getWorkerName(), KeyMapping(), SpectrumMapping());
+
   return true;
 }
 
@@ -97,6 +103,8 @@ bool ControlWorker::configure(
   LOG(INFO) << "Control Worker has been configured";
   this->workerState = DeviceStatus::IDLE;
   this->controlWorkerSubState = CONTROL_WORKER_SUBSTATE_WAITING_FOR_CONNECTION;
+
+  this->onConfigured(KeyMapping(), SpectrumMapping());
 
   return true;
 }
@@ -139,7 +147,7 @@ bool ControlWorker::handleResponse(
       // Has it already connected?
       if (DeviceStatus::OPERATING == statusPayload->getDeviceStatus()) {
         // Connection established. Set new state and remember the proxy ids.
-        for (auto proxyId : statusPayload->getProxyIds()) {
+        for (auto &proxyId : statusPayload->getProxyIds()) {
           this->remoteHostIds[proxyId.id()] =
               std::make_tuple(false, ControlWorker::UnknownDeviceSpecifier,
                               DeviceType::INVALID);
@@ -244,6 +252,116 @@ bool ControlWorker::handleResponse(
              this->controlWorkerSubState) {
       // Handle the status response.
       this->handleStatusPayload(response);
+
+      // If all remote devices are in IDLE (i.e. their configuration succeeded),
+      // send a message to request their data keys.
+      auto pumpIt = std::find_if(
+          this->remoteStatus.begin(), this->remoteStatus.end(),
+          [](std::shared_ptr<StatusPayload> status) {
+            return status->getDeviceStatus() == DeviceStatus::IDLE &&
+                   status->getDeviceType() == DeviceType::PUMP_CONTROLLER;
+          });
+      auto spectrometerIt = std::find_if(
+          this->remoteStatus.begin(), this->remoteStatus.end(),
+          [](std::shared_ptr<StatusPayload> status) {
+            return status->getDeviceStatus() == DeviceStatus::IDLE &&
+                   status->getDeviceType() ==
+                       DeviceType::IMPEDANCE_SPECTROMETER;
+          });
+
+      if (pumpIt != this->remoteStatus.end() &&
+          spectrometerIt != this->remoteStatus.end()) {
+        // Configuration succeeded for the remote devices. Request their data
+        // keys by sending corresponding messages.
+
+        std::shared_ptr<DeviceMessage> requestPumpKeyMsg(
+            new WriteDeviceMessage(this->getUserId(), (*pumpIt)->getDeviceId(),
+                                   WriteDeviceTopic::WRITE_TOPIC_REQUEST_KEYS));
+        std::shared_ptr<DeviceMessage> requestSpectrometerKeyMsg(
+            new WriteDeviceMessage(this->getUserId(),
+                                   (*spectrometerIt)->getDeviceId(),
+                                   WriteDeviceTopic::WRITE_TOPIC_REQUEST_KEYS));
+
+        this->pushMessageQueue(requestPumpKeyMsg);
+        this->pushMessageQueue(requestSpectrometerKeyMsg);
+        this->controlWorkerSubState =
+            CONTROL_WORKER_SUBSTATE_CONF_GET_DATA_KEYS;
+      } else {
+        // Remote devices are not yet ready. Do nothing.
+      }
+
+      return true;
+
+    } else if (ControlWorkerSubState::
+                   CONTROL_WORKER_SUBSTATE_CONF_GET_DATA_KEYS ==
+               this->controlWorkerSubState) {
+      // Handle the status response.
+      this->handleStatusPayload(response);
+
+      // Downcast and check if this is a KeyResponsePayload.
+      auto keyResponsePayload =
+          dynamic_pointer_cast<KeyResponsePayload>(response->getReadPaylod());
+      if (!keyResponsePayload) {
+        return true;
+      }
+
+      // Save the data keys.
+      this->remoteDataKeys[response->getSource().id()] =
+          std::make_tuple(keyResponsePayload->getKeyMapping(),
+                          keyResponsePayload->getSpectrumMapping());
+
+      // Check if the data keys of all remote devices are now known.
+      if (this->remoteDataKeys.contains(this->getPumpControllerId()) &&
+          this->remoteDataKeys.contains(this->getSpectrometerId())) {
+
+        // Create those keys in the local data manager.
+        for (auto &remoteDataKeysEntry : this->remoteDataKeys) {
+          KeyMapping keyMapping =
+              std::get<KeyMapping>(remoteDataKeysEntry.second);
+          for (auto &keys : keyMapping) {
+            std::string keyName =
+                std::to_string(remoteDataKeysEntry.first) + "/" + keys.first;
+            this->dataManager->createKey(keyName, keys.second);
+            // If the key corresponds to a spectrum, it has to be set up.
+            if (keys.second == Utilities::DATAMANAGER_DATA_TYPE_SPECTRUM) {
+              SpectrumMapping spectrumMapping =
+                  std::get<SpectrumMapping>(remoteDataKeysEntry.second);
+              this->dataManager->setupSpectrum(keyName,
+                                               spectrumMapping[keys.first]);
+            }
+          }
+        }
+
+        // All remote keys are known. Start the data query thread.
+        this->lastDataQuery = getNow() - this->dataQueryInterval;
+        this->dataQueryThread.reset(
+            new std::thread(&ControlWorker::dataQueryWorker, this));
+        this->controlWorkerSubState =
+            ControlWorkerSubState::CONTROL_WORKER_SUBSTATE_REMOTE_STOPPED;
+      }
+
+      return true;
+    }
+
+    else if (ControlWorkerSubState::CONTROL_WORKER_SUBSTATE_REMOTE_STOPPED ==
+             this->controlWorkerSubState) {
+      this->handleStatusPayload(response);
+
+      // If this is a data response message, write the contents to the local
+      // data manager.
+      auto dataResponseMsg =
+          dynamic_pointer_cast<DataResponsePayload>(response->getReadPaylod());
+      if (!dataResponseMsg) {
+        return true;
+      }
+
+      std::string key = std::to_string(response->getSource().id()) + "/" +
+                        dataResponseMsg->key;
+      this->dataManager->write(dataResponseMsg->timestamps, key,
+                               dataResponseMsg->values);
+
+      return true;
+
     }
 
     else {
@@ -408,4 +526,74 @@ bool ControlWorker::setRemoteWorkerState(UserId remoteId, bool state) {
   this->pushMessageQueue(std::shared_ptr<DeviceMessage>(
       new WriteDeviceMessage(this->getUserId(), remoteId, enableState)));
   return true;
+}
+
+UserId ControlWorker::getPumpControllerId() {
+  UserId retVal;
+  for (auto keyValuePair : this->remoteHostIds) {
+    if (get<1>(keyValuePair.second) == SENTRY_WORKER_TYPE_NAME) {
+      retVal = keyValuePair.first;
+      break;
+    }
+  }
+
+  auto it = std::find_if(
+      this->remoteHostIds.begin(), this->remoteHostIds.end(),
+      [](std::pair<size_t, std::tuple<bool, std::string, DeviceType>> pair) {
+        return std::get<2>(pair.second) == DeviceType::PUMP_CONTROLLER;
+      });
+
+  if (it != this->remoteHostIds.end()) {
+    return it->first;
+  } else {
+    return UserId();
+  }
+}
+
+UserId ControlWorker::getSpectrometerId() {
+  UserId retVal;
+  for (auto keyValuePair : this->remoteHostIds) {
+    if (get<1>(keyValuePair.second) == SENTRY_WORKER_TYPE_NAME) {
+      retVal = keyValuePair.first;
+      break;
+    }
+  }
+
+  auto it = std::find_if(
+      this->remoteHostIds.begin(), this->remoteHostIds.end(),
+      [](std::pair<size_t, std::tuple<bool, std::string, DeviceType>> pair) {
+        return std::get<2>(pair.second) == DeviceType::IMPEDANCE_SPECTROMETER;
+      });
+
+  if (it != this->remoteHostIds.end()) {
+    return it->first;
+  } else {
+    return UserId();
+  }
+}
+
+void ControlWorker::dataQueryWorker() {
+  while (this->doQueryData) {
+    // Send a data query message to all known remote devices.
+    TimePoint now = getNow();
+
+    std::vector<std::shared_ptr<DeviceMessage>> dataQueryMessages;
+    for (auto remoteDataKeyEntry : this->remoteDataKeys) {
+      KeyMapping keyMapping = std::get<KeyMapping>(remoteDataKeyEntry.second);
+      for (auto key : keyMapping) {
+
+        std::shared_ptr<WritePayload> dataRequestPayload(
+            new RequestDataPayload(this->lastDataQuery, now, key.first));
+
+        dataQueryMessages.emplace_back(std::shared_ptr<DeviceMessage>(
+            new WriteDeviceMessage(this->getUserId(), remoteDataKeyEntry.first,
+                                   Messages::WRITE_TOPIC_REQUEST_DATA,
+                                   dataRequestPayload)));
+      }
+    }
+
+    this->pushMessageQueue(dataQueryMessages);
+    this->lastDataQuery = now;
+    std::this_thread::sleep_for(this->dataQueryInterval);
+  }
 }

@@ -1,0 +1,7 @@
+namespace Serialization.Devices;
+
+table RequestKeyPayload {
+    dummy:int64;
+}
+
+root_type RequestKeyPayload;

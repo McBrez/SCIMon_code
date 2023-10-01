@@ -24,6 +24,8 @@ set(
     ${RES_DIR}/flatbuffers/Devices/request_data_payload.fbs 
     ${RES_DIR}/flatbuffers/Devices/set_device_state_payload.fbs 
     ${RES_DIR}/flatbuffers/Devices/data_response_payload.fbs 
+    ${RES_DIR}/flatbuffers/Devices/request_key_payload.fbs 
+    ${RES_DIR}/flatbuffers/Devices/key_response_payload.fbs 
 
     ${RES_DIR}/flatbuffers/Devices/elveflow/ob1/ob1_config_payload.fbs
     ${RES_DIR}/flatbuffers/Devices/elveflow/ob1/ob1_init_payload.fbs
@@ -119,6 +121,8 @@ target_sources(scimon_message PUBLIC
     ${INCLUDE_DIR}/Devices/request_data_payload.hpp
     ${INCLUDE_DIR}/Devices/set_device_status_payload.hpp
     ${INCLUDE_DIR}/Devices/data_response_payload.hpp
+    ${INCLUDE_DIR}/Devices/request_key_payload.hpp
+    ${INCLUDE_DIR}/Devices/key_response_payload.hpp
     ${INCLUDE_DIR}/Devices/payload_decoder.hpp
     ${INCLUDE_DIR}/Devices/builtin_payload_decoder.hpp
     ${INCLUDE_DIR}/Devices/isx3/com_interface_codec.hpp
@@ -176,6 +180,8 @@ target_sources(scimon_message PUBLIC
     ${SOURCE_DIR}/Devices/set_pressure_payload.cpp
     ${SOURCE_DIR}/Devices/request_data_payload.cpp
     ${SOURCE_DIR}/Devices/set_device_status_payload.cpp
+    ${SOURCE_DIR}/Devices/request_key_payload.cpp
+    ${SOURCE_DIR}/Devices/key_response_payload.cpp
     ${SOURCE_DIR}/Devices/data_response_payload.cpp
     ${SOURCE_DIR}/Devices/builtin_payload_decoder.cpp
     ${SOURCE_DIR}/Devices/isx3/com_interface_codec.cpp

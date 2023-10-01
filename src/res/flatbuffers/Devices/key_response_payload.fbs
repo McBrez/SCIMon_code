@@ -1,0 +1,18 @@
+namespace Serialization.Devices;
+
+table TypeMappingEntry {
+    key:string;
+    type:uint64;
+}
+
+table SpectrumMappingEntry {
+    key:string;
+    frequencies:[float64];
+}
+
+table KeyResponsePayload {
+    typeMappings:[TypeMappingEntry];
+    spectrumMapping:[SpectrumMappingEntry];
+}
+
+root_type KeyResponsePayload;

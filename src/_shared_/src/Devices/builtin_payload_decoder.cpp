@@ -1,19 +1,23 @@
 // Project includes
 #include <builtin_payload_decoder.hpp>
 #include <common.hpp>
-#include <data_response_payload.hpp>>
+#include <data_response_payload.hpp>
 #include <generic_read_payload.hpp>
+#include <key_response_payload.hpp>
 #include <request_data_payload.hpp>
+#include <request_key_payload.hpp>
 #include <set_device_status_payload.hpp>
 #include <set_pressure_payload.hpp>
 #include <status_payload.hpp>
 #include <user_id.hpp>
 
 // Generated includes
-#include <data_response_payload_generated.h>>
+#include <data_response_payload_generated.h>
 #include <generic_read_payload_generated.h>
 #include <is_payload_generated.h>
+#include <key_response_payload_generated.h>
 #include <request_data_payload_generated.h>
+#include <request_key_payload_generated.h>
 #include <set_device_state_payload_generated.h>
 #include <set_pressure_payload_generated.h>
 #include <status_payload_generated.h>
@@ -135,6 +139,23 @@ BuiltinPayloadDecoder::decodeReadPayload(const std::vector<unsigned char> &data,
         from, to, key, timestamps, values);
   }
 
+  else if (MAGIC_NUMBER_KEY_RESPONSE_PAYLOAD == magicNumber) {
+    const Serialization::Devices::KeyResponsePayloadT *keyResponsePayload =
+        Serialization::Devices::GetKeyResponsePayload(buffer)->UnPack();
+
+    KeyMapping keyMapping;
+    for (auto &entry : keyResponsePayload->typeMappings) {
+      keyMapping[entry->key] = static_cast<DataManagerDataType>(entry->type);
+    }
+
+    SpectrumMapping spectrumMapping;
+    for (auto &entry : keyResponsePayload->spectrumMapping) {
+      spectrumMapping[entry->key] = entry->frequencies;
+    }
+
+    return new KeyResponsePayload(keyMapping, spectrumMapping);
+  }
+
   else {
     return nullptr;
   }
@@ -171,6 +192,13 @@ WritePayload *BuiltinPayloadDecoder::decodeWritePayload(
 
     return new SetDeviceStatusPayload(setDeviceStatePayload->setStatus,
                                       setDeviceStatePayload->targetDeviceId);
+  }
+
+  else if (MAGIC_NUMBER_REQUEST_KEY_PAYLOAD == magicNumber) {
+    const Serialization::Devices::RequestKeyPayloadT *requestKeyPayload =
+        Serialization::Devices::GetRequestKeyPayload(buffer)->UnPack();
+
+    return new RequestKeyPayload();
   }
 
   else {
