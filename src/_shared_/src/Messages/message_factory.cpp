@@ -73,6 +73,12 @@ MessageFactory::encodeMessage(std::shared_ptr<DeviceMessage> msg) {
     writeDeviceMessageContent.writeDeviceTopic =
         static_cast<Serialization::Messages::WriteDeviceTopic>(
             writeMsg->getTopic());
+    if (writeMsg->getPayload()) {
+      writeDeviceMessageContent.magicNumber =
+          writeMsg->getPayload()->getMagicNumber();
+      writeDeviceMessageContent.payload = writeMsg->getPayload()->bytes();
+    }
+
     intermediateObject.content.Set(writeDeviceMessageContent);
   } else {
 
@@ -363,9 +369,13 @@ std::shared_ptr<DeviceMessage> MessageFactory::translateMessageContent(
         *writeDeviceContent,
     int magicNumber) {
 
+  WritePayload *decodedPayload = this->decodeWritePayload(
+      writeDeviceContent->payload, writeDeviceContent->magicNumber);
+
   return std::shared_ptr<WriteDeviceMessage>(new WriteDeviceMessage(
       sourceId, destinationId,
-      static_cast<WriteDeviceTopic>(writeDeviceContent->writeDeviceTopic)));
+      static_cast<WriteDeviceTopic>(writeDeviceContent->writeDeviceTopic),
+      decodedPayload));
 }
 
 std::shared_ptr<DeviceMessage> MessageFactory::translateMessageContent(

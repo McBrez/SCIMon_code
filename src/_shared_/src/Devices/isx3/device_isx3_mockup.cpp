@@ -22,8 +22,10 @@ void writeThreadWorker(DataManager *dataManager, DeviceIsx3 *device) {
   while (doWriteThread) {
 
     std::vector<Impedance> impedances;
-    for (auto frequency : frequencies) {
-      impedances.push_back(Impedance(++counter, ++counter));
+    for (auto &frequency : frequencies) {
+      double real = ++counter;
+      double imag = ++counter;
+      impedances.push_back(Impedance(real, imag));
     }
     ImpedanceSpectrum impedanceSpectrum;
     Utilities::joinImpedanceSpectrum(frequencies, impedances,

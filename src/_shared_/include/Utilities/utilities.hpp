@@ -98,5 +98,13 @@ void splitImpedanceSpectrum(const std::vector<ImpedanceSpectrum> &isSpectrum,
 void splitImpedance(const std::vector<Impedance> &impedanceVec,
                     std::vector<double> &realVec, std::vector<double> &imagVec);
 
+/**
+ * @brief Splits an impedance vector into an 2D array.
+ * @param impedanceVec The impedance vector that shall be split.
+ * @param outVec A 2D vector containing the impedances.
+ */
+void splitImpedance(const std::vector<Impedance> &impedanceVec,
+                    std::vector<std::vector<double>> &outVec);
+
 } // namespace Utilities
 #endif

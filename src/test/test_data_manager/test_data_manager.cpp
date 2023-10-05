@@ -2,10 +2,11 @@
 #include <chrono>
 #include <cstdio>
 #include <memory>
+#include <sstream>
 
 // 3rd party includes
 #define CATCH_CONFIG_MAIN
-#define CATCH_CONFIG_ENABLE_BENCHMARKING
+// #define CATCH_CONFIG_ENABLE_BENCHMARKING
 #include <catch2/catch.hpp>
 #include <easylogging++.h>
 
@@ -14,12 +15,30 @@
 
 INITIALIZE_EASYLOGGINGPP
 
-#define TEST_FILE_NAME "test_file.hdf"
+const std::string TestFileName = "test_file";
+const std::string TestFileNameExt = TestFileName + ".hdf";
 
 using namespace Utilities;
 
+std::ostream &operator<<(std::ostream &out, std::vector<Value> const &t) {
+  if (t.empty()) {
+    return out;
+  }
+
+  for (auto &it : t) {
+    if (std::holds_alternative<Impedance>(it)) {
+      Impedance impedance = std::get<Impedance>(it);
+      out << ",{" << std::to_string(impedance.real()) << ", "
+          << std::to_string(impedance.imag()) << "}";
+    }
+  }
+
+  return out;
+}
+
 TEST_CASE("Opening HDF data manager") {
-  std::remove(TEST_FILE_NAME);
+
+  std::remove(TestFileNameExt.c_str());
 
   std::shared_ptr<DataManager> dut =
       std::shared_ptr<DataManager>(new DataManagerHdf());
@@ -30,7 +49,7 @@ TEST_CASE("Opening HDF data manager") {
   keyMapping["string"] = DataManagerDataType::DATAMANAGER_DATA_TYPE_STRING;
   keyMapping["complex"] = DataManagerDataType::DATAMANAGER_DATA_TYPE_COMPLEX;
 
-  REQUIRE(dut->open("test_file.hdf", keyMapping));
+  REQUIRE(dut->open(TestFileName, keyMapping));
   REQUIRE(dut->getKeyMapping() ==
           KeyMapping{{"int", DATAMANAGER_DATA_TYPE_INT},
                      {"double", DATAMANAGER_DATA_TYPE_DOUBLE},
@@ -41,7 +60,7 @@ TEST_CASE("Opening HDF data manager") {
 
   // Reopen file.
   dut.reset(new DataManagerHdf());
-  REQUIRE(dut->open("test_file.hdf"));
+  REQUIRE(dut->open(TestFileNameExt));
   REQUIRE(dut->getKeyMapping() ==
           KeyMapping{{"int", DATAMANAGER_DATA_TYPE_INT},
                      {"double", DATAMANAGER_DATA_TYPE_DOUBLE},
@@ -50,7 +69,7 @@ TEST_CASE("Opening HDF data manager") {
 }
 
 TEST_CASE("Test creating new indices of the HDF data manager") {
-  std::remove(TEST_FILE_NAME);
+  std::remove(TestFileNameExt.c_str());
 
   std::shared_ptr<DataManager> dut =
       std::shared_ptr<DataManager>(new DataManagerHdf());
@@ -58,7 +77,7 @@ TEST_CASE("Test creating new indices of the HDF data manager") {
   // Empty key mapping
   KeyMapping keyMapping;
 
-  REQUIRE(dut->open("test_file.hdf", keyMapping));
+  REQUIRE(dut->open(TestFileName, keyMapping));
   REQUIRE(dut->getKeyMapping().size() == 0);
 
   // Create new key.
@@ -88,9 +107,9 @@ TEST_CASE("Test creating new indices of the HDF data manager") {
                   DataManagerDataType::DATAMANAGER_DATA_TYPE_DOUBLE}});
 }
 
-TEST_CASE("Test reads and writes of the HDF data manager") {
+TEST_CASE("Test single reads and writes of the HDF data manager") {
 
-  std::remove(TEST_FILE_NAME);
+  std::remove(TestFileNameExt.c_str());
 
   std::shared_ptr<DataManager> dut =
       std::shared_ptr<DataManager>(new DataManagerHdf());
@@ -110,7 +129,7 @@ TEST_CASE("Test reads and writes of the HDF data manager") {
   ImpedanceSpectrum testSpectrum;
   Utilities::joinImpedanceSpectrum(testFrequencies, testImpedances,
                                    testSpectrum);
-  REQUIRE(dut->open("test_file.hdf", keyMapping));
+  REQUIRE(dut->open(TestFileName, keyMapping));
   dut->setupSpectrum("spectrum", testFrequencies);
 
   TimePoint now = getNow();
@@ -166,126 +185,11 @@ TEST_CASE("Test reads and writes of the HDF data manager") {
   readValueString = "";
   readValueComplex = Impedance(0.0, 0.0);
   readValueSpectrum = ImpedanceSpectrum();
-  // Try to read time ranges.
-  std::vector<Value> readValueVec;
-  std::vector<TimePoint> readTimestampVec;
-  // int
-  REQUIRE(
-      dut->read(beforeNow, afterNow, "int", readTimestampVec, readValueVec));
-  REQUIRE(readValueVec == std::vector<Value>{1});
-  REQUIRE(readTimestampVec == std::vector<TimePoint>{now});
-  readValueVec.clear();
-  readTimestampVec.clear();
-  // double
-  REQUIRE(
-      dut->read(beforeNow, afterNow, "double", readTimestampVec, readValueVec));
-  REQUIRE(readValueVec == std::vector<Value>{1.2});
-  REQUIRE(readTimestampVec == std::vector<TimePoint>{now});
-  readValueVec.clear();
-  readTimestampVec.clear();
-  // string
-  REQUIRE(
-      dut->read(beforeNow, afterNow, "string", readTimestampVec, readValueVec));
-  REQUIRE(readValueVec == std::vector<Value>{"test"});
-  REQUIRE(readTimestampVec == std::vector<TimePoint>{now});
-  readValueVec.clear();
-  readTimestampVec.clear();
-  // complex
-  REQUIRE(dut->read(beforeNow, afterNow, "complex", readTimestampVec,
-                    readValueVec));
-  REQUIRE(readValueVec == std::vector<Value>{Impedance(1.0, 2.0)});
-  REQUIRE(readTimestampVec == std::vector<TimePoint>{now});
-  readValueVec.clear();
-  readTimestampVec.clear();
-  // spectrum
-  REQUIRE(dut->read(beforeNow, afterNow, "spectrum", readTimestampVec,
-                    readValueVec));
-  REQUIRE(readValueVec == std::vector<Value>{testSpectrum});
-  REQUIRE(readTimestampVec == std::vector<TimePoint>{now});
-  readValueVec.clear();
-  readTimestampVec.clear();
-
-  // Try to read before the time ranges.
-  TimePoint longBeforeNow = now - std::chrono::milliseconds(4);
-  // int
-  REQUIRE(dut->read(longBeforeNow, beforeNow, "int", readTimestampVec,
-                    readValueVec));
-  REQUIRE(readValueVec.size() == 0);
-  REQUIRE(readTimestampVec.size() == 0);
-  readValueVec.clear();
-  readTimestampVec.clear();
-  // double
-  REQUIRE(dut->read(longBeforeNow, beforeNow, "double", readTimestampVec,
-                    readValueVec));
-  REQUIRE(readValueVec.size() == 0);
-  REQUIRE(readTimestampVec.size() == 0);
-  readValueVec.clear();
-  readTimestampVec.clear();
-  // string
-  REQUIRE(dut->read(longBeforeNow, beforeNow, "string", readTimestampVec,
-                    readValueVec));
-  REQUIRE(readValueVec.size() == 0);
-  REQUIRE(readTimestampVec.size() == 0);
-  readValueVec.clear();
-  readTimestampVec.clear();
-  // complex
-  REQUIRE(dut->read(longBeforeNow, beforeNow, "complex", readTimestampVec,
-                    readValueVec));
-  REQUIRE(readValueVec.size() == 0);
-  REQUIRE(readTimestampVec.size() == 0);
-  readValueVec.clear();
-  readTimestampVec.clear();
-  // spectrum
-  REQUIRE(dut->read(longBeforeNow, beforeNow, "spectrum", readTimestampVec,
-                    readValueVec));
-  REQUIRE(readValueVec.size() == 0);
-  REQUIRE(readTimestampVec.size() == 0);
-  readValueVec.clear();
-  readTimestampVec.clear();
-
-  // Try to read after the time ranges.
-  TimePoint longAfterNow = now + std::chrono::milliseconds(4);
-  // int
-  REQUIRE(
-      dut->read(afterNow, longAfterNow, "int", readTimestampVec, readValueVec));
-  REQUIRE(readValueVec.size() == 0);
-  REQUIRE(readTimestampVec.size() == 0);
-  readValueVec.clear();
-  readTimestampVec.clear();
-  // double
-  REQUIRE(dut->read(afterNow, longAfterNow, "double", readTimestampVec,
-                    readValueVec));
-  REQUIRE(readValueVec.size() == 0);
-  REQUIRE(readTimestampVec.size() == 0);
-  readValueVec.clear();
-  readTimestampVec.clear();
-  // string
-  REQUIRE(dut->read(afterNow, longAfterNow, "string", readTimestampVec,
-                    readValueVec));
-  REQUIRE(readValueVec.size() == 0);
-  REQUIRE(readTimestampVec.size() == 0);
-  readValueVec.clear();
-  readTimestampVec.clear();
-  // complex
-  REQUIRE(dut->read(afterNow, longAfterNow, "complex", readTimestampVec,
-                    readValueVec));
-  REQUIRE(readValueVec.size() == 0);
-  REQUIRE(readTimestampVec.size() == 0);
-  readValueVec.clear();
-  readTimestampVec.clear();
-  // spectrum
-  // complex
-  REQUIRE(dut->read(afterNow, longAfterNow, "spectrum", readTimestampVec,
-                    readValueVec));
-  REQUIRE(readValueVec.size() == 0);
-  REQUIRE(readTimestampVec.size() == 0);
-  readValueVec.clear();
-  readTimestampVec.clear();
 }
 
-#define TEST_VECTOR_SIZE 2000
-TEST_CASE("Test mass writes") {
-  std::remove(TEST_FILE_NAME);
+TEST_CASE("Test vectorized reads and writes of the HDF data manager") {
+
+  std::remove(TestFileNameExt.c_str());
 
   std::shared_ptr<DataManager> dut =
       std::shared_ptr<DataManager>(new DataManagerHdf());
@@ -306,7 +210,273 @@ TEST_CASE("Test mass writes") {
   Utilities::joinImpedanceSpectrum(testFrequencies, testImpedances,
                                    testSpectrum);
 
-  REQUIRE(dut->open("test_file.hdf", keyMapping));
+  REQUIRE(dut->open(TestFileName, keyMapping));
+  dut->setupSpectrum("spectrum", testFrequencies);
+
+  TimePoint now = getNow();
+  TimePoint beforeNow = now - std::chrono::minutes(1);
+  TimePoint afterNow = now + std::chrono::minutes(1);
+
+  // Build the vectors that shall be written.
+  std::vector<Value> valueVectorInt = std::vector<Value>(120, Value(1));
+  std::vector<Value> valueVectorDouble = std::vector<Value>(120, Value(1.2));
+  std::vector<Value> valueVectorString = std::vector<Value>(120, Value("test"));
+  std::vector<Value> valueVectorComplex =
+      std::vector<Value>(120, Value(Impedance(1.0, 2.0)));
+  std::vector<Value> valueVectorSpectrum =
+      std::vector<Value>(120, Value(testSpectrum));
+
+  std::vector<TimePoint> timePointVector;
+  timePointVector.reserve(120);
+  for (int i = 0; i < 120; i++) {
+    timePointVector.emplace_back(beforeNow + std::chrono::seconds(i));
+  }
+
+  REQUIRE(dut->write(timePointVector, "int", valueVectorInt));
+  REQUIRE(dut->write(timePointVector, "double", valueVectorDouble));
+  REQUIRE(dut->write(timePointVector, "string", valueVectorString));
+  REQUIRE(dut->write(timePointVector, "complex", valueVectorComplex));
+  REQUIRE(dut->write(timePointVector, "spectrum", valueVectorSpectrum));
+
+  std::vector<Value> readValueInt;
+  std::vector<TimePoint> readTimestampsInt;
+  std::vector<Value> readValueDouble;
+  std::vector<TimePoint> readTimestampsDouble;
+  std::vector<Value> readValueString;
+  std::vector<TimePoint> readTimestampsString;
+  std::vector<Value> readValueComplex;
+  std::vector<TimePoint> readTimestampsComplex;
+  std::vector<Value> readValueSpectrum;
+  std::vector<TimePoint> readTimestampsSpectrum;
+
+  // Try to read the exact range.
+  REQUIRE(
+      dut->read(beforeNow, afterNow, "int", readTimestampsInt, readValueInt));
+  REQUIRE(dut->read(beforeNow, afterNow, "double", readTimestampsDouble,
+                    readValueDouble));
+  REQUIRE(dut->read(beforeNow, afterNow, "string", readTimestampsString,
+                    readValueString));
+  REQUIRE(dut->read(beforeNow, afterNow, "complex", readTimestampsComplex,
+                    readValueComplex));
+  REQUIRE(dut->read(beforeNow, afterNow, "spectrum", readTimestampsSpectrum,
+                    readValueSpectrum));
+
+  REQUIRE(valueVectorInt == readValueInt);
+  REQUIRE(valueVectorDouble == readValueDouble);
+  REQUIRE(valueVectorString == readValueString);
+  REQUIRE(valueVectorComplex == readValueComplex);
+  REQUIRE(valueVectorSpectrum == readValueSpectrum);
+  REQUIRE(timePointVector == readTimestampsInt);
+  REQUIRE(timePointVector == readTimestampsDouble);
+  REQUIRE(timePointVector == readTimestampsString);
+  REQUIRE(timePointVector == readTimestampsComplex);
+  REQUIRE(timePointVector == readTimestampsSpectrum);
+
+  // Try to read before the range.
+  readValueInt.clear();
+  readTimestampsInt.clear();
+  readValueDouble.clear();
+  readTimestampsDouble.clear();
+  readValueString.clear();
+  readTimestampsString.clear();
+  readValueComplex.clear();
+  readTimestampsComplex.clear();
+  readValueSpectrum.clear();
+  readTimestampsSpectrum.clear();
+
+  TimePoint veryLongBeforeNow = beforeNow - std::chrono::minutes(2);
+  TimePoint longBeforeNow = beforeNow - std::chrono::minutes(1);
+
+  REQUIRE(dut->read(veryLongBeforeNow, longBeforeNow, "int", readTimestampsInt,
+                    readValueInt));
+  REQUIRE(dut->read(veryLongBeforeNow, longBeforeNow, "double",
+                    readTimestampsDouble, readValueDouble));
+  REQUIRE(dut->read(veryLongBeforeNow, longBeforeNow, "string",
+                    readTimestampsString, readValueString));
+  REQUIRE(dut->read(veryLongBeforeNow, longBeforeNow, "complex",
+                    readTimestampsComplex, readValueComplex));
+  REQUIRE(dut->read(veryLongBeforeNow, longBeforeNow, "spectrum",
+                    readTimestampsSpectrum, readValueSpectrum));
+
+  REQUIRE(readValueInt == std::vector<Value>{});
+  REQUIRE(readValueDouble == std::vector<Value>{});
+  REQUIRE(readValueString == std::vector<Value>{});
+  REQUIRE(readValueComplex == std::vector<Value>{});
+  REQUIRE(readValueSpectrum == std::vector<Value>{});
+  REQUIRE(readTimestampsInt == std::vector<TimePoint>{});
+  REQUIRE(readTimestampsDouble == std::vector<TimePoint>{});
+  REQUIRE(readTimestampsString == std::vector<TimePoint>{});
+  REQUIRE(readTimestampsComplex == std::vector<TimePoint>{});
+  REQUIRE(readTimestampsSpectrum == std::vector<TimePoint>{});
+
+  // Try to read a range that intersects from lower timestamps.
+  readValueInt.clear();
+  readTimestampsInt.clear();
+  readValueDouble.clear();
+  readTimestampsDouble.clear();
+  readValueString.clear();
+  readTimestampsString.clear();
+  readValueComplex.clear();
+  readTimestampsComplex.clear();
+  readValueSpectrum.clear();
+  readTimestampsSpectrum.clear();
+
+  REQUIRE(
+      dut->read(longBeforeNow, now, "int", readTimestampsInt, readValueInt));
+  REQUIRE(dut->read(longBeforeNow, now, "double", readTimestampsDouble,
+                    readValueDouble));
+  REQUIRE(dut->read(longBeforeNow, now, "string", readTimestampsString,
+                    readValueString));
+  REQUIRE(dut->read(longBeforeNow, now, "complex", readTimestampsComplex,
+                    readValueComplex));
+  REQUIRE(dut->read(longBeforeNow, now, "spectrum", readTimestampsSpectrum,
+                    readValueSpectrum));
+
+  REQUIRE(readValueInt == std::vector<Value>(valueVectorInt.begin(),
+                                             valueVectorInt.begin() + 61));
+  REQUIRE(readValueDouble ==
+          std::vector<Value>(valueVectorDouble.begin(),
+                             valueVectorDouble.begin() + 61));
+  REQUIRE(readValueString ==
+          std::vector<Value>(valueVectorString.begin(),
+                             valueVectorString.begin() + 61));
+  REQUIRE(readValueComplex ==
+          std::vector<Value>(valueVectorComplex.begin(),
+                             valueVectorComplex.begin() + 61));
+  REQUIRE(readValueSpectrum ==
+          std::vector<Value>(valueVectorSpectrum.begin(),
+                             valueVectorSpectrum.begin() + 61));
+  REQUIRE(readTimestampsInt ==
+          std::vector<TimePoint>(timePointVector.begin(),
+                                 timePointVector.begin() + 61));
+  REQUIRE(readTimestampsDouble ==
+          std::vector<TimePoint>(timePointVector.begin(),
+                                 timePointVector.begin() + 61));
+  REQUIRE(readTimestampsString ==
+          std::vector<TimePoint>(timePointVector.begin(),
+                                 timePointVector.begin() + 61));
+  REQUIRE(readTimestampsComplex ==
+          std::vector<TimePoint>(timePointVector.begin(),
+                                 timePointVector.begin() + 61));
+  REQUIRE(readTimestampsSpectrum ==
+          std::vector<TimePoint>(timePointVector.begin(),
+                                 timePointVector.begin() + 61));
+
+  // Try to read a range that intersects from higher timestamps.
+  readValueInt.clear();
+  readTimestampsInt.clear();
+  readValueDouble.clear();
+  readTimestampsDouble.clear();
+  readValueString.clear();
+  readTimestampsString.clear();
+  readValueComplex.clear();
+  readTimestampsComplex.clear();
+  readValueSpectrum.clear();
+  readTimestampsSpectrum.clear();
+
+  TimePoint longAfterNow = afterNow + std::chrono::minutes(1);
+
+  REQUIRE(dut->read(now, longAfterNow, "int", readTimestampsInt, readValueInt));
+  REQUIRE(dut->read(now, longAfterNow, "double", readTimestampsDouble,
+                    readValueDouble));
+  REQUIRE(dut->read(now, longAfterNow, "string", readTimestampsString,
+                    readValueString));
+  REQUIRE(dut->read(now, longAfterNow, "complex", readTimestampsComplex,
+                    readValueComplex));
+  REQUIRE(dut->read(now, longAfterNow, "spectrum", readTimestampsSpectrum,
+                    readValueSpectrum));
+
+  REQUIRE(readValueInt == std::vector<Value>(valueVectorInt.begin() + 60,
+                                             valueVectorInt.end()));
+  REQUIRE(readValueDouble == std::vector<Value>(valueVectorDouble.begin() + 60,
+                                                valueVectorDouble.end()));
+  REQUIRE(readValueString == std::vector<Value>(valueVectorString.begin() + 60,
+                                                valueVectorString.end()));
+  REQUIRE(readValueComplex ==
+          std::vector<Value>(valueVectorComplex.begin() + 60,
+                             valueVectorComplex.end()));
+  REQUIRE(readValueSpectrum ==
+          std::vector<Value>(valueVectorSpectrum.begin() + 60,
+                             valueVectorSpectrum.end()));
+  REQUIRE(readTimestampsInt ==
+          std::vector<TimePoint>(timePointVector.begin() + 60,
+                                 timePointVector.end()));
+  REQUIRE(readTimestampsDouble ==
+          std::vector<TimePoint>(timePointVector.begin() + 60,
+                                 timePointVector.end()));
+  REQUIRE(readTimestampsString ==
+          std::vector<TimePoint>(timePointVector.begin() + 60,
+                                 timePointVector.end()));
+  REQUIRE(readTimestampsComplex ==
+          std::vector<TimePoint>(timePointVector.begin() + 60,
+                                 timePointVector.end()));
+  REQUIRE(readTimestampsSpectrum ==
+          std::vector<TimePoint>(timePointVector.begin() + 60,
+                                 timePointVector.end()));
+
+  // Try to read after the range.
+  readValueInt.clear();
+  readTimestampsInt.clear();
+  readValueDouble.clear();
+  readTimestampsDouble.clear();
+  readValueString.clear();
+  readTimestampsString.clear();
+  readValueComplex.clear();
+  readTimestampsComplex.clear();
+  readValueSpectrum.clear();
+  readTimestampsSpectrum.clear();
+
+  TimePoint veryLongAfterNow = afterNow + std::chrono::minutes(2);
+
+  REQUIRE(dut->read(longAfterNow, veryLongAfterNow, "int", readTimestampsInt,
+                    readValueInt));
+  REQUIRE(dut->read(longAfterNow, veryLongAfterNow, "double",
+                    readTimestampsDouble, readValueDouble));
+  REQUIRE(dut->read(longAfterNow, veryLongAfterNow, "string",
+                    readTimestampsString, readValueString));
+  REQUIRE(dut->read(longAfterNow, veryLongAfterNow, "complex",
+                    readTimestampsComplex, readValueComplex));
+  REQUIRE(dut->read(longAfterNow, veryLongAfterNow, "spectrum",
+                    readTimestampsSpectrum, readValueSpectrum));
+
+  REQUIRE(readValueInt == std::vector<Value>{});
+  REQUIRE(readValueDouble == std::vector<Value>{});
+  REQUIRE(readValueString == std::vector<Value>{});
+  REQUIRE(readValueComplex == std::vector<Value>{});
+  REQUIRE(readValueSpectrum == std::vector<Value>{});
+  REQUIRE(readTimestampsInt == std::vector<TimePoint>{});
+  REQUIRE(readTimestampsDouble == std::vector<TimePoint>{});
+  REQUIRE(readTimestampsString == std::vector<TimePoint>{});
+  REQUIRE(readTimestampsComplex == std::vector<TimePoint>{});
+  REQUIRE(readTimestampsSpectrum == std::vector<TimePoint>{});
+}
+
+#ifdef CATCH_CONFIG_ENABLE_BENCHMARKING
+
+#define TEST_VECTOR_SIZE 2000
+TEST_CASE("Test mass writes") {
+  std::remove(TestFileNameExt.c_str());
+
+  std::shared_ptr<DataManager> dut =
+      std::shared_ptr<DataManager>(new DataManagerHdf());
+
+  KeyMapping keyMapping;
+  keyMapping["int"] = DataManagerDataType::DATAMANAGER_DATA_TYPE_INT;
+  keyMapping["double"] = DataManagerDataType::DATAMANAGER_DATA_TYPE_DOUBLE;
+  keyMapping["string"] = DataManagerDataType::DATAMANAGER_DATA_TYPE_STRING;
+  keyMapping["complex"] = DataManagerDataType::DATAMANAGER_DATA_TYPE_COMPLEX;
+  keyMapping["spectrum"] = DataManagerDataType::DATAMANAGER_DATA_TYPE_SPECTRUM;
+
+  std::vector<double> testFrequencies{1.0,     10.0,     100.0,    1000.0,
+                                      10000.0, 100000.0, 1000000.0};
+  std::vector<Impedance> testImpedances{{1.0, 2.0},  {3.0, 4.0},  {5.0, 6.0},
+                                        {7.0, 8.0},  {9.0, 10.0}, {11.0, 12.0},
+                                        {13.0, 14.0}};
+  ImpedanceSpectrum testSpectrum;
+  Utilities::joinImpedanceSpectrum(testFrequencies, testImpedances,
+                                   testSpectrum);
+
+  REQUIRE(dut->open(TestFileName, keyMapping));
 
   dut->setupSpectrum("spectrum", testFrequencies);
 
@@ -350,7 +520,7 @@ TEST_CASE("Test mass writes") {
 }
 
 TEST_CASE("Benchmark single writes") {
-  std::remove(TEST_FILE_NAME);
+  std::remove(TestFileNameExt.c_str());
 
   std::shared_ptr<DataManager> dut =
       std::shared_ptr<DataManager>(new DataManagerHdf());
@@ -371,7 +541,7 @@ TEST_CASE("Benchmark single writes") {
                                    testSpectrum);
   dut->setupSpectrum("spectrum", testFrequencies);
 
-  REQUIRE(dut->open("test_file.hdf", keyMapping));
+  REQUIRE(dut->open(TestFileName, keyMapping));
 
   BENCHMARK("Single Write INT") {
     return dut->write(Core::getNow(), "int", Value(1));
@@ -391,7 +561,7 @@ TEST_CASE("Benchmark single writes") {
 }
 
 TEST_CASE("Benchmark single read") {
-  std::remove(TEST_FILE_NAME);
+  std::remove(TestFileNameExt.c_str());
 
   std::shared_ptr<DataManager> dut =
       std::shared_ptr<DataManager>(new DataManagerHdf());
@@ -443,3 +613,4 @@ TEST_CASE("Benchmark single read") {
     return dut->read(now, "spectrum", valueSpectrum);
   };
 }
+#endif

@@ -1,3 +1,7 @@
+// Standard includes
+#include <ostream>
+#include <sstream>
+
 // Project includes
 #include <common.hpp>
 #include <data_response_payload.hpp>
@@ -16,20 +20,29 @@ DataResponsePayload::constructDataResponsePayload(
 
   std::vector<DataResponsePayload *> retVal;
   bool atEnd = false;
+  auto timestampsItBegin = timestamps.begin();
+  auto valuesItBegin = values.begin();
   do {
-    auto timestampsItBegin = timestamps.begin();
     auto timestampsItEnd =
-        timestampsItBegin + SCIMON_RESPONSE_PAYLOAD_MAX_MESSAGE_LENGTH;
+        timestamps.end() - timestamps.begin() >
+                SCIMON_RESPONSE_PAYLOAD_MAX_MESSAGE_LENGTH
+            ? timestampsItBegin + SCIMON_RESPONSE_PAYLOAD_MAX_MESSAGE_LENGTH
+            : timestamps.end();
 
-    auto valuesItBegin = values.begin();
     auto valuesItEnd =
-        valuesItBegin + SCIMON_RESPONSE_PAYLOAD_MAX_MESSAGE_LENGTH;
+        values.end() - values.begin() >
+                SCIMON_RESPONSE_PAYLOAD_MAX_MESSAGE_LENGTH
+            ? valuesItBegin + SCIMON_RESPONSE_PAYLOAD_MAX_MESSAGE_LENGTH
+            : values.end();
 
     std::vector<TimePoint> timepointVec(timestampsItBegin, timestampsItEnd);
     std::vector<Value> valueVec(valuesItBegin, valuesItEnd);
 
     retVal.emplace_back(new DataResponsePayload(
         from, to, key, timepointVec.size(), timepointVec, valueVec));
+
+    timestampsItBegin = timestampsItEnd;
+    valuesItBegin = valuesItEnd;
 
     atEnd = timestampsItEnd == timestamps.end();
 
@@ -43,22 +56,47 @@ DataResponsePayload *DataResponsePayload::constructSingleDataResponsePayload(
 
   auto timestampsItBegin = timestamps.begin();
   auto timestampsItEnd =
-      timestampsItBegin + SCIMON_RESPONSE_PAYLOAD_MAX_MESSAGE_LENGTH;
+      timestamps.end() - timestamps.begin() >
+              SCIMON_RESPONSE_PAYLOAD_MAX_MESSAGE_LENGTH
+          ? timestampsItBegin + SCIMON_RESPONSE_PAYLOAD_MAX_MESSAGE_LENGTH
+          : timestamps.end();
 
   auto valuesItBegin = values.begin();
-  auto valuesItEnd = valuesItBegin + SCIMON_RESPONSE_PAYLOAD_MAX_MESSAGE_LENGTH;
+  auto valuesItEnd =
+      values.end() - values.begin() > SCIMON_RESPONSE_PAYLOAD_MAX_MESSAGE_LENGTH
+          ? valuesItBegin + SCIMON_RESPONSE_PAYLOAD_MAX_MESSAGE_LENGTH
+          : values.end();
 
   std::vector<TimePoint> timepointVec(timestampsItBegin, timestampsItEnd);
   std::vector<Value> valueVec(valuesItBegin, valuesItEnd);
 
-  timestamps = std::vector<TimePoint>(timestampsItEnd + 1, timestamps.end());
-  values = std::vector<Value>(valuesItEnd + 1, values.end());
+  timestamps.erase(timestampsItBegin, timestampsItEnd);
+  values.erase(valuesItBegin, valuesItEnd);
 
   return new DataResponsePayload(from, to, key, timepointVec.size(),
                                  timepointVec, valueVec);
 }
 
-std::string DataResponsePayload::serialize() { return ""; }
+std::string DataResponsePayload::serialize() {
+  std::stringstream sstream;
+
+  sstream << "From: " << std::format("{:%Y-%m-%d %H:%M:%S}", this->from)
+          << std::endl
+          << "To: " << std::format("{:%Y-%m-%d %H:%M:%S}", this->to)
+          << std::endl
+          << "Key: " << this->key << std::endl
+          << "Count: " << this->count << std::endl;
+
+  if (this->count > 0) {
+    sstream << "First timestamp: "
+            << std::format("{:%Y-%m-%d %H:%M:%S}", this->timestamps.front())
+            << std::endl
+            << "Last timestamp: "
+            << std::format("{:%Y-%m-%d %H:%M:%S}", this->timestamps.back())
+            << std::endl;
+  }
+  return sstream.str();
+}
 
 std::vector<unsigned char> DataResponsePayload::DataResponsePayload::bytes() {
   Serialization::Devices::DataResponsePayloadT intermediateObject;

@@ -22,7 +22,7 @@ using namespace Utilities;
 
 namespace Messages {
 
-class MessageDistributor;
+class MessgeDistributor;
 
 /**
  * @brief Declares an interface that allows reading, writing and

@@ -30,9 +30,9 @@ target_link_libraries(control PRIVATE
     scimon_message
 )
 
-set_target_properties(control PROPERTIES
-    WIN32_EXECUTABLE ON
-)
+#set_target_properties(control PROPERTIES
+#    WIN32_EXECUTABLE ON
+#)
 
 # Enforce C++20
 set_property(TARGET sentry PROPERTY CXX_STANDARD 20)

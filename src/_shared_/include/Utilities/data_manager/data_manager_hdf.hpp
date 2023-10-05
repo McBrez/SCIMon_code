@@ -70,7 +70,7 @@ public:
   /**
    * @brief Tries to open an already existing data base.
    *F
-   * @param name The name of the data base, that shall be opened (without file
+   * @param name The name of the data base, that shall be opened (with file
    * extension).
    * @return TRUE if a database has been opened. False otherwise.
    */
@@ -159,8 +159,11 @@ private:
   bool transformTimestampVector(const std::vector<TimePoint> &origVec,
                                 std::vector<long long> &transformedVec);
 
-  // Pointer to the file.
+  /// Pointer to the file.
   std::unique_ptr<HighFive::File> hdfFile;
+
+  /// The default chunking size.
+  const hsize_t defaultChunkingSize = 1024;
 };
 } // namespace Utilities
 

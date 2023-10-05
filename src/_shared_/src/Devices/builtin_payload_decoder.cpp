@@ -195,9 +195,8 @@ WritePayload *BuiltinPayloadDecoder::decodeWritePayload(
   }
 
   else if (MAGIC_NUMBER_REQUEST_KEY_PAYLOAD == magicNumber) {
-    const Serialization::Devices::RequestKeyPayloadT *requestKeyPayload =
-        Serialization::Devices::GetRequestKeyPayload(buffer)->UnPack();
-
+    // NOTE: Right now, RequestKeyPayload is just a stub. No decoding has to be
+    // done here.
     return new RequestKeyPayload();
   }
 

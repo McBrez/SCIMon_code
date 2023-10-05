@@ -82,6 +82,16 @@ void splitImpedance(const std::vector<Impedance> &impedanceVec,
   }
 }
 
+void splitImpedance(const std::vector<Impedance> &impedanceVec,
+                    std::vector<std::vector<double>> &outVec) {
+  outVec.reserve(impedanceVec.size());
+
+  for (auto impedance : impedanceVec) {
+    outVec.emplace_back(
+        std::vector<double>{impedance.real(), impedance.imag()});
+  }
+}
+
 void joinImpedanceSpectrum(
     const std::vector<std::vector<std::vector<double>>> &array,
     const std::vector<double> &spectrumMapping,

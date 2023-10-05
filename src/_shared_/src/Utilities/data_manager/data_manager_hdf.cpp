@@ -26,64 +26,77 @@ bool DataManagerHdf::read(TimePoint timestamp, const std::string &key,
     return false;
   }
 
+  std::lock_guard<std::mutex> lockGuard(this->dataManagerMutex);
+
   DataSet datasetTimestamps =
       this->hdfFile->getDataSet("/data/" + key + "/timestamps");
 
-  for (size_t i = 0; i < datasetTimestamps.getElementCount(); i++) {
-    long long timestampLongRead;
-    datasetTimestamps.select({i, 0}, {1, 1}).read(timestampLongRead);
-    TimePoint timestampRead =
-        TimePoint(std::chrono::milliseconds(timestampLongRead));
-    if (this->timePointDiff(timestampRead, timestamp) <
-        std::chrono::milliseconds(1)) {
-      DataManagerDataType dataType = this->typeMapping[key];
-      if (DATAMANAGER_DATA_TYPE_INT == dataType) {
-        DataSet datasetValues =
-            this->hdfFile->getDataSet("/data/" + key + "/values");
-        value = datasetValues.select({i, 0}, {1, 1}).read<int>();
+  // Read chunk by chunk and try to find a matching timestamp.
+  std::vector<long long> timestampLongRead(this->defaultChunkingSize);
+  for (hsize_t i = 0; i < datasetTimestamps.getElementCount();
+       i += this->defaultChunkingSize) {
+    // Determine the count of elements that shall be read.
+    hsize_t elementCount =
+        (i + this->defaultChunkingSize) > datasetTimestamps.getElementCount()
+            ? datasetTimestamps.getElementCount() - i
+            : this->defaultChunkingSize;
+    datasetTimestamps.select({i, 0}, {elementCount, 1}).read(timestampLongRead);
 
-        return true;
-      } else if (DATAMANAGER_DATA_TYPE_DOUBLE == dataType) {
-        DataSet datasetValues =
-            this->hdfFile->getDataSet("/data/" + key + "/values");
-        value = datasetValues.select({i, 0}, {1, 1}).read<double>();
+    // Iterate over the gathered timestamps and try to find a match.
+    for (auto timestampRaw : timestampLongRead) {
+      TimePoint timestampRead =
+          TimePoint(std::chrono::milliseconds(timestampRaw));
+      if (this->timePointDiff(timestampRead, timestamp) <
+          std::chrono::milliseconds(1)) {
+        DataManagerDataType dataType = this->typeMapping[key];
+        if (DATAMANAGER_DATA_TYPE_INT == dataType) {
+          DataSet datasetValues =
+              this->hdfFile->getDataSet("/data/" + key + "/values");
+          value = datasetValues.select({i, 0}, {1, 1}).read<int>();
 
-        return true;
-      } else if (DATAMANAGER_DATA_TYPE_COMPLEX == dataType) {
-        DataSet datasetValues =
-            this->hdfFile->getDataSet("/data/" + key + "/values");
-        Impedance impedance(
-            datasetValues.select({i, 0}, {1, 1}).read<double>(),
-            datasetValues.select({i, 1}, {1, 1}).read<double>());
-        value = impedance;
+          return true;
+        } else if (DATAMANAGER_DATA_TYPE_DOUBLE == dataType) {
+          DataSet datasetValues =
+              this->hdfFile->getDataSet("/data/" + key + "/values");
+          value = datasetValues.select({i, 0}, {1, 1}).read<double>();
 
-        return true;
+          return true;
+        } else if (DATAMANAGER_DATA_TYPE_COMPLEX == dataType) {
+          DataSet datasetValues =
+              this->hdfFile->getDataSet("/data/" + key + "/values");
+          Impedance impedance(
+              datasetValues.select({i, 0}, {1, 1}).read<double>(),
+              datasetValues.select({i, 1}, {1, 1}).read<double>());
+          value = impedance;
 
-      } else if (DATAMANAGER_DATA_TYPE_STRING == dataType) {
-        DataSet datasetValues =
-            this->hdfFile->getDataSet("/data/" + key + "/values");
-        value = datasetValues.select({i, 0}, {1, 1}).read<std::string>();
+          return true;
 
-        return true;
+        } else if (DATAMANAGER_DATA_TYPE_STRING == dataType) {
+          DataSet datasetValues =
+              this->hdfFile->getDataSet("/data/" + key + "/values");
+          value = datasetValues.select({i, 0}, {1, 1}).read<std::string>();
 
-      } else if (DATAMANAGER_DATA_TYPE_SPECTRUM == dataType) {
-        DataSet datasetValues =
-            this->hdfFile->getDataSet("/data/" + key + "/values");
-        size_t frequencyCount = this->spectrumMapping[key].size();
-        auto spectrumArray =
-            datasetValues.select({i, 0, 0}, {1, frequencyCount, 2})
-                .read<std::vector<std::vector<std::vector<double>>>>();
-        std::vector<ImpedanceSpectrum> isSpectrum;
-        Utilities::joinImpedanceSpectrum(
-            spectrumArray, this->spectrumMapping[key], isSpectrum);
+          return true;
 
-        value = isSpectrum.front();
+        } else if (DATAMANAGER_DATA_TYPE_SPECTRUM == dataType) {
+          DataSet datasetValues =
+              this->hdfFile->getDataSet("/data/" + key + "/values");
+          size_t frequencyCount = this->spectrumMapping[key].size();
+          auto spectrumArray =
+              datasetValues.select({i, 0, 0}, {1, frequencyCount, 2})
+                  .read<std::vector<std::vector<std::vector<double>>>>();
+          std::vector<ImpedanceSpectrum> isSpectrum;
+          Utilities::joinImpedanceSpectrum(
+              spectrumArray, this->spectrumMapping[key], isSpectrum);
 
-        return true;
-      }
+          value = isSpectrum.front();
 
-      else {
-        return false;
+          return true;
+        }
+
+        else {
+          return false;
+        }
       }
     }
   }
@@ -95,6 +108,11 @@ bool DataManagerHdf::read(TimePoint from, TimePoint to, const std::string &key,
                           std::vector<TimePoint> &timestamps,
                           std::vector<Value> &value) {
 
+  LOG(INFO) << "Received read request." << std::endl
+            << "From: " << std::format("{:%Y-%m-%d %H:%M:%S}", from)
+            << std::endl
+            << "To: " << std::format("{:%Y-%m-%d %H:%M:%S}", to);
+
   if (!this->isOpen()) {
     return false;
   }
@@ -105,38 +123,64 @@ bool DataManagerHdf::read(TimePoint from, TimePoint to, const std::string &key,
     return false;
   }
 
+  std::lock_guard<std::mutex> lockGuard(this->dataManagerMutex);
+
   DataSet datasetTimestamps =
       this->hdfFile->getDataSet("/data/" + key + "/timestamps");
 
-  // Iterate over the whole dataset and find the index margins of the requested
-  // time frame.
-  size_t idxFrom = -1;
-  size_t idxTo = -1;
-  for (size_t i = 0; i < datasetTimestamps.getElementCount(); i++) {
-    long long timestampLongRead;
-    datasetTimestamps.select({i, 0}, {1, 1}).read(timestampLongRead);
-    TimePoint timestampCurrent((std::chrono::milliseconds(timestampLongRead)));
-    if (timestampCurrent >= from && timestampCurrent <= to && idxFrom == -1) {
-      idxFrom = i;
-      continue;
+  // Iterate chunk by chunk over the whole dataset and find the index margins of
+  // the requested time frame.
+  hsize_t idxFrom = 0;
+  hsize_t idxTo = 0;
+  bool idxFromFound = false;
+  bool idxToFound = false;
+  std::vector<long long> timestampLongRead;
+  timestampLongRead.reserve(this->defaultChunkingSize);
+  for (hsize_t i = 0; i < datasetTimestamps.getElementCount();
+       i += this->defaultChunkingSize) {
+    // Determine the count of elements that shall be read. Ensure that it is not
+    // read beyond the bounds of the dataset.
+    hsize_t elementCount =
+        (i + this->defaultChunkingSize) > datasetTimestamps.getElementCount()
+            ? datasetTimestamps.getElementCount() - i
+            : this->defaultChunkingSize;
+    datasetTimestamps.select({i, 0}, {elementCount, 1}).read(timestampLongRead);
+
+    hsize_t offset = 0;
+    for (auto timestampRaw : timestampLongRead) {
+      TimePoint timestampCurrent((std::chrono::milliseconds(timestampRaw)));
+      if (timestampCurrent >= from && timestampCurrent <= to && !idxFromFound) {
+        idxFrom = i + offset;
+        idxFromFound = true;
+      }
+      if (timestampCurrent >= to && !idxToFound) {
+        idxTo = i + offset;
+        idxToFound = true;
+        // The fact that idxTo has been found implies that idxFrom has been
+        // found too, as it is assumed that timestamps are ordered. Break the
+        // loop here, as both indices have been found.
+        break;
+      }
+      offset++;
     }
-    if (timestampCurrent >= to && idxTo == -1) {
-      idxTo = i;
+
+    // Break the loop, if both indices have been found.
+    if (idxFromFound && idxToFound) {
       break;
     }
   }
 
-  // Check if the indices have been found. idxFrom has to greater or equal 0.
+  // Check if the indices have been found. idxFrom has to be greater or equal 0.
   // idxTo optionally needs to be greater or equal 0. An idxTo of -1 means, that
   // the idx would lie beyond the range of the dataset. In that case, just take
   // the last element as idxTo.
-  if (idxFrom == -1) {
+  if (!idxFromFound) {
     // Return empty vector.
     value = std::vector<Value>();
 
     return true;
   }
-  if (idxTo == -1) {
+  if (!idxToFound) {
     idxTo = datasetTimestamps.getElementCount() - 1;
   }
 
@@ -149,6 +193,8 @@ bool DataManagerHdf::read(TimePoint from, TimePoint to, const std::string &key,
     timestamps.emplace_back(
         TimePoint(std::chrono::milliseconds(timestampsRawValue)));
   }
+
+  LOG(INFO) << "DataManager found " << timestampsRaw.size() << "data points.";
 
   // Read from the data set and construct a std::vector<Value>.
   DataManagerDataType dataType = this->typeMapping[key];
@@ -357,7 +403,7 @@ bool DataManagerHdf::open(std::string name, KeyMapping keyMapping, bool force) {
     // Create the hierarchy. First, create the struture that holds the values
     // ... Use chunking
     DataSetCreateProps props;
-    props.add(Chunking(std::vector<hsize_t>{1024, 1}));
+    props.add(Chunking(std::vector<hsize_t>{this->defaultChunkingSize, 1}));
     // ... now iterate over the typemapping to create the structures for the
     // data fields and to write into the key/types fields.
     std::vector<std::string> keys;
@@ -434,6 +480,16 @@ bool DataManagerHdf::open(std::string name, KeyMapping keyMapping, bool force) {
 
     for (int i = 0; i < keys.size(); i++) {
       this->typeMapping[keys[i]] = static_cast<DataManagerDataType>(types[i]);
+
+      // If the current key corresponds to a spectrum, read the spectrum mapping
+      // aswell.
+      if (types[i] == DataManagerDataType::DATAMANAGER_DATA_TYPE_SPECTRUM) {
+        DataSet dataSetSpectrumMapping =
+            file->getDataSet("/data/" + keys[i] + "/spectrumMapping");
+        std::vector<double> spectrum;
+        dataSetSpectrumMapping.read(spectrum);
+        this->spectrumMapping[keys[i]] = spectrum;
+      }
     }
   }
 
@@ -444,6 +500,8 @@ bool DataManagerHdf::close() {
   if (!this->isOpen()) {
     return false;
   }
+
+  std::lock_guard<std::mutex> lockGuard(this->dataManagerMutex);
 
   this->hdfFile.reset();
   this->typeMapping.clear();
@@ -493,7 +551,7 @@ bool DataManagerHdf::extendingWrite(const std::vector<TimePoint> &timestamp,
     return false;
   }
 
-  this->dataManagerMutex.lock();
+  std::lock_guard<std::mutex> lockGuard(this->dataManagerMutex);
 
   size_t extendSize = timestamp.size();
 
@@ -530,11 +588,10 @@ bool DataManagerHdf::extendingWrite(const std::vector<TimePoint> &timestamp,
     DataSet dataset = this->hdfFile->getDataSet("/data/" + key + "/values");
     std::vector<Impedance> valueVector;
     this->transformValueVector(value, valueVector);
-    std::vector<double> realVec;
-    std::vector<double> imagVec;
-    Utilities::splitImpedance(valueVector, realVec, imagVec);
-    dataset.select({newIdx, 0}, {extendSize, 2})
-        .write(std::vector<std::vector<double>>{{realVec}, {imagVec}});
+    std::vector<std::vector<double>> impedance2dVec;
+
+    Utilities::splitImpedance(valueVector, impedance2dVec);
+    dataset.select({newIdx, 0}, {extendSize, 2}).write(impedance2dVec);
   }
 
   else if (DATAMANAGER_DATA_TYPE_STRING == dataType) {
@@ -556,11 +613,9 @@ bool DataManagerHdf::extendingWrite(const std::vector<TimePoint> &timestamp,
   }
 
   else {
-    this->dataManagerMutex.unlock();
     return false;
   }
 
-  this->dataManagerMutex.unlock();
   this->hdfFile->flush();
   return true;
 }
@@ -575,10 +630,12 @@ bool DataManagerHdf::createKey(std::string key, DataManagerDataType dataType) {
 
   this->typeMapping[key] = dataType;
 
+  std::lock_guard<std::mutex> lockGuard(this->dataManagerMutex);
+
   // Create the hierarchy. First, create the structure that holds the values ...
   // Use chunking
   DataSetCreateProps props;
-  props.add(Chunking(std::vector<hsize_t>{1024, 1}));
+  props.add(Chunking(std::vector<hsize_t>{this->defaultChunkingSize, 1}));
   // ... now iterate over the typemapping to create the structures for the data
   // fields and to write into the key/types fields.
   // Create the dataset for the data.
@@ -667,6 +724,8 @@ bool DataManagerHdf::setupSpectrumSpecific(std::string key,
     return false;
   }
 
+  std::lock_guard<std::mutex> lockGuard(this->dataManagerMutex);
+
   // Create the dataset for the spectrum.
   size_t frequencyCount = frequencies.size();
   DataSetCreateProps propsValues;
@@ -677,7 +736,8 @@ bool DataManagerHdf::setupSpectrumSpecific(std::string key,
                                create_datatype<double>(), propsValues);
   // Create the dataset for the timestamps.
   DataSetCreateProps propsTimestamps;
-  propsTimestamps.add(Chunking(std::vector<hsize_t>{1024, 1}));
+  propsTimestamps.add(
+      Chunking(std::vector<hsize_t>{this->defaultChunkingSize, 1}));
   DataSpace dataspaceTimestamps = DataSpace({0, 1}, {DataSpace::UNLIMITED, 1});
   this->hdfFile->createDataSet("/data/" + key + "/timestamps",
                                dataspaceTimestamps,

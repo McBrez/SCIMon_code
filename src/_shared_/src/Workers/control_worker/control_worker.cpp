@@ -282,10 +282,11 @@ bool ControlWorker::handleResponse(
                                    (*spectrometerIt)->getDeviceId(),
                                    WriteDeviceTopic::WRITE_TOPIC_REQUEST_KEYS));
 
-        this->pushMessageQueue(requestPumpKeyMsg);
-        this->pushMessageQueue(requestSpectrometerKeyMsg);
         this->controlWorkerSubState =
             CONTROL_WORKER_SUBSTATE_CONF_GET_DATA_KEYS;
+        this->pushMessageQueue(requestPumpKeyMsg);
+        this->pushMessageQueue(requestSpectrometerKeyMsg);
+
       } else {
         // Remote devices are not yet ready. Do nothing.
       }
@@ -311,8 +312,8 @@ bool ControlWorker::handleResponse(
                           keyResponsePayload->getSpectrumMapping());
 
       // Check if the data keys of all remote devices are now known.
-      if (this->remoteDataKeys.contains(this->getPumpControllerId()) &&
-          this->remoteDataKeys.contains(this->getSpectrometerId())) {
+      if (this->remoteDataKeys.contains(this->getPumpControllerId().id()) &&
+          this->remoteDataKeys.contains(this->getSpectrometerId().id())) {
 
         // Create those keys in the local data manager.
         for (auto &remoteDataKeysEntry : this->remoteDataKeys) {
@@ -334,6 +335,7 @@ bool ControlWorker::handleResponse(
 
         // All remote keys are known. Start the data query thread.
         this->lastDataQuery = getNow() - this->dataQueryInterval;
+        this->doQueryData = true;
         this->dataQueryThread.reset(
             new std::thread(&ControlWorker::dataQueryWorker, this));
         this->controlWorkerSubState =
@@ -355,6 +357,9 @@ bool ControlWorker::handleResponse(
         return true;
       }
 
+      LOG(INFO) << "Received a DataResponseMessage: " << std::endl
+                << dataResponseMsg->serialize();
+
       std::string key = std::to_string(response->getSource().id()) + "/" +
                         dataResponseMsg->key;
       this->dataManager->write(dataResponseMsg->timestamps, key,
@@ -373,6 +378,7 @@ bool ControlWorker::handleResponse(
 
   else if (DeviceStatus::OPERATING == this->workerState) {
     this->handleStatusPayload(response);
+    return true;
   }
 
   else {
@@ -382,7 +388,7 @@ bool ControlWorker::handleResponse(
   }
 }
 
-std::string ControlWorker::getWorkerName() { return ""; }
+std::string ControlWorker::getWorkerName() { return CONTROL_WORKER_TYPE_NAME; }
 
 bool ControlWorker::startConnect(std::string ip, int port) {
   if (this->workerState != DeviceStatus::IDLE) {
@@ -472,7 +478,7 @@ void ControlWorker::queryRemoteStateWorker() {
         this->controlWorkerSubState == CONTROL_WORKER_SUBSTATE_REMOTE_STOPPED) {
 
       // Send a query state message to each remote id.
-      for (auto keyValuePair : this->remoteHostIds) {
+      for (auto &keyValuePair : this->remoteHostIds) {
         this->pushMessageQueue(std::shared_ptr<DeviceMessage>(
             new WriteDeviceMessage(this->getUserId(), keyValuePair.first,
                                    WriteDeviceTopic::WRITE_TOPIC_QUERY_STATE)));
@@ -580,7 +586,7 @@ void ControlWorker::dataQueryWorker() {
     std::vector<std::shared_ptr<DeviceMessage>> dataQueryMessages;
     for (auto remoteDataKeyEntry : this->remoteDataKeys) {
       KeyMapping keyMapping = std::get<KeyMapping>(remoteDataKeyEntry.second);
-      for (auto key : keyMapping) {
+      for (auto &key : keyMapping) {
 
         std::shared_ptr<WritePayload> dataRequestPayload(
             new RequestDataPayload(this->lastDataQuery, now, key.first));
