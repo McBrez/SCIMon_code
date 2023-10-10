@@ -8,8 +8,12 @@
 #include <device.hpp>
 
 Dialog::Dialog(QWidget *parent)
-    : QDialog(parent), ui(new Ui::Dialog), controlWorkerWrapper(100, parent) {
+    : QDialog(parent), ui(new Ui::Dialog), controlWorkerWrapper(100, parent),
+      spectroplot(new Gui::Spectroplot(std::vector<double>{0.0}, this)) {
+
   ui->setupUi(this);
+  this->spectroplot->setContentsMargins(0, 5, 0, 10);
+  this->spectroplot->resize(400, 200);
 
   this->ui->tbl_control_workers->setRowCount(1);
   this->ui->tbl_control_workers->setColumnCount(2);
@@ -55,6 +59,17 @@ Dialog::Dialog(QWidget *parent)
   QObject::connect(this->ui->btn_stop_ob1, &QPushButton::clicked,
                    &this->controlWorkerWrapper,
                    &ControlWorkerWrapper::stop_ob1);
+
+  QObject::connect(
+      &this->controlWorkerWrapper, &ControlWorkerWrapper::newSpectrumData,
+      this->spectroplot,
+      [this](
+          const std::vector<std::tuple<TimePoint, ImpedanceSpectrum>> &data) {
+        for (auto tup : data) {
+          this->spectroplot->pushSpectrum(std::get<TimePoint>(tup),
+                                          std::get<ImpedanceSpectrum>(tup));
+        }
+      });
 
   this->controlWorkerWrapper.startStateQuery();
 }

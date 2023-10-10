@@ -13,3 +13,6 @@
 [submodule "src/3rd_party/HighFive"]
 	path = src/3rd_party/HighFive
 	url = git@github.com:BlueBrain/HighFive.git
+[submodule "src/3rd_party/qwt"]
+	path = src/3rd_party/qwt
+	url = https://git.code.sf.net/p/qwt/git

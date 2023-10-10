@@ -143,6 +143,15 @@ public:
    */
   bool setRemoteWorkerState(UserId remoteId, bool state);
 
+  /**
+   * @brief Returns impedance spectra of the most recent data sereis.
+   * @param from Start of the queried time interval.
+   * @param to End of the queried time interval.
+   * @return A vector of impedance spectra.
+   */
+  std::vector<std::tuple<TimePoint, ImpedanceSpectrum>>
+  getSpectra(TimePoint from, TimePoint to);
+
 private:
   /**
    * @brief Returns the User id of the remote sentry from the remote id mapper.
@@ -194,7 +203,8 @@ private:
   /// containing worker/device name, the device type and a flag that indicates,
   /// whether the device name and type have already been resolved..
   std::map<size_t, std::tuple<bool, std::string, DeviceType>> remoteHostIds;
-  /// Holds the remote data keys. Maps from UserId to a tuple.
+  /// Holds the remote data keys. Maps from UserId to a tuple containing data
+  /// keys and spectrum mapping.
   std::map<size_t, std::tuple<KeyMapping, SpectrumMapping>> remoteDataKeys;
   /// The init payload, that shall be sent to the remote host, during
   /// configuration.

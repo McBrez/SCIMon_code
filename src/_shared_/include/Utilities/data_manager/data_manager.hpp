@@ -38,7 +38,7 @@ enum DataManagerDataType {
   DATAMANAGER_DATA_TYPE_SPECTRUM = 0x05
 };
 
-/// @brief Shortcut to a type that defines a mapping between a a data key name
+/// @brief Shortcut to a type that defines a mapping between a data key name
 /// and the data type.
 typedef std::map<std::string, DataManagerDataType> KeyMapping;
 /// Used to pass values to the data manager.

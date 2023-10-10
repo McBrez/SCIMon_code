@@ -603,3 +603,72 @@ void ControlWorker::dataQueryWorker() {
     std::this_thread::sleep_for(this->dataQueryInterval);
   }
 }
+
+std::vector<std::tuple<TimePoint, ImpedanceSpectrum>>
+ControlWorker::getSpectra(TimePoint from, TimePoint to) {
+  // Get the id of the spectrometer.
+  UserId spectrometerId = getSpectrometerId();
+
+  // Get the data keys of the spectrometer and find the ones that refer to a
+  // spectrum.
+  KeyMapping keyMap =
+      std::get<KeyMapping>(this->remoteDataKeys[spectrometerId.id()]);
+
+  // Copy the keys to a spectrum dataset into a temporary key mapping.
+  KeyMapping keyMapTemp;
+  for (auto &keyValue : keyMap) {
+    if (keyValue.second == DATAMANAGER_DATA_TYPE_SPECTRUM) {
+      keyMapTemp[keyValue.first] = keyValue.second;
+    }
+  }
+
+  // Get the key for the most recent spectrum.
+  std::string targetKey;
+  TimePoint largestTimestamp;
+  for (auto &keyValue : keyMapTemp) {
+    std::vector<std::string> split = Utilities::split(keyValue.first, '_');
+
+    int year, month, day, hour, minute;
+    sscanf_s(split.front().c_str(), "%4i%2i%2i%2i%2i", &year, &month, &day,
+             &hour, &minute);
+    TimePoint timestamp;
+    timestamp += std::chrono::years(year) + std::chrono::months(month) +
+                 std::chrono::days(day) + std::chrono::hours(hour) +
+                 std::chrono::minutes(minute);
+
+    if (timestamp > largestTimestamp) {
+      targetKey = keyValue.first;
+      largestTimestamp = timestamp;
+    }
+  }
+
+  // At the control worker side, the user id number of the remote device is
+  // prepended.
+  targetKey = std::to_string(spectrometerId.id()) + "/" + targetKey;
+
+  std::vector<TimePoint> timestamps;
+  std::vector<Value> values;
+  bool success =
+      this->dataManager->read(from, to, targetKey, timestamps, values);
+  std::vector<ImpedanceSpectrum> spectra;
+
+  if (!success) {
+    return std::vector<std::tuple<TimePoint, ImpedanceSpectrum>>();
+  }
+
+  // Transform std::vector<Value> to std::vector<ImpedanceSpectrum>
+  std::vector<ImpedanceSpectrum> spectrum;
+  std::transform(
+      values.cbegin(), values.cend(), std::back_inserter(spectrum),
+      [](Value value) { return std::get<ImpedanceSpectrum>(value); });
+
+  // Glob timestamps and values together.
+  std::vector<std::tuple<TimePoint, ImpedanceSpectrum>> retVal;
+  std::transform(timestamps.cbegin(), timestamps.cend(), spectrum.cbegin(),
+                 std::back_inserter(retVal),
+                 [](TimePoint timepoint, ImpedanceSpectrum spectrum) {
+                   return std::make_tuple(timepoint, spectrum);
+                 });
+
+  return retVal;
+}

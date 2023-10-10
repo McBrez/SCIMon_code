@@ -7,6 +7,7 @@ set(3RDPARTY_DIR ../../3rd_party)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(Qt6 REQUIRED COMPONENTS Widgets)
+find_package(Qwt REQUIRED)
 qt_standard_project_setup()
 
 qt_add_executable(control
@@ -14,15 +15,20 @@ qt_add_executable(control
 
     dialog.h
     ${INCLUDE_DIR}/Workers/control_worker/control_worker_wrapper.hpp
+    ${INCLUDE_DIR}/Gui/spectroplot.hpp
+    ${INCLUDE_DIR}/Gui/spectroplot_data.hpp
 
     dialog.cpp
     ${SOURCE_DIR}/Workers/control_worker/control_worker_wrapper.cpp
+    ${SOURCE_DIR}/Gui/spectroplot.cpp
+    ${SOURCE_DIR}/Gui/spectroplot_data.cpp
 
     dialog.ui
 )
 
 target_include_directories(control PUBLIC
     ${INCLUDE_DIR}/Workers/control_worker
+    ${INCLUDE_DIR}/Gui
 )
 
 target_link_libraries(control PRIVATE
@@ -30,9 +36,31 @@ target_link_libraries(control PRIVATE
     scimon_message
 )
 
-#set_target_properties(control PROPERTIES
-#    WIN32_EXECUTABLE ON
-#)
+# Set up build according to build type.
+if(${CMAKE_BUILD_TYPE} STREQUAL "Release")
+    # Link against the release library of Qwt.
+    target_link_libraries(control PRIVATE
+        Qwt::Qwt
+    )
+    # This hides the console windows when the binary is started.
+    set_target_properties(control PROPERTIES
+        WIN32_EXECUTABLE ON
+    )
+elseif(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+    # Link against the debug library of Qwt.
+    target_link_libraries(control PRIVATE
+        Qwt::Qwtd
+    )
+    # This shows a console windows when the binary is started.
+    # This console window makes it more convenient to see the log.
+    set_target_properties(control PROPERTIES
+        WIN32_EXECUTABLE OFF
+    )
+else()
+    message( SEND_ERROR "Unkown build type.")
+endif()
+
+
 
 # Enforce C++20
 set_property(TARGET sentry PROPERTY CXX_STANDARD 20)
@@ -44,6 +72,8 @@ target_compile_definitions(control
     # Make easylogging++ thread safe
     PUBLIC ELPP_THREAD_SAFE
     PUBLIC ELPP_FORCE_USE_STD_THREAD
+    PUBLIC QT_NO_PRINTER
+    PUBLIC QWT_DLL
 )
 
 

@@ -5,6 +5,9 @@ set(PROJECT_DIR src/build)
 set(TEST_DIR src/test)
 set(3RDPARTY_DIR src/3rd_party)
 
+# Let CMAKE look for modules in the build folder. 
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/src/build)
+
 # ------------------------------------------------------------ Cache Variable --
 set(SCIMON_MOCK_DEVICE_EPIX 
     FALSE

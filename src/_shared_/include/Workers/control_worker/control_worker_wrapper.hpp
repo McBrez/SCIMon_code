@@ -87,6 +87,8 @@ signals:
                        ControlWorkerSubState newState);
   void remoteStateChanged(QList<std::shared_ptr<StatusPayload>> oldStates,
                           QList<std::shared_ptr<StatusPayload>> newStates);
+  void newSpectrumData(
+      const std::vector<std::tuple<TimePoint, ImpedanceSpectrum>> &data);
 
 private:
   std::shared_ptr<MessageDistributor> messageDistributor;
@@ -95,6 +97,9 @@ private:
   std::unique_ptr<std::thread> messageThread;
   std::unique_ptr<std::thread> periodicActionsThread;
   bool doPeriodicActions;
+
+  /// The timestamp of the most recent spectrum query.
+  TimePoint recentSpectrumQueryTimestamp;
 };
 
 #endif

@@ -78,4 +78,23 @@ const int NetworkWorkerDefaultPort = 4545;
 #define MAGIC_NUMBER_SENTRY_INIT_PAYLOAD 0x0301
 #define MAGIC_NUMBER_SENTRY_CONF_PAYLOAD 0x0302
 } // namespace Core
+
+/**
+ * @brief Overloaded lesser than operator for impedances
+ * @param lhs The left hand side.
+ * @param rhs The right hand side.
+ * @return True if the absolute value of the left hand side is smaller than the
+ * right hand side.
+ */
+bool operator<(const Core::Impedance &lhs, const Core::Impedance &rhs);
+
+/**
+ * @brief Overloaded greater than operator for impedances
+ * @param lhs The left hand side.
+ * @param rhs The right hand side.
+ * @return True if the absolute value of the left hand side is greater than the
+ * right hand side.
+ */
+bool operator>(const Core::Impedance &lhs, const Core::Impedance &rhs);
+
 #endif

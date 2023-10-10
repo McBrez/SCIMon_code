@@ -6,6 +6,7 @@
 
 // Project inclues
 #include <control_worker_wrapper.hpp>
+#include <spectroplot.hpp>
 
 namespace Ui {
 class Dialog;
@@ -28,6 +29,7 @@ public slots:
 private:
   Ui::Dialog *ui;
   ControlWorkerWrapper controlWorkerWrapper;
+  Gui::Spectroplot *spectroplot;
 };
 
 #endif // DIALOG_H

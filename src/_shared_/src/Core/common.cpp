@@ -12,3 +12,13 @@ Core::TimePoint Core::getNow() {
 std::string Core::getTimestampString(TimePoint timepoints) {
   return std::format("{:%FT%T%z}", timepoints);
 }
+
+bool operator<(const Core::Impedance &lhs, const Core::Impedance &rhs) {
+  return (lhs.real() * lhs.real() + lhs.imag() * lhs.imag()) <
+         (rhs.real() * rhs.real() + rhs.imag() * rhs.imag());
+}
+
+bool operator>(const Core::Impedance &lhs, const Core::Impedance &rhs) {
+  return (lhs.real() * lhs.real() + lhs.imag() * lhs.imag()) >
+         (rhs.real() * rhs.real() + rhs.imag() * rhs.imag());
+}
