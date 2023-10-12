@@ -27,6 +27,7 @@ public slots:
   void pushSpectrum(TimePoint timestamp, const ImpedanceSpectrum &spectrum);
 
 private:
+  void rescalePlot();
   std::unique_ptr<QwtPlotSpectrogram> m_spectrogram;
   SpectrogramData *data;
 };
