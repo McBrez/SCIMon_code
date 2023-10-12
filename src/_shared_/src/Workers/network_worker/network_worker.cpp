@@ -12,9 +12,9 @@ using namespace Messages;
 namespace Workers {
 NetworkWorker::NetworkWorker()
     : Worker(), socketWrapper(SocketWrapper::getSocketWrapper()),
-      doListen(new bool(false)), doComm(false),
+      doListen(new bool(false)),
       commState(NetworkWorkerCommState::NETWORK_WOKER_COMM_STATE_INVALID),
-      commThread(nullptr), listenerThread(nullptr) {}
+      commThread(nullptr), doComm(false), listenerThread(nullptr) {}
 
 NetworkWorker::~NetworkWorker() {
   *this->doListen = false;
@@ -230,6 +230,9 @@ void NetworkWorker::listenWorker() {
           << "Network Worker established connection. Starting comm thread.";
       this->commState =
           NetworkWorkerCommState::NETWORK_WOKER_COMM_STATE_HANDSHAKING;
+      this->doComm = false;
+      if (this->commThread)
+        this->commThread->join();
       this->doComm = true;
       this->commThread.reset(new std::thread(&NetworkWorker::commWorker, this));
     }
@@ -289,20 +292,32 @@ void NetworkWorker::commWorker() {
             new HandshakeMessage(this->self->getUserId(), UserId(),
                                  this->messageDistributor->getStatus(),
                                  MessageFactory::getInstace()->getVersion()));
-        this->socketWrapper->write(
+        bool success = this->socketWrapper->write(
             MessageFactory::getInstace()->encodeMessage(handshakeMsg));
-        this->commState =
-            NETWORK_WOKER_COMM_STATE_WAITING_FOR_HANDSHAKE_RESPONSE;
-
+        if (success) {
+          this->commState =
+              NETWORK_WOKER_COMM_STATE_WAITING_FOR_HANDSHAKE_RESPONSE;
+        } else {
+          // Connection got interrupted. Go into error state.
+          LOG(ERROR) << "Connection got interrupted while handshaking. Go into "
+                        "error state.";
+          this->handleLostConnection();
+        }
       }
 
       else if (NetworkWorkerOperationMode::NETWORK_WORKER_OP_MODE_SERVER ==
                this->initPayload->getOperationMode()) {
         // The server just Waits for the hand shake message.
         // This state is only relevant if the worker is configured as
-        // client. Read from the socket and try to decode a message from
+        // server. Read from the socket and try to decode a message from
         // that.
         int readRet = this->socketWrapper->read(this->readBuffer);
+        if (readRet == -1) {
+          // Connection got interrupted. Go back to listening.
+          LOG(ERROR) << "Connection got interrupted while handshaking. "
+                        "Returning to listening.";
+          this->handleLostConnection();
+        }
         std::shared_ptr<DeviceMessage> msg =
             MessageFactory::getInstace()->decodeMessage(this->readBuffer);
 
@@ -334,14 +349,19 @@ void NetworkWorker::commWorker() {
                                  handshakeMsg->getSource(),
                                  this->messageDistributor->getStatus(),
                                  MessageFactory::getInstace()->getVersion()));
-        this->socketWrapper->write(
+        int writeSuccess = this->socketWrapper->write(
             MessageFactory::getInstace()->encodeMessage(handshakeMsgResponse));
-
-        // Handshake was successful. Proceed to next state.
-        this->commState =
-            NetworkWorkerCommState::NETWORK_WOKER_COMM_STATE_WORKING;
-        this->workerState = DeviceStatus::OPERATING;
-        this->readBuffer.clear();
+        if (writeSuccess >= 0) {
+          // Handshake was successful. Proceed to next state.
+          this->commState =
+              NetworkWorkerCommState::NETWORK_WOKER_COMM_STATE_WORKING;
+          this->workerState = DeviceStatus::OPERATING;
+          this->readBuffer.clear();
+        } else {
+          LOG(ERROR) << "Connection failed during handshaking. Going back to "
+                        "listening.";
+          this->handleLostConnection();
+        }
 
       }
 
@@ -361,6 +381,13 @@ void NetworkWorker::commWorker() {
       // This state is only relevant if the worker is configured as client.
       // Read from the socket and try to decode a message from that.
       int readRet = this->socketWrapper->read(this->readBuffer);
+      if (readRet == -1) {
+        // Connection got interrupted. Go into error state.
+        LOG(ERROR) << "Connection got iterrupted while handshaking. Go into "
+                      "error state.";
+        this->handleLostConnection();
+        break;
+      }
       std::shared_ptr<DeviceMessage> msg =
           MessageFactory::getInstace()->decodeMessage(this->readBuffer);
 
@@ -396,16 +423,17 @@ void NetworkWorker::commWorker() {
              this->commState) {
 
       // Worker is in operation mode. Read from socket and try to interpret
-      // messages. Put interpreted messages into messageOut. Then send
+      // messages. Put interpreted messages into messageOut. Then, send
       // messages meant for the communication partner over.
 
       // Read from socket.
       int readSuccess = this->socketWrapper->read(this->readBuffer);
       if (readSuccess <= 0) {
-        // Connection seems to be closed. Set the worker in an invalid state.
-        // LOG(INFO) << "Other end point seems to have closed the connection. "
-        //             "Closing down socket.";
-        // this->doComm = false;
+        // Connection seems to be closed.
+        LOG(ERROR) << "Other end point seems to have closed the connection. "
+                      "Closing down socket.";
+        this->handleLostConnection();
+        break;
       }
       std::shared_ptr<DeviceMessage> msg =
           MessageFactory::getInstace()->decodeMessage(this->readBuffer);
@@ -424,6 +452,14 @@ void NetworkWorker::commWorker() {
         this->outgoingNetworkMessages.pop();
         int sendSuccess = this->socketWrapper->write(
             MessageFactory::getInstace()->encodeMessage(message));
+        if (sendSuccess <= 0) {
+          // Connection seems to be closed.
+          LOG(ERROR) << "Other end point seems to have closed the connection. "
+                        "Closing down socket.";
+          this->handleLostConnection();
+          this->outgoingNetworkMessagesMutex.unlock();
+          break;
+        }
       }
       this->outgoingNetworkMessagesMutex.unlock();
     }
@@ -435,7 +471,6 @@ void NetworkWorker::commWorker() {
     }
   }
 
-  this->commState = NetworkWorkerCommState::NETWORK_WOKER_COMM_STATE_INVALID;
   LOG(INFO) << "Network Worker thread is finished. Shutting down.";
   this->socketWrapper->close();
 }
@@ -494,6 +529,38 @@ bool NetworkWorker::write(std::shared_ptr<ConfigDeviceMessage> configMsg) {
 
 std::string NetworkWorker::getWorkerName() {
   return Core::NETWORK_WORKER_TYPE_NAME;
+}
+
+void NetworkWorker::handleLostConnection() {
+  // Clear the queue.
+  this->outgoingNetworkMessages = std::queue<std::shared_ptr<DeviceMessage>>();
+
+  // Server goes back to listening. Client goes into error state.
+  if (NetworkWorkerOperationMode::NETWORK_WORKER_OP_MODE_SERVER ==
+      this->initPayload->getOperationMode()) {
+    LOG(INFO) << "Server restarts listener thread, after connection got "
+                 "interrupted.";
+    this->doComm = false;
+    *this->doListen = false;
+    this->listenerThread->join();
+    *this->doListen = true;
+    this->commState = NETWORK_WOKER_COMM_STATE_LISTENING;
+    this->workerState = DeviceStatus::BUSY;
+    this->listenerThread.reset(
+        new std::thread(&NetworkWorker::listenWorker, this));
+  }
+
+  else if (NetworkWorkerOperationMode::NETWORK_WORKER_OP_MODE_CLIENT ==
+           this->initPayload->getOperationMode()) {
+    this->doComm = false;
+    this->commState = NETWORK_WOKER_COMM_STATE_ERROR;
+    this->workerState = DeviceStatus::ERROR;
+  }
+
+  else {
+    this->commState = NETWORK_WOKER_COMM_STATE_ERROR;
+    this->workerState = DeviceStatus::ERROR;
+  }
 }
 
 } // namespace Workers

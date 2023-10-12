@@ -60,13 +60,13 @@ public:
    * @brief Starts operation of the network worker.
    * @return TRUE if operation could be started. FALSE otherwise.
    */
-  virtual bool start();
+  virtual bool start() override;
 
   /**
    * @brief Stops operation of the network worker.
    * @return TRUE if the operation could be stopped. FALSE otherwise.
    */
-  virtual bool stop();
+  virtual bool stop() override;
 
   /**
    * @brief Triggers an initialization of the network worker. I.e. the worker
@@ -143,6 +143,14 @@ public:
   virtual std::string getWorkerName() override;
 
 private:
+  /**
+   * @brief Handles the state machine, in case the socket got closed. If the
+   * worker is configured as server, the comm thread is stopped, and the
+   * listener thread is started again. If the worker is configured as client, it
+   * goes into error state.
+   */
+  void handleLostConnection();
+
   std::shared_ptr<NetworkWorkerInitPayload> initPayload;
 
   std::shared_ptr<SocketWrapper> socketWrapper;

@@ -68,6 +68,12 @@ public:
    * ownership of the pointer.
    */
   static SocketWrapper *getSocketWrapper();
+
+  /**
+   * @brief Returns whether a connection is currently open and active.
+   * @return True if a connection is currently open and active.
+   */
+  virtual bool isOpen() const = 0;
 };
 
 } // namespace Utilities

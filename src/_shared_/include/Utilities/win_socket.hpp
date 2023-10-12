@@ -11,7 +11,7 @@
 /// The default buffer length.
 #define WIN_SOCKET_DEFAULT_BUFFER_LEN 2048
 /// The default receive timeout duration. In milliseconds.
-#define WIN_SOCKET_DEFAULT_RECV_TIMEOUT 100
+#define WIN_SOCKET_DEFAULT_RECV_TIMEOUT 5000
 
 namespace Utilities {
 /**
@@ -74,6 +74,12 @@ public:
    * @return Length of the socket in bytes.
    */
   int getBufferLength();
+
+  /**
+   * @brief Returns whether a connection is currently open and active.
+   * @return True if a connection is currently open and active.
+   */
+  virtual bool isOpen() const override;
 
 private:
   /// The socket object.

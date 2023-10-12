@@ -92,9 +92,13 @@ bool WinSocket::listenConnection(std::shared_ptr<bool> doListen, int port) {
     WSACleanup();
     return false;
   }
-
-  DWORD recvTimeout = WIN_SOCKET_DEFAULT_RECV_TIMEOUT;
-  setsockopt(this->connectSocket, SOL_SOCKET, SO_RCVTIMEO, (char *)&recvTimeout,
+  /*
+    DWORD recvTimeout = WIN_SOCKET_DEFAULT_RECV_TIMEOUT;
+    setsockopt(this->connectSocket, SOL_SOCKET, SO_RCVTIMEO, (char
+    *)&recvTimeout, sizeof(DWORD));
+  */
+  DWORD keepAlive = 1;
+  setsockopt(this->connectSocket, SOL_SOCKET, SO_KEEPALIVE, (char *)&keepAlive,
              sizeof(DWORD));
 
   closesocket(listenSocket);
@@ -168,8 +172,12 @@ bool WinSocket::open(std::string ip, int port) {
   }
 
   freeaddrinfo(result);
+  /*
   DWORD recvTimeout = WIN_SOCKET_DEFAULT_RECV_TIMEOUT;
   setsockopt(this->connectSocket, SOL_SOCKET, SO_RCVTIMEO, (char *)&recvTimeout,
+             sizeof(DWORD)); */
+  DWORD keepAlive = 1;
+  setsockopt(this->connectSocket, SOL_SOCKET, SO_KEEPALIVE, (char *)&keepAlive,
              sizeof(DWORD));
 
   this->isConnected = true;
@@ -226,6 +234,8 @@ int WinSocket::read(std::vector<unsigned char> &bytes) {
     LOG(INFO) << "Connection closed";
     return 0;
   } else {
+    LOG(INFO) << "Socket read failed.";
+    this->isConnected = false;
     return -1;
   }
 }
@@ -235,5 +245,7 @@ int WinSocket::clear() {
   ZeroMemory(this->recvbuf, this->getBufferLength());
   return bufferLen;
 }
+
+bool WinSocket::isOpen() const { return this->isConnected; }
 
 } // namespace Utilities
