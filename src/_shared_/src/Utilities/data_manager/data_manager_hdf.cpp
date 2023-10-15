@@ -108,11 +108,6 @@ bool DataManagerHdf::read(TimePoint from, TimePoint to, const std::string &key,
                           std::vector<TimePoint> &timestamps,
                           std::vector<Value> &value) {
 
-  LOG(INFO) << "Received read request." << std::endl
-            << "From: " << std::format("{:%Y-%m-%d %H:%M:%S}", from)
-            << std::endl
-            << "To: " << std::format("{:%Y-%m-%d %H:%M:%S}", to);
-
   if (!this->isOpen()) {
     return false;
   }
@@ -193,8 +188,6 @@ bool DataManagerHdf::read(TimePoint from, TimePoint to, const std::string &key,
     timestamps.emplace_back(
         TimePoint(std::chrono::milliseconds(timestampsRawValue)));
   }
-
-  LOG(INFO) << "DataManager found " << timestampsRaw.size() << "data points.";
 
   // Read from the data set and construct a std::vector<Value>.
   DataManagerDataType dataType = this->typeMapping[key];

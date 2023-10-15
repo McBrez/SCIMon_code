@@ -2,7 +2,7 @@
 #define CONFIGURATION_PAYLOAD_HPP
 
 // Project includes
-#include <data_manager.hpp>>
+#include <data_manager.hpp>
 #include <payload.hpp>
 #include <user_id.hpp>
 

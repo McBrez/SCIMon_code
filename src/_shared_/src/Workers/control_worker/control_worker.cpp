@@ -444,12 +444,13 @@ bool ControlWorker::startConfig(
   // Adjust sub state and send a status message to each of the proxy ids..
   this->controlWorkerSubState =
       ControlWorkerSubState::CONTROL_WORKER_SUBSTATE_CONF_EXPLORE;
-  for (auto keyValuePair : this->remoteHostIds) {
+  for (auto &keyValuePair : this->remoteHostIds) {
     this->pushMessageQueue(std::shared_ptr<DeviceMessage>(
         new WriteDeviceMessage(this->getUserId(), keyValuePair.first,
                                WriteDeviceTopic::WRITE_TOPIC_QUERY_STATE)));
   }
 
+  // Logic continues in handleResponse().
   return true;
 }
 

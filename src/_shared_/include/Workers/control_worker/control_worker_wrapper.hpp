@@ -20,6 +20,7 @@
 using namespace Workers;
 /**
  * @brief Wrapper over the control worker that implements the Qt methods.
+ * Provides the glue logic between the Qt world and the scimon specifics.
  */
 class ControlWorkerWrapper : public QObject {
   Q_OBJECT
