@@ -242,12 +242,9 @@ bool DeviceIsx3::handleReadPayload(std::shared_ptr<ReadPayload> readPayload) {
         // Determine the destination. If responseId is set, send the messages
         // to the response id. If not, set it to the interface that sent the
         // start message.
-        UserId destinationId;
-        if (this->responseId.isValid()) {
-          destinationId = this->responseId;
-        } else {
-          destinationId = this->startMessageCache->getSource();
-        }
+        // TODO: Check if this can be removed.
+        UserId destinationId = this->startMessageCache->getSource();
+        ;
 
         this->pushMessageQueue(
             std::shared_ptr<DeviceMessage>(new ReadDeviceMessage(

@@ -175,9 +175,6 @@ protected:
   DeviceStatus deviceState;
   /// The type of the device.
   DeviceType deviceType;
-  /// The id of the response message interface. If this device is started,
-  /// messages shall be sent to this object.
-  UserId responseId;
 };
 } // namespace Devices
 

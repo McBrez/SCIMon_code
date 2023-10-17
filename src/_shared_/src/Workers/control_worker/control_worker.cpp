@@ -406,6 +406,8 @@ bool ControlWorker::startConnect(std::string ip, int port) {
       new NetworkWorkerInitPayload(
           NetworkWorkerOperationMode::NETWORK_WORKER_OP_MODE_CLIENT, ip,
           port))));
+  this->pushMessageQueue(std::shared_ptr<DeviceMessage>(new ConfigDeviceMessage(
+      this->getUserId(), this->networkWorkerId, nullptr, {this->getUserId()})));
   this->pushMessageQueue(std::shared_ptr<DeviceMessage>(
       new WriteDeviceMessage(this->getUserId(), this->networkWorkerId,
                              WriteDeviceTopic::WRITE_TOPIC_RUN)));

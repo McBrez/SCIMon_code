@@ -255,6 +255,10 @@ protected:
   /// Pointer to the data manager.
   std::unique_ptr<DataManager> dataManager;
 
+  /// In case the message interface's subclass produces an event, a message is
+  /// sent to the message interfaces given in this list.
+  std::vector<UserId> eventResponseId;
+
 private:
   /// The unique id of the object that implements this interface.
   UserId id;

@@ -25,7 +25,7 @@ public:
    */
   ConfigDeviceMessage(UserId source, UserId destination,
                       ConfigurationPayload *deviceConfiguration,
-                      UserId responseId = UserId());
+                      std::vector<UserId> responseId = std::vector<UserId>());
 
   /**
    * @brief Constructor for payloads that already exist.
@@ -37,7 +37,7 @@ public:
    */
   ConfigDeviceMessage(UserId source, UserId destination,
                       std::shared_ptr<ConfigurationPayload> deviceConfiguration,
-                      UserId responseId = UserId());
+                      std::vector<UserId> responseId = std::vector<UserId>());
 
   /**
    * @brief Destroy the Config Device Message object
@@ -55,7 +55,7 @@ public:
    * @brief Returns the response id.
    * @return The response id.
    */
-  UserId getResponseId() const;
+  std::vector<UserId> getResponseIds() const;
 
   /**
    * @brief Serializes the message into a string.
@@ -68,7 +68,7 @@ protected:
   std::shared_ptr<ConfigurationPayload> deviceConfiguration;
   /// The id to which the primary response shall be written to. (I.e.after
   /// start() has been called on the device.)
-  UserId responseId;
+  std::vector<UserId> responseIds;
 };
 } // namespace Messages
 

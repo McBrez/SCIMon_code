@@ -4,16 +4,16 @@ namespace Messages {
 
 ConfigDeviceMessage::ConfigDeviceMessage(
     UserId source, UserId destination,
-    ConfigurationPayload *deviceConfiguration, UserId responseId)
+    ConfigurationPayload *deviceConfiguration, std::vector<UserId> responseId)
     : DeviceMessage(source, destination),
-      deviceConfiguration(deviceConfiguration), responseId(responseId) {}
+      deviceConfiguration(deviceConfiguration), responseIds(responseIds) {}
 
 ConfigDeviceMessage::ConfigDeviceMessage(
     UserId source, UserId destination,
     std::shared_ptr<ConfigurationPayload> deviceConfiguration,
-    UserId responseId)
+    std::vector<UserId> responseId)
     : DeviceMessage(source, destination),
-      deviceConfiguration(deviceConfiguration), responseId(responseId) {}
+      deviceConfiguration(deviceConfiguration), responseIds(responseIds) {}
 
 ConfigDeviceMessage::~ConfigDeviceMessage() {}
 
@@ -23,6 +23,8 @@ std::shared_ptr<ConfigurationPayload> ConfigDeviceMessage::getConfiguration() {
 
 std::string ConfigDeviceMessage::serialize() { return ""; }
 
-UserId ConfigDeviceMessage::getResponseId() const { return this->responseId; }
+std::vector<UserId> ConfigDeviceMessage::getResponseIds() const {
+  return this->responseIds;
+}
 
 } // namespace Messages

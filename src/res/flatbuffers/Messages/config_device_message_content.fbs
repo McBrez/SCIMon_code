@@ -87,7 +87,7 @@ table SpectrumMappingEntry {
 
 table ConfigDeviceMessageContent {
     magicNumber:uint;
-    responseId:uint;
+    responseIds:[uint64];
     keyMapping:[KeyMappingEntry];
     spectrumMapping:[SpectrumMappingEntry];
     configurationPayload:[uint8];

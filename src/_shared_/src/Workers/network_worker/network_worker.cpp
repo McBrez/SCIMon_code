@@ -31,8 +31,7 @@ NetworkWorker::~NetworkWorker() {
 void NetworkWorker::work(TimePoint timestamp) {}
 
 bool NetworkWorker::start() {
-  if (DeviceStatus::INITIALIZED != this->getState() &&
-      DeviceStatus::IDLE != this->getState()) {
+  if (DeviceStatus::IDLE != this->getState()) {
     LOG(WARNING)
         << "Can not start Network Worker as it is not in the correct state.";
     return false;
@@ -110,7 +109,13 @@ bool NetworkWorker::initialize(std::shared_ptr<InitPayload> initPayload) {
 
 bool NetworkWorker::configure(
     std::shared_ptr<ConfigurationPayload> configPayload) {
-  // Nothing to do. Just return true.
+  if (this->workerState != DeviceStatus::INITIALIZED) {
+    LOG(ERROR) << "Network worker reveived a configure message while in the "
+                  "incorrect state. This will be ingored.";
+    return false;
+  }
+  // No specific configuration necessary. Adjust state to IDLE and return true.
+  this->workerState = DeviceStatus::IDLE;
 
   return true;
 }

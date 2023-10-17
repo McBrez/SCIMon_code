@@ -94,7 +94,7 @@ bool Worker::write(std::shared_ptr<ConfigDeviceMessage> configMsg) {
     LOG(WARNING) << "Got a message that is not meant for this device.";
     return false;
   }
-
+  this->eventResponseId = configMsg->getResponseIds();
   return this->configure(configMsg->getConfiguration());
 }
 

@@ -63,13 +63,16 @@ int main(int argc, char *argv[]) {
   messageDistributor.addParticipant(sentryWorker);
 
   // Immediatelly queue up messages for the network worker, so that it starts
-  // listening.
+  // listening on startup.
   messageDistributor.takeMessage(
       std::shared_ptr<DeviceMessage>(new InitDeviceMessage(
           UserId(), networkWorker->getUserId(),
           new NetworkWorkerInitPayload(
               NetworkWorkerOperationMode::NETWORK_WORKER_OP_MODE_SERVER, "",
               program.get<int>("--port")))));
+  messageDistributor.takeMessage(
+      std::shared_ptr<DeviceMessage>(new ConfigDeviceMessage(
+          UserId(), networkWorker->getUserId(), nullptr, {})));
   messageDistributor.takeMessage(std::shared_ptr<DeviceMessage>(
       new WriteDeviceMessage(UserId(), networkWorker->getUserId(),
                              WriteDeviceTopic::WRITE_TOPIC_RUN)));

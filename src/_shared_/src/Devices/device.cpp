@@ -185,7 +185,7 @@ bool Device::write(std::shared_ptr<InitDeviceMessage> initMsg) {
 
 bool Device::write(std::shared_ptr<ConfigDeviceMessage> configMsg) {
 
-  this->responseId = configMsg->getResponseId();
+  this->eventResponseId = configMsg->getResponseIds();
   return this->configure(configMsg->getConfiguration());
 }
 

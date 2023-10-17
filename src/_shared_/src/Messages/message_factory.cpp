@@ -147,8 +147,11 @@ MessageFactory::encodeMessage(std::shared_ptr<DeviceMessage> msg) {
           if (configMsg) {
             Serialization::Messages::ConfigDeviceMessageContentT
                 configDeviceMessageContent;
-            configDeviceMessageContent.responseId =
-                configMsg->getResponseId().id();
+            std::vector<uint64_t> responseIdsUint;
+            for (auto &userId : configMsg->getResponseIds()) {
+              responseIdsUint.push_back(userId.id());
+            }
+            configDeviceMessageContent.responseIds = responseIdsUint;
             configDeviceMessageContent.configurationPayload =
                 configMsg->getConfiguration()->bytes();
             configDeviceMessageContent.magicNumber =
@@ -185,8 +188,8 @@ MessageFactory::encodeMessage(std::shared_ptr<DeviceMessage> msg) {
             intermediateObject.content.Set(configDeviceMessageContent);
 
           } else {
-            LOG(ERROR)
-                << "Message factory was presented an Unsupported message type.";
+            LOG(ERROR) << "Message factory was presented an Unsupported "
+                          "message type.";
             return std::vector<unsigned char>();
           }
         }
@@ -497,10 +500,14 @@ std::shared_ptr<DeviceMessage> MessageFactory::translateMessageContent(
       Utilities::buildSpectrumMappingFromFlatbuffers(
           configDeviceContent->spectrumMapping);
   decodedPayload->setSpectrumMapping(spectrumMapping);
+  // The response ids.
+  std::vector<UserId> responseIds;
+  for (auto userIdInt : configDeviceContent->responseIds) {
+    responseIds.emplace_back(UserId(userIdInt));
+  }
 
-  return std::shared_ptr<DeviceMessage>(
-      new ConfigDeviceMessage(sourceId, destinationId, decodedPayload,
-                              UserId(configDeviceContent->responseId)));
+  return std::shared_ptr<DeviceMessage>(new ConfigDeviceMessage(
+      sourceId, destinationId, decodedPayload, responseIds));
 }
 
 MessageFactory *MessageFactory::createInstace(
