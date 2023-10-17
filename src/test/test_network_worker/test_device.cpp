@@ -9,7 +9,7 @@
 
 using namespace Devices;
 
-const string TestDevice::TEST_DEVICE_TYPE_NAME = "Test Device";
+const std::string TestDevice::TEST_DEVICE_TYPE_NAME = "Test Device";
 
 TestDevice::TestDevice() : Device(DeviceType::UNSPECIFIED) {
   this->deviceState = DeviceStatus::UNKNOWN_DEVICE_STATUS;
@@ -17,25 +17,25 @@ TestDevice::TestDevice() : Device(DeviceType::UNSPECIFIED) {
 
 TestDevice::~TestDevice() {}
 
-string TestDevice::getDeviceTypeName() {
+std::string TestDevice::getDeviceTypeName() {
   return TestDevice::TEST_DEVICE_TYPE_NAME;
 }
 
-bool TestDevice::specificWrite std::shared_ptr<WriteDeviceMessage> writeMsg) {
-  this->messageOut.push std::shared_ptr<DeviceMessage>(new ReadDeviceMessage(
+bool TestDevice::specificWrite(std::shared_ptr<WriteDeviceMessage> writeMsg) {
+  this->pushMessageQueue(std::shared_ptr<DeviceMessage>(new ReadDeviceMessage(
       this->getUserId(), writeMsg->getSource(),
       ReadDeviceTopic::READ_TOPIC_DEVICE_SPECIFIC_MSG,
-      new GenericReadPayload(vector<unsigned char>{1, 2, 3}), writeMsg)));
+      new GenericReadPayload(std::vector<unsigned char>{1, 2, 3}), writeMsg)));
 
   return true;
 }
 
-list std::shared_ptr < DeviceMessage >>
-    TestDevice::specificRead(TimePoint timestamp) {
-  return list std::shared_ptr < DeviceMessage >> ();
+std::list<std::shared_ptr<DeviceMessage>>
+TestDevice::specificRead(TimePoint timestamp) {
+  return std::list<std::shared_ptr<DeviceMessage>>();
 }
 
-bool TestDevice::handleResponse std::shared_ptr<ReadDeviceMessage> response) {
+bool TestDevice::handleResponse(std::shared_ptr<ReadDeviceMessage> response) {
 
   if (DeviceStatus::BUSY == this->deviceState) {
     auto statusPayload =
@@ -45,9 +45,10 @@ bool TestDevice::handleResponse std::shared_ptr<ReadDeviceMessage> response) {
         LOG(INFO) << "Found the remote test device!";
         this->deviceState = DeviceStatus::OPERATING;
         this->remoteTestDeviceId = response->getSource();
-        this->messageOut.push std::shared_ptr<DeviceMessage>(new WriteDeviceMessage(
-            this->getUserId(), this->remoteTestDeviceId,
-            WriteDeviceTopic::WRITE_TOPIC_DEVICE_SPECIFIC)));
+        this->pushMessageQueue(
+            std::shared_ptr<DeviceMessage>(new WriteDeviceMessage(
+                this->getUserId(), this->remoteTestDeviceId,
+                WriteDeviceTopic::WRITE_TOPIC_DEVICE_SPECIFIC)));
       } else {
         LOG(INFO) << "The responding device is not an test device.";
       }
@@ -69,6 +70,8 @@ bool TestDevice::handleResponse std::shared_ptr<ReadDeviceMessage> response) {
       return false;
     }
   }
+
+  return false;
 }
 
 bool TestDevice::configure(
@@ -76,16 +79,16 @@ bool TestDevice::configure(
   return true;
 }
 
-bool TestDevice::initialize std::shared_ptr<InitPayload> initPayload) {
+bool TestDevice::initialize(std::shared_ptr<InitPayload> initPayload) {
   return true;
 }
 
 bool TestDevice::start() {
   // Find the local network worker.
-  list std::shared_ptr < StatusPayload >> statusPayloads =
+  std::list<std::shared_ptr<StatusPayload>> statusPayloads =
       this->messageDistributor->getStatus();
   bool proxyIdsFound = false;
-  list<UserId> remoteIds;
+  std::list<UserId> remoteIds;
   for (auto statusPayload : statusPayloads) {
     if (statusPayload->getDeviceName() == Core::NETWORK_WORKER_TYPE_NAME) {
       // Get the ids of the other end point.
@@ -99,15 +102,19 @@ bool TestDevice::start() {
   }
   // Send status request to the remote ids.
   for (auto remoteId : remoteIds) {
-    this->messageOut.push std::shared_ptr<DeviceMessage>(
+    this->pushMessageQueue(std::shared_ptr<DeviceMessage>(
         new WriteDeviceMessage(this->getUserId(), remoteId,
                                WriteDeviceTopic::WRITE_TOPIC_QUERY_STATE)));
   }
   this->deviceState = DeviceStatus::BUSY;
+
+  return true;
 }
 
 bool TestDevice::stop() { return true; }
 
-vector<unsigned char> TestDevice::returnReceivedVector() {
+std::vector<unsigned char> TestDevice::returnReceivedVector() {
   return this->receivedVector;
 }
+
+std::string TestDevice::getDeviceSerialNumber() { return "Test Device"; }
