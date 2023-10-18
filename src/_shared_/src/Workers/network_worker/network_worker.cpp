@@ -6,6 +6,7 @@
 #include <message_distributor.hpp>
 #include <message_factory.hpp>
 #include <network_worker.hpp>
+#include <network_worker_state_payload.hpp>
 
 using namespace Messages;
 
@@ -566,6 +567,8 @@ void NetworkWorker::handleLostConnection() {
       this->initPayload->getOperationMode()) {
     LOG(INFO) << "Server restarts listener thread, after connection got "
                  "interrupted.";
+
+    // Adjust state.
     this->doComm = false;
     this->listenerThread->join();
     this->commState = NETWORK_WOKER_COMM_STATE_LISTENING;
@@ -585,6 +588,19 @@ void NetworkWorker::handleLostConnection() {
     this->commState = NETWORK_WOKER_COMM_STATE_ERROR;
     this->workerState = DeviceStatus::ERROR;
   }
+
+  // Send a state message to the event response ids.
+  std::vector<std::shared_ptr<DeviceMessage>> responseMessages;
+  std::shared_ptr<ReadPayload> statePayload(
+      new NetworkWorkerStatePayload(this->commState));
+  for (auto &responseId : this->eventResponseId) {
+    std::shared_ptr<DeviceMessage> responseMsg(new ReadDeviceMessage(
+        this->getUserId(), responseId,
+        ReadDeviceTopic::READ_TOPIC_DEVICE_SPECIFIC_MSG, statePayload,
+        std::shared_ptr<WriteDeviceMessage>()));
+    responseMessages.push_back(responseMsg);
+  }
+  this->pushMessageQueue(responseMessages);
 }
 
 } // namespace Workers

@@ -15,8 +15,10 @@ class TestDevice : public Device {
 public:
   /**
    * @brief Construct a new Device Isx 3 object
+   * @param testDevice If true, test device is connected to server. If false
+   * test device is connected to client.
    */
-  TestDevice();
+  TestDevice(bool testDevice);
 
   /**
    * @brief Destroy the Device Isx 3 object
@@ -95,11 +97,24 @@ public:
 
   std::vector<unsigned char> returnReceivedVector();
 
+  /**
+   * @brief Returns whether the disconnect response has been received from the
+   * network worker.
+   * @return True if the response from the network worker has already been
+   * received. False otherwise.
+   */
+  bool gotNetworkWorkerResponse();
+
 private:
   /// String that identifies this type of device.
   static const std::string TEST_DEVICE_TYPE_NAME;
   UserId remoteTestDeviceId;
   std::vector<unsigned char> receivedVector;
+  /// If true, test device is connected to server. If false test device is
+  /// connected to client.
+  bool handleServer;
+
+  bool receivedResponse;
 };
 } // namespace Devices
 

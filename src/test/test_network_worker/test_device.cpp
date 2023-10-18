@@ -1,17 +1,21 @@
+// 3rd party includes
+#include <easylogging++.h>
+
 // Project includes
 #include <common.hpp>
 #include <generic_read_payload.hpp>
 #include <message_distributor.hpp>
+#include <network_worker_state_payload.hpp>>
 #include <test_device.hpp>
 
-// 3rd party includes
-#include <easylogging++.h>
-
 using namespace Devices;
+using namespace Workers;
 
 const std::string TestDevice::TEST_DEVICE_TYPE_NAME = "Test Device";
 
-TestDevice::TestDevice() : Device(DeviceType::UNSPECIFIED) {
+TestDevice::TestDevice(bool handleServer)
+    : Device(DeviceType::UNSPECIFIED), handleServer(handleServer),
+      receivedResponse(false) {
   this->deviceState = DeviceStatus::UNKNOWN_DEVICE_STATUS;
 }
 
@@ -36,6 +40,27 @@ TestDevice::specificRead(TimePoint timestamp) {
 }
 
 bool TestDevice::handleResponse(std::shared_ptr<ReadDeviceMessage> response) {
+
+  // Regardless of the device state, check if the response came from the network
+  // worker.
+  auto statePayload = dynamic_pointer_cast<NetworkWorkerStatePayload>(
+      response->getReadPaylod());
+  if (statePayload) {
+    if (this->handleServer && statePayload->getNetworkWorkerState() ==
+                                  Workers::NETWORK_WOKER_COMM_STATE_LISTENING) {
+      this->receivedResponse = true;
+
+      return true;
+    }
+    if (!this->handleServer && (statePayload->getNetworkWorkerState() ==
+                                    Workers::NETWORK_WOKER_COMM_STATE_INVALID ||
+                                statePayload->getNetworkWorkerState() ==
+                                    Workers::NETWORK_WOKER_COMM_STATE_ERROR)) {
+      this->receivedResponse = true;
+
+      return true;
+    }
+  }
 
   if (DeviceStatus::BUSY == this->deviceState) {
     auto statusPayload =
@@ -118,3 +143,5 @@ std::vector<unsigned char> TestDevice::returnReceivedVector() {
 }
 
 std::string TestDevice::getDeviceSerialNumber() { return "Test Device"; }
+
+bool TestDevice::gotNetworkWorkerResponse() { return this->receivedResponse; }

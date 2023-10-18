@@ -25,7 +25,7 @@ public:
    */
   ConfigDeviceMessage(UserId source, UserId destination,
                       ConfigurationPayload *deviceConfiguration,
-                      std::vector<UserId> responseId = std::vector<UserId>());
+                      std::vector<UserId> responseIds = std::vector<UserId>());
 
   /**
    * @brief Constructor for payloads that already exist.
@@ -37,7 +37,7 @@ public:
    */
   ConfigDeviceMessage(UserId source, UserId destination,
                       std::shared_ptr<ConfigurationPayload> deviceConfiguration,
-                      std::vector<UserId> responseId = std::vector<UserId>());
+                      std::vector<UserId> responseIds = std::vector<UserId>());
 
   /**
    * @brief Destroy the Config Device Message object

@@ -197,8 +197,8 @@ TEST_CASE("Test communication between the end points") {
       dynamic_pointer_cast<NetworkWorker>(client);
   distributorServer.addParticipant(server);
   distributorClient.addParticipant(client);
-  std::shared_ptr<TestDevice> serverDevice(new TestDevice());
-  std::shared_ptr<TestDevice> clientDevice(new TestDevice());
+  std::shared_ptr<TestDevice> serverDevice(new TestDevice(true));
+  std::shared_ptr<TestDevice> clientDevice(new TestDevice(false));
   distributorServer.addParticipant(serverDevice);
   distributorClient.addParticipant(clientDevice);
 
@@ -252,6 +252,184 @@ TEST_CASE("Test communication between the end points") {
 
   REQUIRE(clientDevice->returnReceivedVector() ==
           std::vector<unsigned char>{1, 2, 3});
+
+  // Shut down the connection.
+  std::shared_ptr<WriteDeviceMessage> serverStopMessage(new WriteDeviceMessage(
+      UserId(), server->getUserId(), WriteDeviceTopic::WRITE_TOPIC_STOP));
+  std::shared_ptr<WriteDeviceMessage> clientStopMessage(new WriteDeviceMessage(
+      UserId(), client->getUserId(), WriteDeviceTopic::WRITE_TOPIC_STOP));
+  REQUIRE(server->write(serverStopMessage));
+  REQUIRE(client->write(clientStopMessage));
+
+  distributorServer.stop();
+  distributorClient.stop();
+  serverThread.join();
+  clientThread.join();
+}
+
+TEST_CASE("Test the response of the network worker on disconnect - client "
+          "closes connection") {
+  MessageFactory::createInstace(std::list<std::shared_ptr<PayloadDecoder>>{
+      std::shared_ptr<PayloadDecoder>(new Isx3PayloadDecoder()),
+      std::shared_ptr<PayloadDecoder>(new Ob1PayloadDecoder())});
+  MessageDistributor distributorServer(100);
+  MessageDistributor distributorClient(100);
+  std::shared_ptr<MessageInterface> server(new NetworkWorker());
+  std::shared_ptr<MessageInterface> client(new NetworkWorker());
+  std::shared_ptr<NetworkWorker> serverWorker =
+      dynamic_pointer_cast<NetworkWorker>(server);
+  std::shared_ptr<NetworkWorker> clientWorker =
+      dynamic_pointer_cast<NetworkWorker>(client);
+  distributorServer.addParticipant(server);
+  distributorClient.addParticipant(client);
+  std::shared_ptr<TestDevice> serverDevice(new TestDevice(true));
+  std::shared_ptr<TestDevice> clientDevice(new TestDevice(false));
+  distributorServer.addParticipant(serverDevice);
+  distributorClient.addParticipant(clientDevice);
+
+  std::shared_ptr<InitDeviceMessage> serverInitMessage(new InitDeviceMessage(
+      UserId(), server->getUserId(),
+      new NetworkWorkerInitPayload(
+          NetworkWorkerOperationMode::NETWORK_WORKER_OP_MODE_SERVER, DefaultIp,
+          DefaultPort)));
+  std::shared_ptr<InitDeviceMessage> clientInitMessage(new InitDeviceMessage(
+      UserId(), client->getUserId(),
+      new NetworkWorkerInitPayload(
+          NetworkWorkerOperationMode::NETWORK_WORKER_OP_MODE_CLIENT, DefaultIp,
+          DefaultPort)));
+
+  REQUIRE(server->write(serverInitMessage));
+  REQUIRE(client->write(clientInitMessage));
+
+  std::shared_ptr<ConfigDeviceMessage> serverConfigMessage(
+      new ConfigDeviceMessage(UserId(), server->getUserId(), nullptr,
+                              {serverDevice->getUserId()}));
+  std::shared_ptr<ConfigDeviceMessage> clientConfigMessage(
+      new ConfigDeviceMessage(UserId(), client->getUserId(), nullptr,
+                              {clientDevice->getUserId()}));
+
+  REQUIRE(server->write(serverConfigMessage));
+  REQUIRE(client->write(clientConfigMessage));
+
+  std::shared_ptr<WriteDeviceMessage> serverStartMessage(new WriteDeviceMessage(
+      UserId(), server->getUserId(), WriteDeviceTopic::WRITE_TOPIC_RUN));
+  std::shared_ptr<WriteDeviceMessage> clientStartMessage(new WriteDeviceMessage(
+      UserId(), client->getUserId(), WriteDeviceTopic::WRITE_TOPIC_RUN));
+
+  REQUIRE(server->write(serverStartMessage));
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+  REQUIRE(client->write(clientStartMessage));
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+  REQUIRE(serverWorker->getState() == DeviceStatus::OPERATING);
+  REQUIRE(clientWorker->getState() == DeviceStatus::OPERATING);
+
+  std::thread serverThread(&MessageDistributor::run, &distributorServer);
+  std::thread clientThread(&MessageDistributor::run, &distributorClient);
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+  // Stop the client. The server testdevice should receive a message from the
+  // network worker.
+  std::shared_ptr<WriteDeviceMessage> clientStopMessage(new WriteDeviceMessage(
+      UserId(), client->getUserId(), WriteDeviceTopic::WRITE_TOPIC_STOP));
+  REQUIRE(client->write(clientStopMessage));
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+  // Server test device should have received a response from the network worker.
+  REQUIRE(serverDevice->gotNetworkWorkerResponse());
+  // Client test device should NOT have received a response from the network
+  // worker, as connection as been stopped via a command.
+  REQUIRE(!clientDevice->gotNetworkWorkerResponse());
+
+  // Send stop message to the server.
+  std::shared_ptr<WriteDeviceMessage> serverStopMessage(new WriteDeviceMessage(
+      UserId(), server->getUserId(), WriteDeviceTopic::WRITE_TOPIC_STOP));
+  REQUIRE(server->write(serverStopMessage));
+
+  distributorServer.stop();
+  distributorClient.stop();
+  serverThread.join();
+  clientThread.join();
+}
+
+TEST_CASE("Test the response of the network worker on disconnect - server "
+          "closes connection") {
+  MessageFactory::createInstace(std::list<std::shared_ptr<PayloadDecoder>>{
+      std::shared_ptr<PayloadDecoder>(new Isx3PayloadDecoder()),
+      std::shared_ptr<PayloadDecoder>(new Ob1PayloadDecoder())});
+  MessageDistributor distributorServer(100);
+  MessageDistributor distributorClient(100);
+  std::shared_ptr<MessageInterface> server(new NetworkWorker());
+  std::shared_ptr<MessageInterface> client(new NetworkWorker());
+  std::shared_ptr<NetworkWorker> serverWorker =
+      dynamic_pointer_cast<NetworkWorker>(server);
+  std::shared_ptr<NetworkWorker> clientWorker =
+      dynamic_pointer_cast<NetworkWorker>(client);
+  distributorServer.addParticipant(server);
+  distributorClient.addParticipant(client);
+  std::shared_ptr<TestDevice> serverDevice(new TestDevice(true));
+  std::shared_ptr<TestDevice> clientDevice(new TestDevice(false));
+  distributorServer.addParticipant(serverDevice);
+  distributorClient.addParticipant(clientDevice);
+
+  std::shared_ptr<InitDeviceMessage> serverInitMessage(new InitDeviceMessage(
+      UserId(), server->getUserId(),
+      new NetworkWorkerInitPayload(
+          NetworkWorkerOperationMode::NETWORK_WORKER_OP_MODE_SERVER, DefaultIp,
+          DefaultPort)));
+  std::shared_ptr<InitDeviceMessage> clientInitMessage(new InitDeviceMessage(
+      UserId(), client->getUserId(),
+      new NetworkWorkerInitPayload(
+          NetworkWorkerOperationMode::NETWORK_WORKER_OP_MODE_CLIENT, DefaultIp,
+          DefaultPort)));
+
+  REQUIRE(server->write(serverInitMessage));
+  REQUIRE(client->write(clientInitMessage));
+
+  std::shared_ptr<ConfigDeviceMessage> serverConfigMessage(
+      new ConfigDeviceMessage(UserId(), server->getUserId(), nullptr,
+                              {serverDevice->getUserId()}));
+  std::shared_ptr<ConfigDeviceMessage> clientConfigMessage(
+      new ConfigDeviceMessage(UserId(), client->getUserId(), nullptr,
+                              {clientDevice->getUserId()}));
+
+  REQUIRE(server->write(serverConfigMessage));
+  REQUIRE(client->write(clientConfigMessage));
+
+  std::shared_ptr<WriteDeviceMessage> serverStartMessage(new WriteDeviceMessage(
+      UserId(), server->getUserId(), WriteDeviceTopic::WRITE_TOPIC_RUN));
+  std::shared_ptr<WriteDeviceMessage> clientStartMessage(new WriteDeviceMessage(
+      UserId(), client->getUserId(), WriteDeviceTopic::WRITE_TOPIC_RUN));
+
+  REQUIRE(server->write(serverStartMessage));
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+  REQUIRE(client->write(clientStartMessage));
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+  REQUIRE(serverWorker->getState() == DeviceStatus::OPERATING);
+  REQUIRE(clientWorker->getState() == DeviceStatus::OPERATING);
+
+  std::thread serverThread(&MessageDistributor::run, &distributorServer);
+  std::thread clientThread(&MessageDistributor::run, &distributorClient);
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+  // Stop the server. The client testdevice should receive a message from the
+  // network worker.
+  std::shared_ptr<WriteDeviceMessage> serverStopMessage(new WriteDeviceMessage(
+      UserId(), server->getUserId(), WriteDeviceTopic::WRITE_TOPIC_STOP));
+  REQUIRE(server->write(serverStopMessage));
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+  // Client test device should have received a response from the network worker.
+  REQUIRE(clientDevice->gotNetworkWorkerResponse());
+  // Server test device should NOT have received a response from the network
+  // worker, as connection as been stopped via a command.
+  REQUIRE(!serverDevice->gotNetworkWorkerResponse());
+
+  // Send stop message to the client.
+  std::shared_ptr<WriteDeviceMessage> clientStopMessage(new WriteDeviceMessage(
+      UserId(), client->getUserId(), WriteDeviceTopic::WRITE_TOPIC_STOP));
+  REQUIRE(client->write(clientStopMessage));
 
   distributorServer.stop();
   distributorClient.stop();
