@@ -15,15 +15,15 @@
 namespace Utilities {
 
 WinSocket::WinSocket()
-    : connectSocket(INVALID_SOCKET), isConnected(false),
-      recvbuf(new char[WIN_SOCKET_DEFAULT_BUFFER_LEN]) {}
+    : connectSocket(INVALID_SOCKET), listenSocket(INVALID_SOCKET),
+      isConnected(false), recvbuf(new char[WIN_SOCKET_DEFAULT_BUFFER_LEN]) {}
 
 WinSocket::~WinSocket() {
-  this->close();
+  WinSocket::close();
   delete[] recvbuf;
 }
 
-bool WinSocket::listenConnection(std::shared_ptr<bool> doListen, int port) {
+bool WinSocket::listenConnection(int port) {
   if (this->isConnected) {
     LOG(WARNING)
         << "Can not start std::listening, as an connection is already open.";
@@ -32,7 +32,6 @@ bool WinSocket::listenConnection(std::shared_ptr<bool> doListen, int port) {
 
   WSADATA wsaData;
   int iResult;
-  SOCKET listenSocket = INVALID_SOCKET;
 
   // Initialize Winsock
   iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
@@ -58,20 +57,19 @@ bool WinSocket::listenConnection(std::shared_ptr<bool> doListen, int port) {
     return 1;
   }
 
-  // Create a SOCKET for the server to std::listen for client connections.
-  listenSocket =
+  // Create a SOCKET for the server to listen for client connections.
+  this->listenSocket =
       socket(result->ai_family, result->ai_socktype, result->ai_protocol);
-  if (listenSocket == INVALID_SOCKET) {
+  if (this->listenSocket == INVALID_SOCKET) {
     LOG(ERROR) << "Creation of socket failed.";
     WSACleanup();
     return false;
   }
-
-  // Setup the TCP std::listening socket
-  iResult = bind(listenSocket, result->ai_addr, result->ai_addrlen);
+  // Setup the TCP listening socket
+  iResult = bind(this->listenSocket, result->ai_addr, result->ai_addrlen);
   if (iResult == SOCKET_ERROR) {
     LOG(ERROR) << "Bind failed with error: " << WSAGetLastError();
-    closesocket(listenSocket);
+    closesocket(this->listenSocket);
     WSACleanup();
     return false;
   }
@@ -79,29 +77,28 @@ bool WinSocket::listenConnection(std::shared_ptr<bool> doListen, int port) {
   iResult = listen(listenSocket, SOMAXCONN);
   if (iResult == SOCKET_ERROR) {
     LOG(ERROR) << "listen failed with error: " << WSAGetLastError();
-    closesocket(listenSocket);
+    closesocket(this->listenSocket);
     WSACleanup();
     return false;
   }
 
   // Accept a client socket
-  this->connectSocket = accept(listenSocket, NULL, NULL);
+  this->connectSocket = accept(this->listenSocket, NULL, NULL);
   if (this->connectSocket == INVALID_SOCKET) {
     LOG(ERROR) << "Accept failed with error: " << WSAGetLastError();
-    closesocket(listenSocket);
+    closesocket(this->listenSocket);
     WSACleanup();
     return false;
   }
-  /*
-    DWORD recvTimeout = WIN_SOCKET_DEFAULT_RECV_TIMEOUT;
-    setsockopt(this->connectSocket, SOL_SOCKET, SO_RCVTIMEO, (char
-    *)&recvTimeout, sizeof(DWORD));
-  */
+
+  DWORD recvTimeout = WIN_SOCKET_DEFAULT_RECV_TIMEOUT;
+  setsockopt(this->connectSocket, SOL_SOCKET, SO_RCVTIMEO, (char *)&recvTimeout,
+             sizeof(DWORD));
   DWORD keepAlive = 1;
   setsockopt(this->connectSocket, SOL_SOCKET, SO_KEEPALIVE, (char *)&keepAlive,
              sizeof(DWORD));
 
-  closesocket(listenSocket);
+  closesocket(this->listenSocket);
   this->isConnected = true;
   return true;
 }
@@ -116,10 +113,8 @@ bool WinSocket::open(std::string ip, int port) {
   WSADATA wsaData;
   struct addrinfo *result = NULL, *ptr = NULL, hints;
 
-  int iResult;
-  int recvbuflen = WIN_SOCKET_DEFAULT_BUFFER_LEN;
-
   // Initialize Winsock
+  int iResult;
   iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
   if (iResult != 0) {
     LOG(ERROR) << "WSAStartup failed with error: " << std::to_string(iResult);
@@ -172,10 +167,10 @@ bool WinSocket::open(std::string ip, int port) {
   }
 
   freeaddrinfo(result);
-  /*
+
   DWORD recvTimeout = WIN_SOCKET_DEFAULT_RECV_TIMEOUT;
   setsockopt(this->connectSocket, SOL_SOCKET, SO_RCVTIMEO, (char *)&recvTimeout,
-             sizeof(DWORD)); */
+             sizeof(DWORD));
   DWORD keepAlive = 1;
   setsockopt(this->connectSocket, SOL_SOCKET, SO_KEEPALIVE, (char *)&keepAlive,
              sizeof(DWORD));
@@ -185,11 +180,8 @@ bool WinSocket::open(std::string ip, int port) {
 }
 
 bool WinSocket::close() {
-  if (!this->isConnected) {
-    return false;
-  }
-
-  int retVal = closesocket(this->connectSocket);
+  closesocket(this->listenSocket);
+  closesocket(this->connectSocket);
   WSACleanup();
   this->isConnected = false;
   return true;
@@ -197,17 +189,16 @@ bool WinSocket::close() {
 
 int WinSocket::write(const std::vector<unsigned char> &bytes) {
   if (!this->isConnected) {
-    return false;
+    return -1;
   }
 
   const char *sendBuffer = (const char *)bytes.data();
   int iResult = send(this->connectSocket, sendBuffer, bytes.size(), 0);
   if (iResult == SOCKET_ERROR) {
-
-    return false;
+    return iResult;
   }
 
-  return true;
+  return iResult;
 }
 
 int WinSocket::getBufferLength() { return WIN_SOCKET_DEFAULT_BUFFER_LEN; }
@@ -215,7 +206,7 @@ int WinSocket::getBufferLength() { return WIN_SOCKET_DEFAULT_BUFFER_LEN; }
 int WinSocket::read(std::vector<unsigned char> &bytes) {
 
   if (!this->isConnected) {
-    return false;
+    return -1;
   }
 
   // Clear buffer.
@@ -232,11 +223,18 @@ int WinSocket::read(std::vector<unsigned char> &bytes) {
 
   } else if (iResult == 0) {
     LOG(INFO) << "Connection closed";
-    return 0;
-  } else {
-    LOG(INFO) << "Socket read failed.";
-    this->isConnected = false;
     return -1;
+  } else {
+    int error = WSAGetLastError();
+    if (WSAETIMEDOUT == error) {
+      // Nothing has been received during the timeout. Just return 0.
+      return 0;
+    } else {
+      // Some other error occured. Return error.
+      LOG(INFO) << "Connection encountered an error.";
+      this->isConnected = false;
+      return -1;
+    }
   }
 }
 

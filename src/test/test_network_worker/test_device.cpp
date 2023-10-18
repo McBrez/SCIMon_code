@@ -101,7 +101,7 @@ bool TestDevice::start() {
     return true;
   }
   // Send status request to the remote ids.
-  for (auto remoteId : remoteIds) {
+  for (auto &remoteId : remoteIds) {
     this->pushMessageQueue(std::shared_ptr<DeviceMessage>(
         new WriteDeviceMessage(this->getUserId(), remoteId,
                                WriteDeviceTopic::WRITE_TOPIC_QUERY_STATE)));

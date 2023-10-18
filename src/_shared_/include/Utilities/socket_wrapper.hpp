@@ -18,11 +18,13 @@ public:
   virtual ~SocketWrapper() = 0;
 
   /**
-   * @brief Starts waiting for a connection.
-   * @return true
-   * @return false
+   * @brief Listens on the given port for incoming connections. This method
+   * blocks until a connection has been established. Call close() from another
+   * thread to stop listening.
+   * @param port The port that shall be listened to.
+   * @return True if an connection has been established. False otherwise.
    */
-  virtual bool listenConnection(std::shared_ptr<bool> doListen, int port) = 0;
+  virtual bool listenConnection(int port) = 0;
 
   /**
    * @brief Trys to connect to the given ip and port.

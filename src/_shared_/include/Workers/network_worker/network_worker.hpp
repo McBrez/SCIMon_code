@@ -159,8 +159,6 @@ private:
 
   std::unique_ptr<std::thread> listenerThread;
 
-  std::shared_ptr<bool> doListen;
-
   NetworkWorkerCommState commState;
 
   bool doComm;

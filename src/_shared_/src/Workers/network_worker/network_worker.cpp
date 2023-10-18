@@ -12,13 +12,13 @@ using namespace Messages;
 namespace Workers {
 NetworkWorker::NetworkWorker()
     : Worker(), socketWrapper(SocketWrapper::getSocketWrapper()),
-      doListen(new bool(false)),
       commState(NetworkWorkerCommState::NETWORK_WOKER_COMM_STATE_INVALID),
       commThread(nullptr), doComm(false), listenerThread(nullptr) {}
 
 NetworkWorker::~NetworkWorker() {
-  *this->doListen = false;
   this->doComm = false;
+
+  this->socketWrapper->close();
 
   if (this->commThread) {
     this->commThread->join();
@@ -43,7 +43,6 @@ bool NetworkWorker::start() {
     this->workerState = DeviceStatus::BUSY;
     this->commState =
         NetworkWorkerCommState::NETWORK_WOKER_COMM_STATE_LISTENING;
-    *this->doListen = true;
     this->listenerThread.reset(
         new std::thread(&NetworkWorker::listenWorker, this));
 
@@ -79,10 +78,20 @@ bool NetworkWorker::stop() {
         << "Can not stop Network Worker, as it is currently not connected.";
   }
 
-  this->workerState = DeviceStatus::IDLE;
   this->doComm = false;
-  *this->doListen = false;
+  if (this->commThread) {
+    this->commThread->join();
+    this->commThread.reset();
+  }
+  this->socketWrapper->close();
+  if (this->listenerThread) {
+    this->listenerThread->join();
+    this->listenerThread.reset();
+  }
 
+  this->socketWrapper->clear();
+
+  this->workerState = DeviceStatus::IDLE;
   this->commState = NetworkWorkerCommState::NETWORK_WOKER_COMM_STATE_INVALID;
 
   return true;
@@ -99,6 +108,18 @@ bool NetworkWorker::initialize(std::shared_ptr<InitPayload> initPayload) {
   if (!castedInitPayload) {
     LOG(ERROR) << "Received malformed init message.";
     return false;
+  }
+
+  this->doComm = false;
+  if (this->commThread) {
+    this->commThread->join();
+    this->commThread.reset();
+  }
+
+  this->socketWrapper->close();
+  if (this->listenerThread) {
+    this->listenerThread->join();
+    this->listenerThread.reset();
   }
 
   this->readBuffer.clear();
@@ -224,8 +245,8 @@ void NetworkWorker::listenWorker() {
     this->socketWrapper->close();
     this->socketWrapper->clear();
 
-    bool success = this->socketWrapper->listenConnection(
-        this->doListen, this->initPayload->getPort());
+    bool success =
+        this->socketWrapper->listenConnection(this->initPayload->getPort());
     LOG(INFO) << "Network Worker finished std::listening on port "
               << this->initPayload->getPort() << ".";
 
@@ -433,7 +454,7 @@ void NetworkWorker::commWorker() {
 
       // Read from socket.
       int readSuccess = this->socketWrapper->read(this->readBuffer);
-      if (readSuccess <= 0) {
+      if (readSuccess < 0) {
         // Connection seems to be closed.
         LOG(ERROR) << "Other end point seems to have closed the connection. "
                       "Closing down socket.";
@@ -457,7 +478,7 @@ void NetworkWorker::commWorker() {
         this->outgoingNetworkMessages.pop();
         int sendSuccess = this->socketWrapper->write(
             MessageFactory::getInstace()->encodeMessage(message));
-        if (sendSuccess <= 0) {
+        if (sendSuccess < 0) {
           // Connection seems to be closed.
           LOG(ERROR) << "Other end point seems to have closed the connection. "
                         "Closing down socket.";
@@ -546,9 +567,7 @@ void NetworkWorker::handleLostConnection() {
     LOG(INFO) << "Server restarts listener thread, after connection got "
                  "interrupted.";
     this->doComm = false;
-    *this->doListen = false;
     this->listenerThread->join();
-    *this->doListen = true;
     this->commState = NETWORK_WOKER_COMM_STATE_LISTENING;
     this->workerState = DeviceStatus::BUSY;
     this->listenerThread.reset(

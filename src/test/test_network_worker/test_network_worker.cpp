@@ -24,9 +24,11 @@ using namespace Workers;
 using namespace Messages;
 using namespace Devices;
 
-#if 0
+const int DefaultPort = 54321;
+const std::string DefaultIp = "127.0.0.1";
+
 TEST_CASE("Test the network worker handshake") {
-  MessageFactory::createInstace(list std::shared_ptr<PayloadDecoder>>{
+  MessageFactory::createInstace(std::list<std::shared_ptr<PayloadDecoder>>{
       std::shared_ptr<PayloadDecoder>(new Isx3PayloadDecoder()),
       std::shared_ptr<PayloadDecoder>(new Ob1PayloadDecoder())});
   MessageDistributor distributorServer(100);
@@ -43,13 +45,13 @@ TEST_CASE("Test the network worker handshake") {
   std::shared_ptr<InitDeviceMessage> serverInitMessage(new InitDeviceMessage(
       UserId(), server->getUserId(),
       new NetworkWorkerInitPayload(
-          NetworkWorkerOperationMode::NETWORK_WORKER_OP_MODE_SERVER,
-          "127.0.0.1", 54321)));
+          NetworkWorkerOperationMode::NETWORK_WORKER_OP_MODE_SERVER, DefaultIp,
+          DefaultPort)));
   std::shared_ptr<InitDeviceMessage> clientInitMessage(new InitDeviceMessage(
       UserId(), client->getUserId(),
       new NetworkWorkerInitPayload(
-          NetworkWorkerOperationMode::NETWORK_WORKER_OP_MODE_CLIENT,
-          "127.0.0.1", 54321)));
+          NetworkWorkerOperationMode::NETWORK_WORKER_OP_MODE_CLIENT, DefaultIp,
+          DefaultPort)));
 
   REQUIRE(server->write(serverInitMessage));
   REQUIRE(client->write(clientInitMessage));
@@ -68,19 +70,18 @@ TEST_CASE("Test the network worker handshake") {
       UserId(), client->getUserId(), WriteDeviceTopic::WRITE_TOPIC_RUN));
 
   REQUIRE(server->write(serverStartMessage));
-  this_thread::sleep_for(chrono::milliseconds(1000));
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
   REQUIRE(client->write(clientStartMessage));
-
-  this_thread::sleep_for(chrono::milliseconds(1000));
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
   // Workers should now both be in operating state.
   REQUIRE(serverWorker->getState() == DeviceStatus::OPERATING);
   REQUIRE(clientWorker->getState() == DeviceStatus::OPERATING);
   // Workers should now have each others user id as proxy id.
   REQUIRE(serverWorker->getProxyUserIds() ==
-          list<UserId>{clientWorker->getUserId()});
+          std::list<UserId>{clientWorker->getUserId()});
   REQUIRE(clientWorker->getProxyUserIds() ==
-          list<UserId>{serverWorker->getUserId()});
+          std::list<UserId>{serverWorker->getUserId()});
 
   // Shut down the connection.
   std::shared_ptr<WriteDeviceMessage> serverStopMessage(new WriteDeviceMessage(
@@ -89,19 +90,103 @@ TEST_CASE("Test the network worker handshake") {
       UserId(), client->getUserId(), WriteDeviceTopic::WRITE_TOPIC_STOP));
 
   REQUIRE(server->write(serverStopMessage));
-  this_thread::sleep_for(chrono::milliseconds(1000));
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
   REQUIRE(client->write(clientStopMessage));
 
   REQUIRE(serverWorker->getState() == DeviceStatus::IDLE);
   REQUIRE(clientWorker->getState() == DeviceStatus::IDLE);
 }
-#endif
+
+TEST_CASE("Test the network worker reconnect") {
+  MessageFactory::createInstace(std::list<std::shared_ptr<PayloadDecoder>>{
+      std::shared_ptr<PayloadDecoder>(new Isx3PayloadDecoder()),
+      std::shared_ptr<PayloadDecoder>(new Ob1PayloadDecoder())});
+  MessageDistributor distributorServer(100);
+  MessageDistributor distributorClient(100);
+  std::shared_ptr<MessageInterface> server(new NetworkWorker());
+  std::shared_ptr<MessageInterface> client(new NetworkWorker());
+  std::shared_ptr<NetworkWorker> serverWorker =
+      dynamic_pointer_cast<NetworkWorker>(server);
+  std::shared_ptr<NetworkWorker> clientWorker =
+      dynamic_pointer_cast<NetworkWorker>(client);
+  distributorServer.addParticipant(server);
+  distributorClient.addParticipant(client);
+
+  std::shared_ptr<InitDeviceMessage> serverInitMessage(new InitDeviceMessage(
+      UserId(), server->getUserId(),
+      new NetworkWorkerInitPayload(
+          NetworkWorkerOperationMode::NETWORK_WORKER_OP_MODE_SERVER, DefaultIp,
+          DefaultPort)));
+  std::shared_ptr<InitDeviceMessage> clientInitMessage(new InitDeviceMessage(
+      UserId(), client->getUserId(),
+      new NetworkWorkerInitPayload(
+          NetworkWorkerOperationMode::NETWORK_WORKER_OP_MODE_CLIENT, DefaultIp,
+          DefaultPort)));
+
+  REQUIRE(server->write(serverInitMessage));
+  REQUIRE(client->write(clientInitMessage));
+
+  std::shared_ptr<ConfigDeviceMessage> serverConfigMessage(
+      new ConfigDeviceMessage(UserId(), server->getUserId(), nullptr));
+  std::shared_ptr<ConfigDeviceMessage> clientConfigMessage(
+      new ConfigDeviceMessage(UserId(), client->getUserId(), nullptr));
+
+  REQUIRE(server->write(serverConfigMessage));
+  REQUIRE(client->write(clientConfigMessage));
+
+  std::shared_ptr<WriteDeviceMessage> serverStartMessage(new WriteDeviceMessage(
+      UserId(), server->getUserId(), WriteDeviceTopic::WRITE_TOPIC_RUN));
+  std::shared_ptr<WriteDeviceMessage> clientStartMessage(new WriteDeviceMessage(
+      UserId(), client->getUserId(), WriteDeviceTopic::WRITE_TOPIC_RUN));
+
+  REQUIRE(server->write(serverStartMessage));
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+  REQUIRE(client->write(clientStartMessage));
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+  // Workers should now both be in operating state.
+  REQUIRE(serverWorker->getState() == DeviceStatus::OPERATING);
+  REQUIRE(clientWorker->getState() == DeviceStatus::OPERATING);
+  // Workers should now have each others user id as proxy id.
+  REQUIRE(serverWorker->getProxyUserIds() ==
+          std::list<UserId>{clientWorker->getUserId()});
+  REQUIRE(clientWorker->getProxyUserIds() ==
+          std::list<UserId>{serverWorker->getUserId()});
+
+  // Let the client shut down the connection.
+  std::shared_ptr<WriteDeviceMessage> clientStopMessage(new WriteDeviceMessage(
+      UserId(), client->getUserId(), WriteDeviceTopic::WRITE_TOPIC_STOP));
+  REQUIRE(client->write(clientStopMessage));
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+  REQUIRE(serverWorker->getState() == DeviceStatus::BUSY);
+  REQUIRE(clientWorker->getState() == DeviceStatus::IDLE);
+
+  // Client reconnects.
+  std::shared_ptr<WriteDeviceMessage> clientReconnectMessage(
+      new WriteDeviceMessage(UserId(), client->getUserId(),
+                             WriteDeviceTopic::WRITE_TOPIC_RUN));
+  REQUIRE(client->write(clientReconnectMessage));
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+  REQUIRE(serverWorker->getState() == DeviceStatus::OPERATING);
+  REQUIRE(clientWorker->getState() == DeviceStatus::OPERATING);
+
+  // Shut down both network workers.
+  std::shared_ptr<WriteDeviceMessage> serverStopMessage(new WriteDeviceMessage(
+      UserId(), server->getUserId(), WriteDeviceTopic::WRITE_TOPIC_STOP));
+  REQUIRE(server->write(serverStopMessage));
+  REQUIRE(client->write(clientStopMessage));
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+  REQUIRE(serverWorker->getState() == DeviceStatus::IDLE);
+  REQUIRE(clientWorker->getState() == DeviceStatus::IDLE);
+}
 
 TEST_CASE("Test communication between the end points") {
-  MessageFactory::createInstace(
-      list std::shared_ptr < PayloadDecoder >>
-      {std::shared_ptr<PayloadDecoder>(new Isx3PayloadDecoder()),
-       std::shared_ptr<PayloadDecoder>(new Ob1PayloadDecoder())});
+  MessageFactory::createInstace(std::list<std::shared_ptr<PayloadDecoder>>{
+      std::shared_ptr<PayloadDecoder>(new Isx3PayloadDecoder()),
+      std::shared_ptr<PayloadDecoder>(new Ob1PayloadDecoder())});
   MessageDistributor distributorServer(100);
   MessageDistributor distributorClient(100);
   std::shared_ptr<MessageInterface> server(new NetworkWorker());
@@ -120,13 +205,13 @@ TEST_CASE("Test communication between the end points") {
   std::shared_ptr<InitDeviceMessage> serverInitMessage(new InitDeviceMessage(
       UserId(), server->getUserId(),
       new NetworkWorkerInitPayload(
-          NetworkWorkerOperationMode::NETWORK_WORKER_OP_MODE_SERVER,
-          "127.0.0.1", 54321)));
+          NetworkWorkerOperationMode::NETWORK_WORKER_OP_MODE_SERVER, DefaultIp,
+          DefaultPort)));
   std::shared_ptr<InitDeviceMessage> clientInitMessage(new InitDeviceMessage(
       UserId(), client->getUserId(),
       new NetworkWorkerInitPayload(
-          NetworkWorkerOperationMode::NETWORK_WORKER_OP_MODE_CLIENT,
-          "127.0.0.1", 54321)));
+          NetworkWorkerOperationMode::NETWORK_WORKER_OP_MODE_CLIENT, DefaultIp,
+          DefaultPort)));
 
   REQUIRE(server->write(serverInitMessage));
   REQUIRE(client->write(clientInitMessage));
@@ -145,27 +230,28 @@ TEST_CASE("Test communication between the end points") {
       UserId(), client->getUserId(), WriteDeviceTopic::WRITE_TOPIC_RUN));
 
   REQUIRE(server->write(serverStartMessage));
-  this_thread::sleep_for(chrono::milliseconds(1000));
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
   REQUIRE(client->write(clientStartMessage));
-
-  this_thread::sleep_for(chrono::milliseconds(1000));
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
   // Workers should now both be in operating state.
   REQUIRE(serverWorker->getState() == DeviceStatus::OPERATING);
   REQUIRE(clientWorker->getState() == DeviceStatus::OPERATING);
   // Workers should now have each others user id as proxy id.
-  REQUIRE(serverWorker->getProxyUserIds() ==
-          list<UserId>{clientWorker->getUserId(), clientDevice->getUserId()});
-  REQUIRE(clientWorker->getProxyUserIds() ==
-          list<UserId>{serverWorker->getUserId(), serverDevice->getUserId()});
+  REQUIRE(
+      serverWorker->getProxyUserIds() ==
+      std::list<UserId>{clientWorker->getUserId(), clientDevice->getUserId()});
+  REQUIRE(
+      clientWorker->getProxyUserIds() ==
+      std::list<UserId>{serverWorker->getUserId(), serverDevice->getUserId()});
 
   clientDevice->start();
   std::thread serverThread(&MessageDistributor::run, &distributorServer);
   std::thread clientThread(&MessageDistributor::run, &distributorClient);
-  this_thread::sleep_for(chrono::milliseconds(1000));
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
   REQUIRE(clientDevice->returnReceivedVector() ==
-          vector<unsigned char>{1, 2, 3});
+          std::vector<unsigned char>{1, 2, 3});
 
   distributorServer.stop();
   distributorClient.stop();
