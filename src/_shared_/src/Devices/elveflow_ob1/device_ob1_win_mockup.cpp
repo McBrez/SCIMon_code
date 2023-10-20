@@ -112,7 +112,6 @@ bool DeviceOb1Win::stop() {
 bool DeviceOb1Win::configure(
     std::shared_ptr<ConfigurationPayload> configPayload) {
   this->deviceState = DeviceStatus::IDLE;
-  this->deviceConfiguration = configPayload;
 
   return true;
 }

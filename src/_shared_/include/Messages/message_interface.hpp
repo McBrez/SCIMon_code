@@ -208,6 +208,13 @@ protected:
   void pushMessageQueue(const std::vector<std::shared_ptr<DeviceMessage>> &msg);
 
   /**
+   * @brief Removes messages from the queue, that have the given destinations.
+   * @param destinations Vector of destinations.
+   * @return Count of messages that have been removed.
+   */
+  int removeFromMessageQueue(const std::vector<UserId> &destinations);
+
+  /**
    * @brief Hook that is called after initialization has succesfully finished.
    * Has to be called by the sub class after succesfull initialization.
    * Following actions are executed by onInitialized:
@@ -258,6 +265,12 @@ protected:
   /// In case the message interface's subclass produces an event, a message is
   /// sent to the message interfaces given in this list.
   std::vector<UserId> eventResponseId;
+
+  /// The payload this interface has been initialized with. May be empty.
+  std::shared_ptr<InitPayload> initPayload;
+
+  /// The payload this interface has been configured with. May be empty.
+  std::shared_ptr<ConfigurationPayload> configPayload;
 
 private:
   /// The unique id of the object that implements this interface.

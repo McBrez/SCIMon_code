@@ -201,4 +201,30 @@ bool MessageInterface::onConfigured(const KeyMapping &keyMapping,
   return true;
 }
 
+int MessageInterface::removeFromMessageQueue(
+    const std::vector<UserId> &destinations) {
+
+  this->messageOutMutex.lock();
+  size_t counter = 0;
+  std::queue<std::shared_ptr<DeviceMessage>> tempQueue;
+  while (!this->messageOut.empty()) {
+    auto msg = this->messageOut.front();
+    this->messageOut.pop();
+
+    auto it = std::find(destinations.begin(), destinations.end(),
+                        msg->getDestination());
+
+    if (it != destinations.end()) {
+      tempQueue.push(msg);
+    } else {
+      counter++;
+    }
+  }
+  this->messageOut.swap(tempQueue);
+
+  this->messageOutMutex.unlock();
+
+  return counter;
+}
+
 } // namespace Messages

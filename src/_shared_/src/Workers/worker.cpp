@@ -42,7 +42,8 @@ bool Worker::write(std::shared_ptr<WriteDeviceMessage> writeMsg) {
         READ_TOPIC_DEVICE_STATUS,
         new StatusPayload(this->getUserId(), this->getState(),
                           this->getProxyUserIds(), DeviceType::UNSPECIFIED,
-                          this->getWorkerName()),
+                          this->getWorkerName(), this->initPayload,
+                          this->configPayload),
         writeMsg)));
     return true;
   }
@@ -103,7 +104,8 @@ DeviceStatus Worker::getState() const { return this->workerState; }
 std::shared_ptr<StatusPayload> Worker::constructStatus() {
   return std::shared_ptr<StatusPayload>(new StatusPayload(
       this->getUserId(), this->workerState, this->getProxyUserIds(),
-      DeviceType::UNSPECIFIED, this->getWorkerName()));
+      DeviceType::UNSPECIFIED, this->getWorkerName(), this->initPayload,
+      this->configPayload));
 }
 
 } // namespace Workers

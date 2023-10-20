@@ -4,6 +4,7 @@
 #include <data_response_payload.hpp>
 #include <generic_read_payload.hpp>
 #include <key_response_payload.hpp>
+#include <message_factory.hpp>>
 #include <request_data_payload.hpp>
 #include <request_key_payload.hpp>
 #include <set_device_status_payload.hpp>
@@ -67,8 +68,21 @@ BuiltinPayloadDecoder::decodeReadPayload(const std::vector<unsigned char> &data,
     DeviceType deviceType = static_cast<DeviceType>(statusPayload->deviceType);
     std::string deviceName = statusPayload->deviceName;
 
+    InitPayload *initPayload = nullptr;
+    if (!statusPayload->initPayload.empty()) {
+      initPayload = MessageFactory::getInstace()->decodeInitPayload(
+          statusPayload->initPayload, statusPayload->initPayloadMagicNumber);
+    }
+
+    ConfigurationPayload *configPayload = nullptr;
+    if (!statusPayload->configPayload.empty()) {
+      configPayload = MessageFactory::getInstace()->decodeConfigurationPayload(
+          statusPayload->configPayload,
+          statusPayload->configPayloadMagicNumber);
+    }
+
     return new StatusPayload(deviceId, deviceStatus, proxyIds, deviceType,
-                             deviceName);
+                             deviceName, initPayload, configPayload);
   }
 
   else if (MAGIC_NUMBER_DATA_RESPONSE_PAYLOAD == magicNumber) {

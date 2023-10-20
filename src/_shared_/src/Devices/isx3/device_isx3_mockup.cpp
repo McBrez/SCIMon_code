@@ -134,7 +134,6 @@ bool DeviceIsx3::configure(
 
   this->configurationFinished = true;
   this->deviceState = DeviceStatus::IDLE;
-  this->deviceConfiguration = deviceConfiguration;
 
   return true;
 }

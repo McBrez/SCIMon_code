@@ -169,8 +169,6 @@ protected:
   bool configurationFinished;
   /// Flag, that indicates whether the device has been succesfully initialized.
   bool initFinished;
-  /// Reference to the currently active device configuration.
-  std::shared_ptr<ConfigurationPayload> deviceConfiguration;
   /// The state of the device.
   DeviceStatus deviceState;
   /// The type of the device.

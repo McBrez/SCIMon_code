@@ -380,8 +380,8 @@ bool SentryWorker::initialize(std::shared_ptr<InitPayload> initPayload) {
 
   // Reset worker state.
   this->workerState = DeviceStatus::UNKNOWN_DEVICE_STATUS;
-  this->pumpController = nullptr;
-  this->spectrometer = nullptr;
+  this->pumpController = UserId();
+  this->spectrometer = UserId();
 
   // Check if an pump controller and a impedance spectrometer are present.
   std::list<std::shared_ptr<StatusPayload>> participants =
@@ -435,7 +435,7 @@ bool SentryWorker::initialize(std::shared_ptr<InitPayload> initPayload) {
 bool SentryWorker::configure(
     std::shared_ptr<ConfigurationPayload> configPayload) {
   // Check if the worker is in the correct state. Configuration is only
-  // possible, when in INIT.
+  // possible, when in INITIALIZED.
   if (this->getState() != DeviceStatus::INITIALIZED) {
     LOG(WARNING) << "SentryWorker received a configuration message, while it "
                     "was in state "

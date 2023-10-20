@@ -10,11 +10,22 @@
 
 namespace Devices {
 
+StatusPayload::StatusPayload(
+    UserId deviceId, DeviceStatus deviceStatus, std::list<UserId> proxyIds,
+    DeviceType deviceType, std::string deviceName,
+    std::shared_ptr<InitPayload> initPayload,
+    std::shared_ptr<ConfigurationPayload> configPayload)
+    : deviceStatus(deviceStatus), deviceId(deviceId), proxyIds(proxyIds),
+      deviceType(deviceType), deviceName(deviceName), initPayload(initPayload),
+      configPayload(configPayload) {}
+
 StatusPayload::StatusPayload(UserId deviceId, DeviceStatus deviceStatus,
                              std::list<UserId> proxyIds, DeviceType deviceType,
-                             std::string deviceName)
-    : deviceId(deviceId), deviceStatus(deviceStatus), proxyIds(proxyIds),
-      deviceType(deviceType), deviceName(deviceName) {}
+                             std::string deviceName, InitPayload *initPayload,
+                             ConfigurationPayload *configPayload)
+    : deviceStatus(deviceStatus), deviceId(deviceId), proxyIds(proxyIds),
+      deviceType(deviceType), deviceName(deviceName), initPayload(initPayload),
+      configPayload(configPayload) {}
 
 DeviceStatus StatusPayload::getDeviceStatus() { return this->deviceStatus; }
 
@@ -50,6 +61,20 @@ std::vector<unsigned char> StatusPayload::bytes() {
     proxyIds.push_back(proxyId.id());
   }
   intermediateObject.proxyIds = proxyIds;
+  if (this->initPayload) {
+    intermediateObject.initPayloadMagicNumber =
+        this->initPayload->getMagicNumber();
+    intermediateObject.initPayload = this->initPayload->bytes();
+  } else {
+    intermediateObject.initPayloadMagicNumber = -1;
+  }
+  if (this->configPayload) {
+    intermediateObject.configPayloadMagicNumber =
+        this->configPayload->getMagicNumber();
+    intermediateObject.configPayload = this->configPayload->bytes();
+  } else {
+    intermediateObject.configPayloadMagicNumber = -1;
+  }
 
   // Serialize the intermediate object.
   flatbuffers::FlatBufferBuilder builder;
@@ -65,4 +90,11 @@ std::vector<unsigned char> StatusPayload::bytes() {
 
 int StatusPayload::getMagicNumber() { return MAGIC_NUMBER_STATUS_PAYLOAD; }
 
+std::shared_ptr<ConfigurationPayload> StatusPayload::getConfigurationPayload() {
+  return this->configPayload;
+}
+
+std::shared_ptr<InitPayload> StatusPayload::getInitPayload() {
+  return this->initPayload;
+}
 } // namespace Devices

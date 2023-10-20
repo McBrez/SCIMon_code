@@ -143,6 +143,7 @@ target_sources(scimon_message PUBLIC
     ${INCLUDE_DIR}/Workers/worker.hpp
     ${INCLUDE_DIR}/Workers/network_worker/network_worker.hpp
     ${INCLUDE_DIR}/Workers/network_worker/network_worker_init_payload.hpp
+    ${INCLUDE_DIR}/Workers/network_worker/network_worker_state_payload.hpp
     ${INCLUDE_DIR}/Workers/sentry_worker/sentry_worker.hpp
     ${INCLUDE_DIR}/Workers/sentry_worker/sentry_payload_decoder.hpp
     ${INCLUDE_DIR}/Workers/sentry_worker/sentry_init_payload.hpp
@@ -198,6 +199,7 @@ target_sources(scimon_message PUBLIC
     ${SOURCE_DIR}/Workers/worker.cpp
     ${SOURCE_DIR}/Workers/network_worker/network_worker.cpp
     ${SOURCE_DIR}/Workers/network_worker/network_worker_init_payload.cpp
+    ${SOURCE_DIR}/Workers/network_worker/network_worker_state_payload.cpp
     ${SOURCE_DIR}/Workers/sentry_worker/sentry_worker.cpp
     ${SOURCE_DIR}/Workers/sentry_worker/sentry_payload_decoder.cpp
     ${SOURCE_DIR}/Workers/sentry_worker/sentry_init_payload.cpp

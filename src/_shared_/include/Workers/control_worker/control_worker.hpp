@@ -188,6 +188,18 @@ private:
   bool handleStatusPayload(std::shared_ptr<ReadDeviceMessage> msg);
 
   /**
+   * @brief Handles disconnection events from the network worker.
+   * @param readMsg A read message that has been received in the
+   * handleResponse() function. It will be checked if the message originated
+   * from the network worker, and if its payload indicates a disconnection
+   * event. If a disconnection event has been received, the state of the control
+   * worker will be adjusted accordingly.
+   * @return True if a disconnection event has been detected. False otherwise.
+   */
+  bool
+  handleNetworkWorkerDisconnect(std::shared_ptr<ReadDeviceMessage> readMsg);
+
+  /**
    * @brief Worker that queries data from remote devices periodically.
    */
   void dataQueryWorker();

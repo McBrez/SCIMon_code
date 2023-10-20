@@ -359,7 +359,9 @@ std::shared_ptr<DeviceMessage> MessageFactory::translateMessageContent(
             proxyIds,
             static_cast<DeviceType>(
                 handshakeContent->statusPayloads[i]->deviceType),
-            handshakeContent->statusPayloads[i]->deviceName)));
+            handshakeContent->statusPayloads[i]->deviceName,
+            std::shared_ptr<InitPayload>(),
+            std::shared_ptr<ConfigurationPayload>())));
   }
 
   return std::shared_ptr<HandshakeMessage>(new HandshakeMessage(

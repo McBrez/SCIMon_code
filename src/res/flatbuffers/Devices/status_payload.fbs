@@ -40,6 +40,10 @@ table StatusPayload {
     proxyIds:[uint64];
     deviceType:DeviceType;
     deviceName:string;
+	initPayloadMagicNumber:uint64;
+	initPayload:[ubyte];
+	configPayloadMagicNumber:uint64;
+	configPayload:[ubyte];
 }
 
 root_type StatusPayload;

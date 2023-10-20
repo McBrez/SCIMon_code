@@ -8,6 +8,7 @@
 #include <key_response_payload.hpp>
 #include <message_distributor.hpp>
 #include <network_worker_init_payload.hpp>
+#include <network_worker_state_payload.hpp>
 #include <request_data_payload.hpp>
 
 using namespace Workers;
@@ -126,6 +127,13 @@ ControlWorker::specificRead(TimePoint timestamp) {
 bool ControlWorker::handleResponse(
     std::shared_ptr<ReadDeviceMessage> response) {
 
+  // Check if a disconnect event ocurred.
+  bool disconnected = this->handleNetworkWorkerDisconnect(response);
+  if (disconnected) {
+    LOG(WARNING) << "Connection to sentry got lost unexpectedly.";
+    return true;
+  }
+
   if (DeviceStatus::IDLE == this->workerState) {
     // Handle the status of the remote end.
     this->handleStatusPayload(response);
@@ -213,7 +221,8 @@ bool ControlWorker::handleResponse(
 
         // Start the query remote state worker.
         this->doQueryState = false;
-        if (this->queryRemoteStateThread) {
+        if (this->queryRemoteStateThread &&
+            this->queryRemoteStateThread->joinable()) {
           this->queryRemoteStateThread->join();
         }
         this->doQueryState = true;
@@ -400,7 +409,7 @@ bool ControlWorker::startConnect(std::string ip, int port) {
   LOG(INFO) << "Control worker is initiating connection to " << ip << ":"
             << port;
   this->controlWorkerSubState = CONTROL_WORKER_SUBSTATE_CONNECTING;
-  // Send the init and start message to the network worker.
+  // Send the init, config and start message to the network worker.
   this->pushMessageQueue(std::shared_ptr<DeviceMessage>(new InitDeviceMessage(
       this->getUserId(), this->networkWorkerId,
       new NetworkWorkerInitPayload(
@@ -674,4 +683,48 @@ ControlWorker::getSpectra(TimePoint from, TimePoint to) {
                  });
 
   return retVal;
+}
+
+bool ControlWorker::handleNetworkWorkerDisconnect(
+    std::shared_ptr<ReadDeviceMessage> readMsg) {
+
+  if (readMsg->getSource() != this->networkWorkerId) {
+    return false;
+  }
+
+  auto statePayload =
+      dynamic_pointer_cast<NetworkWorkerStatePayload>(readMsg->getReadPaylod());
+  if (!statePayload) {
+    return false;
+  }
+
+  // Stop threads that might be running.
+  this->doQueryState = false;
+  if (this->queryRemoteStateThread) {
+    this->queryRemoteStateThread->join();
+    this->queryRemoteStateThread.reset();
+  }
+  this->doQueryData = false;
+  if (this->dataQueryThread) {
+    this->dataQueryThread->join();
+    this->dataQueryThread.reset();
+  }
+
+  // Invalidate some of the structures that hold information about the remote
+  // end.
+  this->remoteDataKeys.clear();
+  this->remoteHostIds.clear();
+  this->remoteStatus.clear();
+
+  // Adjust the state of the network worker.
+  NetworkWorkerCommState state = statePayload->getNetworkWorkerState();
+  if (NETWORK_WOKER_COMM_STATE_WORKING != state) {
+    this->workerState = DeviceStatus::IDLE;
+    this->controlWorkerSubState =
+        ControlWorkerSubState::CONTROL_WORKER_SUBSTATE_WAITING_FOR_CONNECTION;
+
+    return true;
+  }
+
+  return false;
 }

@@ -33,9 +33,9 @@ public:
 
   virtual void work(TimePoint timestamp) override;
 
-  virtual bool start();
+  virtual bool start() override;
 
-  virtual bool stop();
+  virtual bool stop() override;
 
   virtual bool initialize(std::shared_ptr<InitPayload> initPayload) override;
 

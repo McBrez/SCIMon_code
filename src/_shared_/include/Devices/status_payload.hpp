@@ -6,6 +6,7 @@
 
 // Project include
 #include <configuration_payload.hpp>
+#include <init_payload.hpp>
 #include <read_payload.hpp>
 #include <user_id.hpp>
 
@@ -43,10 +44,30 @@ public:
    * @brief Constructs the object.
    * @param userId The id of the device, this payload originates from.
    * @param deviceStatus The status of the device.
+   * @param initPayload The init payload the device has been initialized with.
+   * @param configPayload The configuration payload the device has been
+   * configured with.
    */
   StatusPayload(UserId deviceId, DeviceStatus deviceStatus,
                 std::list<UserId> proxyIds, DeviceType deviceType,
-                std::string deviceName);
+                std::string deviceName,
+                std::shared_ptr<InitPayload> initPayload,
+                std::shared_ptr<ConfigurationPayload> configPayload);
+
+  /**
+   * @brief Constructs the object.
+   * @param userId The id of the device, this payload originates from.
+   * @param deviceStatus The status of the device.
+   * @param initPayload Pointer to the init payload the device has been
+   * initialized with. Note that the payload will take ownership of the pointer.
+   * @param configPayload Pointer to the configuration payload the device has
+   * been initialized with. Note that the payload will take ownership of the
+   * pointer.
+   */
+  StatusPayload(UserId deviceId, DeviceStatus deviceStatus,
+                std::list<UserId> proxyIds, DeviceType deviceType,
+                std::string deviceName, InitPayload *initPayload,
+                ConfigurationPayload *configPayload);
 
   /**
    * @brief Returns the status of the device.
@@ -65,6 +86,10 @@ public:
   std::string getDeviceName();
 
   std::list<UserId> getProxyIds();
+
+  std::shared_ptr<ConfigurationPayload> getConfigurationPayload();
+
+  std::shared_ptr<InitPayload> getInitPayload();
 
   /**
    * @brief Serializes the payload into a human-readable string.
@@ -102,6 +127,10 @@ private:
 
   /// The device name.
   std::string deviceName;
+
+  std::shared_ptr<InitPayload> initPayload;
+
+  std::shared_ptr<ConfigurationPayload> configPayload;
 };
 
 } // namespace Devices

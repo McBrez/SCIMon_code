@@ -79,6 +79,7 @@ bool NetworkWorker::stop() {
         << "Can not stop Network Worker, as it is currently not connected.";
   }
 
+  // Stop threads.
   this->doComm = false;
   if (this->commThread) {
     this->commThread->join();
@@ -90,8 +91,15 @@ bool NetworkWorker::stop() {
     this->listenerThread.reset();
   }
 
+  // Clear buffers.
   this->socketWrapper->clear();
+  this->readBuffer.clear();
+  this->outgoingNetworkMessagesMutex.lock();
+  std::queue<std::shared_ptr<DeviceMessage>> dummy;
+  outgoingNetworkMessages.swap(dummy);
+  this->outgoingNetworkMessagesMutex.unlock();
 
+  // Adjust states.
   this->workerState = DeviceStatus::IDLE;
   this->commState = NetworkWorkerCommState::NETWORK_WOKER_COMM_STATE_INVALID;
 
@@ -559,8 +567,14 @@ std::string NetworkWorker::getWorkerName() {
 }
 
 void NetworkWorker::handleLostConnection() {
-  // Clear the queue.
+  // Clear buffers.
   this->outgoingNetworkMessages = std::queue<std::shared_ptr<DeviceMessage>>();
+  this->socketWrapper->clear();
+  this->readBuffer.clear();
+  this->outgoingNetworkMessagesMutex.lock();
+  std::queue<std::shared_ptr<DeviceMessage>> dummy;
+  outgoingNetworkMessages.swap(dummy);
+  this->outgoingNetworkMessagesMutex.unlock();
 
   // Server goes back to listening. Client goes into error state.
   if (NetworkWorkerOperationMode::NETWORK_WORKER_OP_MODE_SERVER ==

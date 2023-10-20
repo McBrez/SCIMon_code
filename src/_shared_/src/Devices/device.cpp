@@ -56,7 +56,8 @@ bool Device::write(std::shared_ptr<WriteDeviceMessage> writeMsg) {
         READ_TOPIC_DEVICE_STATUS,
         new StatusPayload(this->getUserId(), this->getDeviceStatus(),
                           this->getProxyUserIds(), this->getDeviceType(),
-                          this->getDeviceTypeName()),
+                          this->getDeviceTypeName(), this->initPayload,
+                          this->configPayload),
         writeMsg)));
     return true;
   }
@@ -200,7 +201,8 @@ DeviceType Device::getDeviceType() { return this->deviceType; }
 std::shared_ptr<StatusPayload> Device::constructStatus() {
   return std::shared_ptr<StatusPayload>(new StatusPayload(
       this->getUserId(), this->getDeviceStatus(), this->getProxyUserIds(),
-      this->getDeviceType(), this->getDeviceTypeName()));
+      this->getDeviceType(), this->getDeviceTypeName(), this->initPayload,
+      this->configPayload));
 }
 
 } // namespace Devices
