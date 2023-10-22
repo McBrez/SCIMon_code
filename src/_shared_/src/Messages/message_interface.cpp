@@ -2,13 +2,17 @@
 #include <easylogging++.h>
 
 // Project includes
+#include <data_response_payload.hpp>
+#include <key_response_payload.hpp>
 #include <message_interface.hpp>
+#include <request_data_payload.hpp>
 
 namespace Messages {
 
 MessageInterface::MessageInterface(DataManagerType dataManagerType)
     : id(UserId(this)), messageDistributor(nullptr),
-      dataManager(DataManager::getDataManager(dataManagerType)) {}
+      dataManager(DataManager::getDataManager(dataManagerType)),
+      deviceState(DeviceStatus::UNKNOWN_DEVICE_STATUS) {}
 
 UserId MessageInterface::getUserId() const { return this->id; }
 
@@ -44,26 +48,18 @@ bool MessageInterface::takeMessage(std::shared_ptr<DeviceMessage> message) {
       }
 
       else {
-        // It is not an init and not a config message. Is it a handshake
-        // message?
-        auto handshakeMessage = dynamic_pointer_cast<HandshakeMessage>(message);
-        if (handshakeMessage) {
+        // It is not an init message, not a config message and not a write
+        // message. Is it a response message?
+        auto readDeviceMessage =
+            dynamic_pointer_cast<ReadDeviceMessage>(message);
+        if (readDeviceMessage) {
           // ... it is. Trigger an config call.
-          return this->write(handshakeMessage);
+          return this->handleResponse(readDeviceMessage);
         } else {
-          // It is not an init message, not a config message and not a write
-          // message. Is it a response message?
-          auto readDeviceMessage =
-              dynamic_pointer_cast<ReadDeviceMessage>(message);
-          if (readDeviceMessage) {
-            // ... it is. Trigger an config call.
-            return this->handleResponse(readDeviceMessage);
-          } else {
-            // Unknown message type. Abort here.
-            LOG(WARNING)
-                << "Encountered unknown message type. Message will be ignored";
-            return false;
-          }
+          // Unknown message type. Abort here.
+          LOG(WARNING)
+              << "Encountered unknown message type. Message will be ignored";
+          return false;
         }
       }
     }
@@ -225,6 +221,177 @@ int MessageInterface::removeFromMessageQueue(
   this->messageOutMutex.unlock();
 
   return counter;
+}
+
+bool MessageInterface::write(std::shared_ptr<WriteDeviceMessage> writeMsg) {
+
+  if (WriteDeviceTopic::WRITE_TOPIC_INVALID == writeMsg->getTopic()) {
+    LOG(WARNING) << "Received a message with invalid topic.";
+    return false;
+  }
+
+  else if (WriteDeviceTopic::WRITE_TOPIC_DEVICE_SPECIFIC ==
+           writeMsg->getTopic()) {
+    // Message topic is too specific. Pass it to the sub class.
+    return this->specificWrite(writeMsg);
+  }
+
+  else if (WriteDeviceTopic::WRITE_TOPIC_RUN == writeMsg->getTopic()) {
+
+    return this->start();
+  }
+
+  else if (WriteDeviceTopic::WRITE_TOPIC_STOP == writeMsg->getTopic()) {
+    return this->stop();
+  }
+
+  else if (WriteDeviceTopic::WRITE_TOPIC_QUERY_STATE == writeMsg->getTopic()) {
+    // Put the device state into the message queue.
+    this->pushMessageQueue(std::shared_ptr<DeviceMessage>(new ReadDeviceMessage(
+        this->self->getUserId(), writeMsg->getSource(),
+        READ_TOPIC_DEVICE_STATUS,
+        new StatusPayload(this->getUserId(), this->getDeviceStatus(),
+                          this->getProxyUserIds(), this->getDeviceType(),
+                          this->getDeviceTypeName(), this->initPayload,
+                          this->configPayload),
+        writeMsg)));
+    return true;
+  }
+
+  else if (WriteDeviceTopic::WRITE_TOPIC_REQUEST_DATA == writeMsg->getTopic()) {
+    // Data is requested. Try to cast down the payload.
+    auto requestedDataPayload =
+        dynamic_pointer_cast<RequestDataPayload>(writeMsg->getPayload());
+    if (!requestedDataPayload) {
+      LOG(ERROR)
+          << "Received malformed request data message. This will be ignored.";
+      return false;
+    }
+
+    // Ask the data manager for the requested data.
+    std::vector<TimePoint> timestamps;
+    std::vector<Value> values;
+    bool readSuccess = this->dataManager->read(
+        requestedDataPayload->from, requestedDataPayload->to,
+        requestedDataPayload->key, timestamps, values);
+
+    if (!readSuccess) {
+
+      LOG(ERROR) << "Read from data manager was not successfull.";
+      return false;
+    }
+
+    // Construct payloads from the gathered data.
+    std::vector<DataResponsePayload *> dataResponsePayloads =
+        DataResponsePayload::constructDataResponsePayload(
+            requestedDataPayload->from, requestedDataPayload->to,
+            requestedDataPayload->key, timestamps, values);
+    // Construct messages from the payloads.
+    std::vector<std::shared_ptr<DeviceMessage>> dataResponseMessages;
+    dataResponseMessages.reserve(dataResponsePayloads.size());
+    for (auto responsePayload : dataResponsePayloads) {
+      dataResponseMessages.emplace_back(std::shared_ptr<DeviceMessage>(
+          new ReadDeviceMessage(this->getUserId(), writeMsg->getSource(),
+                                ReadDeviceTopic::READ_TOPIC_DATA_RESPONSE,
+                                responsePayload, writeMsg)));
+    }
+    this->pushMessageQueue(dataResponseMessages);
+
+    return true;
+  }
+
+  else if (WriteDeviceTopic::WRITE_TOPIC_REQUEST_KEYS == writeMsg->getTopic()) {
+
+    KeyResponsePayload *keyResponsePayload =
+        new KeyResponsePayload(this->dataManager->getKeyMapping(),
+                               this->dataManager->getSpectrumMapping());
+
+    std::shared_ptr<DeviceMessage> responseMsg(
+        new ReadDeviceMessage(this->getUserId(), writeMsg->getSource(),
+                              ReadDeviceTopic::READ_TOPIC_KEY_RESPONSE,
+                              keyResponsePayload, writeMsg));
+
+    this->pushMessageQueue(responseMsg);
+
+    return true;
+
+  }
+
+  else {
+    // Could not identify the topic of the message. Return false.
+    LOG(ERROR) << "Could not identify the topic of the message.";
+    return false;
+  }
+}
+
+bool MessageInterface::write(std::shared_ptr<InitDeviceMessage> initMsg) {
+  if (initMsg->getDestination() != this->getUserId()) {
+    LOG(WARNING) << "Message Interface received an unsolicited init "
+                    "message. This will be ignored.";
+    return false;
+  }
+
+  this->initPayload = initMsg->returnPayload();
+  return this->initialize(initMsg->returnPayload());
+}
+
+bool MessageInterface::write(std::shared_ptr<ConfigDeviceMessage> configMsg) {
+
+  if (configMsg->getDestination() != this->getUserId()) {
+    LOG(WARNING) << "Message Interface received an unsolicited configuration "
+                    "message. This will be ignored.";
+
+    return false;
+  }
+
+  this->configPayload = configMsg->getConfiguration();
+  this->eventResponseId = configMsg->getResponseIds();
+
+  return this->configure(configMsg->getConfiguration());
+}
+
+std::list<std::shared_ptr<DeviceMessage>>
+MessageInterface::read(TimePoint timestamp) {
+  // Call the device-specific read operation.
+  std::list<std::shared_ptr<DeviceMessage>> readMessages =
+      this->specificRead(timestamp);
+  // Append the message, if it was not empty.
+  if (!readMessages.empty()) {
+    for (auto &message : readMessages) {
+      this->pushMessageQueue(message);
+    }
+  }
+
+  // Pop the queue, if it is not empty.
+  if (this->messageQueueEmpty()) {
+    // Queue is empty. Return an empty std::list.
+    return std::list<std::shared_ptr<DeviceMessage>>();
+  } else {
+    // Pop the queue to a std::list and return it.
+    std::list<std::shared_ptr<DeviceMessage>> retVal;
+    while (!this->messageQueueEmpty()) {
+      retVal.push_back(this->popMessageQueue());
+    }
+    return retVal;
+  }
+}
+
+DeviceStatus MessageInterface::getDeviceStatus() { return this->deviceState; }
+
+DeviceType MessageInterface::getDeviceType() { return this->deviceType; }
+
+bool MessageInterface::isConfigured() {
+  return this->deviceState == DeviceStatus::IDLE;
+}
+
+bool MessageInterface::isInitialized() {
+  return this->deviceState == DeviceStatus::INITIALIZED;
+}
+
+bool handshake(std::shared_ptr<HandshakeMessage> msg) {
+  LOG(WARNING) << "Device does not react to handshake messages.";
+
+  return false;
 }
 
 } // namespace Messages

@@ -3,7 +3,7 @@
 #include <isx3_init_payload.hpp>
 #include <isx3_is_conf_payload.hpp>
 #include <message_factory.hpp>
-#include <ob1_conf_payload.hpp>>
+#include <ob1_conf_payload.hpp>
 #include <ob1_init_payload.hpp>
 
 using namespace Workers;

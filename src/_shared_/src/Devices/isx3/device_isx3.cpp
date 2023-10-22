@@ -6,7 +6,7 @@
 
 // Project includes
 #include <common.hpp>
-#include <data_manager.hpp>>
+#include <data_manager.hpp>
 #include <device_isx3.hpp>
 #include <is_configuration.hpp>
 #include <isx3_ack_payload.hpp>

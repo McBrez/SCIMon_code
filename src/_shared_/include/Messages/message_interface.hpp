@@ -47,7 +47,7 @@ public:
    * @return True if the initialization message has been received successfully.
    * False otherwise.
    */
-  virtual bool write(std::shared_ptr<InitDeviceMessage> initMsg) = 0;
+  virtual bool write(std::shared_ptr<InitDeviceMessage> initMsg);
 
   /**
    * @brief Writes a configuration message to the device.
@@ -56,21 +56,14 @@ public:
    * @return True if the configuration message has been received successfully.
    * False otherwise.
    */
-  virtual bool write(std::shared_ptr<ConfigDeviceMessage> configMsg) = 0;
+  virtual bool write(std::shared_ptr<ConfigDeviceMessage> configMsg);
 
   /**
    * @brief Writes a message to the device.
    * @param writeMsg The message that shall be written to the device.
    * @return True if successful. False otherwise.
    */
-  virtual bool write(std::shared_ptr<WriteDeviceMessage> writeMsg) = 0;
-
-  /**
-   * @brief Writes a handshake message to the device.
-   * @param writeMsg The handshake message that shall be written to the device.
-   * @return True if successful. False otherwise.
-   */
-  virtual bool write(std::shared_ptr<HandshakeMessage> writeMsg) = 0;
+  virtual bool write(std::shared_ptr<WriteDeviceMessage> writeMsg);
 
   /**
    * @brief Handles a device specific message. Called by
@@ -87,8 +80,7 @@ public:
    * @return std::list of references to the messages from the message queue. May
    * return an empty std::list, if there was nothing to read.
    */
-  virtual std::list<std::shared_ptr<DeviceMessage>>
-  read(TimePoint timestamp) = 0;
+  virtual std::list<std::shared_ptr<DeviceMessage>> read(TimePoint timestamp);
 
   /**
    * @brief Device-specific read operation, that is executed on each call of
@@ -166,15 +158,39 @@ public:
    */
   DataManagerType getDataManagerType() const;
 
+  /**
+   * @brief Returns the status of the device.
+   * @return The status of the device.
+   */
+  DeviceStatus getDeviceStatus();
+
+  /**
+   * @brief Return the name of the device type.
+   * @return The device type name.
+   */
+  virtual std::string getDeviceTypeName() = 0;
+
+  /**
+   * @brief Returns the type of the device.
+   * @return
+   */
+  DeviceType getDeviceType();
+
+  /**
+   * @brief Retruns whether the device has been succesfully configured.
+   * @return True if the device has been successfully configured false
+   * otherwise.
+   */
+  bool isConfigured();
+
+  /**
+   * @brief Retruns whether the device has been succesfully initialized.
+   * @return True if the device has been successfully initialized false
+   * otherwise.
+   */
+  bool isInitialized();
+
 protected:
-  /// Reference to the message distributor this object belongs to. Is set when
-  /// the message interface object is added to the distributor as participant.
-  MessageDistributor *messageDistributor;
-
-  /// A sharable reference to the object itself. Is set when
-  /// the message interface object is added to the distributor as participant.
-  std::shared_ptr<MessageInterface> self;
-
   /**
    * @brief Adds the given proxy id to the internal std::list of proxy ids of
    * this object.
@@ -259,6 +275,36 @@ protected:
    */
   bool messageQueueEmpty();
 
+  /**
+   * @brief Starts the operation of the device, provided that there is an valid
+   * configuration.
+   * @return TRUE if device has been started. FALSE if an error occured.
+   */
+  virtual bool start() = 0;
+
+  /**
+   * @brief Stops the operation of the device.
+   * @return TRUE if device has been started. FALSE if an error occured.
+   */
+  virtual bool stop() = 0;
+
+  /**
+   * Initializes the device according to the given configuration.
+   * @param deviceConfiguration The configuration that shall be applied to the
+   * device.
+   * @return TRUE if configuration was successful. False otherwise.
+   */
+  virtual bool initialize(std::shared_ptr<InitPayload> initPayload) = 0;
+
+  /**
+   * Configures the device according to the given configuration.
+   * @param deviceConfiguration The configuration that shall be applied to the
+   * device.
+   * @return TRUE if configuration was successful. False otherwise.
+   */
+  virtual bool
+  configure(std::shared_ptr<ConfigurationPayload> deviceConfiguration) = 0;
+
   /// Pointer to the data manager.
   std::unique_ptr<DataManager> dataManager;
 
@@ -271,6 +317,20 @@ protected:
 
   /// The payload this interface has been configured with. May be empty.
   std::shared_ptr<ConfigurationPayload> configPayload;
+
+  /// Reference to the message distributor this object belongs to. Is set when
+  /// the message interface object is added to the distributor as participant.
+  MessageDistributor *messageDistributor;
+
+  /// A sharable reference to the object itself. Is set when
+  /// the message interface object is added to the distributor as participant.
+  std::shared_ptr<MessageInterface> self;
+
+  /// The state of the device.
+  DeviceStatus deviceState;
+
+  /// The type of the device.
+  DeviceType deviceType;
 
 private:
   /// The unique id of the object that implements this interface.

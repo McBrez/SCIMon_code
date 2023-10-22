@@ -75,8 +75,8 @@ TEST_CASE("Test the network worker handshake") {
   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
   // Workers should now both be in operating state.
-  REQUIRE(serverWorker->getState() == DeviceStatus::OPERATING);
-  REQUIRE(clientWorker->getState() == DeviceStatus::OPERATING);
+  REQUIRE(serverWorker->getDeviceStatus() == DeviceStatus::OPERATING);
+  REQUIRE(clientWorker->getDeviceStatus() == DeviceStatus::OPERATING);
   // Workers should now have each others user id as proxy id.
   REQUIRE(serverWorker->getProxyUserIds() ==
           std::list<UserId>{clientWorker->getUserId()});
@@ -93,8 +93,8 @@ TEST_CASE("Test the network worker handshake") {
   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
   REQUIRE(client->write(clientStopMessage));
 
-  REQUIRE(serverWorker->getState() == DeviceStatus::IDLE);
-  REQUIRE(clientWorker->getState() == DeviceStatus::IDLE);
+  REQUIRE(serverWorker->getDeviceStatus() == DeviceStatus::IDLE);
+  REQUIRE(clientWorker->getDeviceStatus() == DeviceStatus::IDLE);
 }
 
 TEST_CASE("Test the network worker reconnect") {
@@ -145,8 +145,8 @@ TEST_CASE("Test the network worker reconnect") {
   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
   // Workers should now both be in operating state.
-  REQUIRE(serverWorker->getState() == DeviceStatus::OPERATING);
-  REQUIRE(clientWorker->getState() == DeviceStatus::OPERATING);
+  REQUIRE(serverWorker->getDeviceStatus() == DeviceStatus::OPERATING);
+  REQUIRE(clientWorker->getDeviceStatus() == DeviceStatus::OPERATING);
   // Workers should now have each others user id as proxy id.
   REQUIRE(serverWorker->getProxyUserIds() ==
           std::list<UserId>{clientWorker->getUserId()});
@@ -159,8 +159,8 @@ TEST_CASE("Test the network worker reconnect") {
   REQUIRE(client->write(clientStopMessage));
   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
-  REQUIRE(serverWorker->getState() == DeviceStatus::BUSY);
-  REQUIRE(clientWorker->getState() == DeviceStatus::IDLE);
+  REQUIRE(serverWorker->getDeviceStatus() == DeviceStatus::BUSY);
+  REQUIRE(clientWorker->getDeviceStatus() == DeviceStatus::IDLE);
 
   // Client reconnects.
   std::shared_ptr<WriteDeviceMessage> clientReconnectMessage(
@@ -169,8 +169,8 @@ TEST_CASE("Test the network worker reconnect") {
   REQUIRE(client->write(clientReconnectMessage));
   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
-  REQUIRE(serverWorker->getState() == DeviceStatus::OPERATING);
-  REQUIRE(clientWorker->getState() == DeviceStatus::OPERATING);
+  REQUIRE(serverWorker->getDeviceStatus() == DeviceStatus::OPERATING);
+  REQUIRE(clientWorker->getDeviceStatus() == DeviceStatus::OPERATING);
 
   // Shut down both network workers.
   std::shared_ptr<WriteDeviceMessage> serverStopMessage(new WriteDeviceMessage(
@@ -179,8 +179,8 @@ TEST_CASE("Test the network worker reconnect") {
   REQUIRE(client->write(clientStopMessage));
   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
-  REQUIRE(serverWorker->getState() == DeviceStatus::IDLE);
-  REQUIRE(clientWorker->getState() == DeviceStatus::IDLE);
+  REQUIRE(serverWorker->getDeviceStatus() == DeviceStatus::IDLE);
+  REQUIRE(clientWorker->getDeviceStatus() == DeviceStatus::IDLE);
 }
 
 TEST_CASE("Test communication between the end points") {
@@ -235,8 +235,8 @@ TEST_CASE("Test communication between the end points") {
   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
   // Workers should now both be in operating state.
-  REQUIRE(serverWorker->getState() == DeviceStatus::OPERATING);
-  REQUIRE(clientWorker->getState() == DeviceStatus::OPERATING);
+  REQUIRE(serverWorker->getDeviceStatus() == DeviceStatus::OPERATING);
+  REQUIRE(clientWorker->getDeviceStatus() == DeviceStatus::OPERATING);
   // Workers should now have each others user id as proxy id.
   REQUIRE(
       serverWorker->getProxyUserIds() ==
@@ -321,8 +321,8 @@ TEST_CASE("Test the response of the network worker on disconnect - client "
   REQUIRE(client->write(clientStartMessage));
   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
-  REQUIRE(serverWorker->getState() == DeviceStatus::OPERATING);
-  REQUIRE(clientWorker->getState() == DeviceStatus::OPERATING);
+  REQUIRE(serverWorker->getDeviceStatus() == DeviceStatus::OPERATING);
+  REQUIRE(clientWorker->getDeviceStatus() == DeviceStatus::OPERATING);
 
   std::thread serverThread(&MessageDistributor::run, &distributorServer);
   std::thread clientThread(&MessageDistributor::run, &distributorClient);
@@ -406,8 +406,8 @@ TEST_CASE("Test the response of the network worker on disconnect - server "
   REQUIRE(client->write(clientStartMessage));
   std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
-  REQUIRE(serverWorker->getState() == DeviceStatus::OPERATING);
-  REQUIRE(clientWorker->getState() == DeviceStatus::OPERATING);
+  REQUIRE(serverWorker->getDeviceStatus() == DeviceStatus::OPERATING);
+  REQUIRE(clientWorker->getDeviceStatus() == DeviceStatus::OPERATING);
 
   std::thread serverThread(&MessageDistributor::run, &distributorServer);
   std::thread clientThread(&MessageDistributor::run, &distributorClient);

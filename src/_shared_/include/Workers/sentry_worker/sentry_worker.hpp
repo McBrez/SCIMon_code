@@ -43,13 +43,6 @@ public:
   configure(std::shared_ptr<ConfigurationPayload> configPayload) override;
 
   /**
-   * @brief Writes a handshake message to the device.
-   * @param writeMsg The handshake message that shall be written to the device.
-   * @return True if successful. False otherwise.
-   */
-  virtual bool write(std::shared_ptr<HandshakeMessage> writeMsg) override;
-
-  /**
    * @brief Handles a device specific message. Called by
    * write std::shared_ptr<WriteDeviceMessage>), if the mssage could not be
    * resolved.
@@ -83,6 +76,12 @@ public:
    * @return A string that identifies the type of the worker.
    */
   virtual std::string getWorkerName() override;
+
+  /**
+   * @brief Return the name of the device type.
+   * @return The device type name.
+   */
+  virtual std::string getDeviceTypeName() override;
 
 private:
   /// The payload with which this object has been initialized.

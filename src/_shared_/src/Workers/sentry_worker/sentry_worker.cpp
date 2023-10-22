@@ -17,9 +17,7 @@ SentryWorker::SentryWorker()
       pumpControllerState(DeviceStatus::UNKNOWN_DEVICE_STATUS),
       spectrometerState(DeviceStatus::UNKNOWN_DEVICE_STATUS),
       threadWaiting(true), runThread(false),
-      workerThreadInterval(std::chrono::milliseconds(100)) {
-  this->workerState = DeviceStatus::UNKNOWN_DEVICE_STATUS;
-}
+      workerThreadInterval(std::chrono::milliseconds(100)) {}
 
 SentryWorker::~SentryWorker() {}
 
@@ -118,8 +116,8 @@ bool SentryWorker::specificWrite(std::shared_ptr<WriteDeviceMessage> writeMsg) {
     }
 
     // Check if sentry worker is in correct state.
-    if (this->workerState != DeviceStatus::IDLE &&
-        this->workerState != DeviceStatus::OPERATING) {
+    if (this->deviceState != DeviceStatus::IDLE &&
+        this->deviceState != DeviceStatus::OPERATING) {
       LOG(WARNING) << "Sentry worker received request to set status of another "
                       "device, but sentry worker is not in the correct state. "
                       "Set status request will be ignored.";
@@ -164,7 +162,7 @@ SentryWorker::specificRead(TimePoint timestamp) {
 
 bool SentryWorker::handleResponse(std::shared_ptr<ReadDeviceMessage> response) {
 
-  if (DeviceStatus::INITIALIZING == this->getState()) {
+  if (DeviceStatus::INITIALIZING == this->getDeviceStatus()) {
     // During INITIALIZING, it is waited until the governed devices become
     // operational. This happens in three configuration sub states: INIT ->
     // CONFIGURE -> OPERATING
@@ -176,7 +174,7 @@ bool SentryWorker::handleResponse(std::shared_ptr<ReadDeviceMessage> response) {
       if (!statusPayload) {
         // Only device status messages are expected right now. Return here.
         LOG(WARNING) << "SentryWorker got an unexpected message while in state "
-                     << this->getState();
+                     << this->getDeviceStatus();
 
         return false;
       }
@@ -293,7 +291,7 @@ bool SentryWorker::handleResponse(std::shared_ptr<ReadDeviceMessage> response) {
         // Both devices have been configured successfully. Set the state
         // accordingly.
         this->initSubState = InitSubState::INIT_SUB_STATE_READY;
-        this->workerState = DeviceStatus::INITIALIZED;
+        this->deviceState = DeviceStatus::INITIALIZED;
         this->onInitialized(SENTRY_WORKER_TYPE_NAME, Utilities::KeyMapping(),
                             Utilities::SpectrumMapping());
 
@@ -307,7 +305,7 @@ bool SentryWorker::handleResponse(std::shared_ptr<ReadDeviceMessage> response) {
     }
   }
 
-  else if (DeviceStatus::OPERATING == this->getState()) {
+  else if (DeviceStatus::OPERATING == this->getDeviceStatus()) {
     // During OPERATING, received messages from the devices are written to
     // cache.
     if (!response->getReadPaylod()) {
@@ -334,9 +332,9 @@ bool SentryWorker::handleResponse(std::shared_ptr<ReadDeviceMessage> response) {
 
 bool SentryWorker::start() {
   // Check if worker is in the correct state.
-  if (DeviceStatus::IDLE != this->workerState) {
+  if (DeviceStatus::IDLE != this->deviceState) {
     LOG(WARNING) << "SentryWorker received start message in state "
-                 << this->workerState;
+                 << this->deviceState;
 
     return false;
   }
@@ -345,16 +343,16 @@ bool SentryWorker::start() {
   this->runThread = true;
   this->workerThread.reset(
       new std::thread(&SentryWorker::work, this, Core::getNow()));
-  this->workerState = DeviceStatus::OPERATING;
+  this->deviceState = DeviceStatus::OPERATING;
 
   return true;
 }
 
 bool SentryWorker::stop() {
   // Check if worker is in the correct state.
-  if (DeviceStatus::OPERATING != this->workerState) {
+  if (DeviceStatus::OPERATING != this->deviceState) {
     LOG(WARNING) << "SentryWorker received stop message in state "
-                 << this->workerState;
+                 << this->deviceState;
 
     return false;
   }
@@ -362,7 +360,7 @@ bool SentryWorker::stop() {
   // Stop the worker.
   this->runThread = false;
   this->workerThread->join();
-  this->workerState = DeviceStatus::IDLE;
+  this->deviceState = DeviceStatus::IDLE;
 
   return true;
 }
@@ -379,7 +377,7 @@ bool SentryWorker::initialize(std::shared_ptr<InitPayload> initPayload) {
   }
 
   // Reset worker state.
-  this->workerState = DeviceStatus::UNKNOWN_DEVICE_STATUS;
+  this->deviceState = DeviceStatus::UNKNOWN_DEVICE_STATUS;
   this->pumpController = UserId();
   this->spectrometer = UserId();
 
@@ -409,7 +407,7 @@ bool SentryWorker::initialize(std::shared_ptr<InitPayload> initPayload) {
 
   // Set the worker state to INITIALIZING and forward the init messages to the
   // corresponding devices.
-  this->workerState = DeviceStatus::INITIALIZING;
+  this->deviceState = DeviceStatus::INITIALIZING;
   this->pushMessageQueue(std::shared_ptr<DeviceMessage>(
       new InitDeviceMessage(this->self->getUserId(), spectrometer,
                             this->initPayload->isSpecInitPayload)));
@@ -436,10 +434,10 @@ bool SentryWorker::configure(
     std::shared_ptr<ConfigurationPayload> configPayload) {
   // Check if the worker is in the correct state. Configuration is only
   // possible, when in INITIALIZED.
-  if (this->getState() != DeviceStatus::INITIALIZED) {
+  if (this->getDeviceStatus() != DeviceStatus::INITIALIZED) {
     LOG(WARNING) << "SentryWorker received a configuration message, while it "
                     "was in state "
-                 << this->workerState;
+                 << this->deviceState;
 
     return false;
   }
@@ -454,17 +452,14 @@ bool SentryWorker::configure(
   }
 
   this->configPayload = sentryConfigPayload;
-  this->workerState = DeviceStatus::IDLE;
+  this->deviceState = DeviceStatus::IDLE;
   this->onConfigured(Utilities::KeyMapping(), Utilities::SpectrumMapping());
 
   return true;
 }
 
-bool SentryWorker::write(std::shared_ptr<HandshakeMessage> writeMsg) {
-  // Sentry worker does not react to handshake messages.
-  LOG(WARNING) << "Sentry worker received handshake message. This will be "
-                  "ignored.";
-  return false;
+std::string SentryWorker::getDeviceTypeName() {
+  return SENTRY_WORKER_TYPE_NAME;
 }
 
 std::string SentryWorker::getWorkerName() { return SENTRY_WORKER_TYPE_NAME; }

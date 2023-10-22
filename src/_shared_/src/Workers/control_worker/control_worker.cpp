@@ -27,14 +27,14 @@ void ControlWorker::work(TimePoint timestamp) {}
 
 bool ControlWorker::start() {
   // Check if control worker is in correct state.
-  if (this->workerState == DeviceStatus::IDLE &&
+  if (this->deviceState == DeviceStatus::IDLE &&
       this->controlWorkerSubState ==
           ControlWorkerSubState::CONTROL_WORKER_SUBSTATE_CONF_REMOTE) {
 
     // Send the start message to the remote end and adjust status.
     this->controlWorkerSubState =
         ControlWorkerSubState::CONTROL_WORKER_SUBSTATE_REMOTE_RUNNING;
-    this->workerState = DeviceStatus::OPERATING;
+    this->deviceState = DeviceStatus::OPERATING;
     this->pushMessageQueue(std::shared_ptr<DeviceMessage>(
         new WriteDeviceMessage(this->getUserId(), this->getSentryId(),
                                WriteDeviceTopic::WRITE_TOPIC_RUN)));
@@ -47,11 +47,11 @@ bool ControlWorker::start() {
 
 bool ControlWorker::stop() {
   // Check if control worker is in correct state.
-  if (this->workerState == DeviceStatus::OPERATING) {
+  if (this->deviceState == DeviceStatus::OPERATING) {
     // Send the stop message to the remote end and adjust status.
     this->controlWorkerSubState =
         ControlWorkerSubState::CONTROL_WORKER_SUBSTATE_REMOTE_STOPPED;
-    this->workerState = DeviceStatus::IDLE;
+    this->deviceState = DeviceStatus::IDLE;
     this->pushMessageQueue(std::shared_ptr<DeviceMessage>(
         new WriteDeviceMessage(this->getUserId(), this->getSentryId(),
                                WriteDeviceTopic::WRITE_TOPIC_STOP)));
@@ -64,7 +64,7 @@ bool ControlWorker::stop() {
 
 bool ControlWorker::initialize(std::shared_ptr<InitPayload> initPayload) {
   LOG(INFO) << "Control Worker is initializing";
-  this->workerState = DeviceStatus::INITIALIZING;
+  this->deviceState = DeviceStatus::INITIALIZING;
 
   // Try to find the network worker.
   std::list<std::shared_ptr<StatusPayload>> statusPayloads =
@@ -80,12 +80,12 @@ bool ControlWorker::initialize(std::shared_ptr<InitPayload> initPayload) {
   if (!foundNetworkWorker) {
     LOG(ERROR) << "Control Worker did not find the network worker. This "
                   "configuration will no work";
-    this->workerState = DeviceStatus::ERROR;
+    this->deviceState = DeviceStatus::ERROR;
     return false;
   }
 
   LOG(INFO) << "Control Worker found the network worker.";
-  this->workerState = DeviceStatus::IDLE;
+  this->deviceState = DeviceStatus::IDLE;
 
   this->onInitialized(this->getWorkerName(), KeyMapping(), SpectrumMapping());
 
@@ -95,23 +95,19 @@ bool ControlWorker::initialize(std::shared_ptr<InitPayload> initPayload) {
 bool ControlWorker::configure(
     std::shared_ptr<ConfigurationPayload> configPayload) {
   // Check if control worker is in the correct state.
-  if (DeviceStatus::INITIALIZED != this->workerState) {
+  if (DeviceStatus::INITIALIZED != this->deviceState) {
     LOG(WARNING) << "Control worker received a configure request, but "
                     "currently is not in the correct state.";
     return false;
   }
 
   LOG(INFO) << "Control Worker has been configured";
-  this->workerState = DeviceStatus::IDLE;
+  this->deviceState = DeviceStatus::IDLE;
   this->controlWorkerSubState = CONTROL_WORKER_SUBSTATE_WAITING_FOR_CONNECTION;
 
   this->onConfigured(KeyMapping(), SpectrumMapping());
 
   return true;
-}
-
-bool ControlWorker::write(std::shared_ptr<HandshakeMessage> writeMsg) {
-  return false;
 }
 
 bool ControlWorker::specificWrite(
@@ -134,7 +130,7 @@ bool ControlWorker::handleResponse(
     return true;
   }
 
-  if (DeviceStatus::IDLE == this->workerState) {
+  if (DeviceStatus::IDLE == this->deviceState) {
     // Handle the status of the remote end.
     this->handleStatusPayload(response);
 
@@ -385,7 +381,7 @@ bool ControlWorker::handleResponse(
     }
   }
 
-  else if (DeviceStatus::OPERATING == this->workerState) {
+  else if (DeviceStatus::OPERATING == this->deviceState) {
     this->handleStatusPayload(response);
     return true;
   }
@@ -400,7 +396,7 @@ bool ControlWorker::handleResponse(
 std::string ControlWorker::getWorkerName() { return CONTROL_WORKER_TYPE_NAME; }
 
 bool ControlWorker::startConnect(std::string ip, int port) {
-  if (this->workerState != DeviceStatus::IDLE) {
+  if (this->deviceState != DeviceStatus::IDLE) {
     LOG(WARNING) << "Control Worker received a request to connect to host, but "
                     "it is not in the correct state.";
     return false;
@@ -434,7 +430,7 @@ bool ControlWorker::startConfig(
     std::shared_ptr<SentryInitPayload> initPayload,
     std::shared_ptr<SentryConfigPayload> configPayload) {
   // Is worker in correct state?
-  if (this->workerState != DeviceStatus::IDLE) {
+  if (this->deviceState != DeviceStatus::IDLE) {
     LOG(WARNING)
         << "Control Worker received a request to configure the host, but "
            "it is not in the correct state.";
@@ -719,7 +715,7 @@ bool ControlWorker::handleNetworkWorkerDisconnect(
   // Adjust the state of the network worker.
   NetworkWorkerCommState state = statePayload->getNetworkWorkerState();
   if (NETWORK_WOKER_COMM_STATE_WORKING != state) {
-    this->workerState = DeviceStatus::IDLE;
+    this->deviceState = DeviceStatus::IDLE;
     this->controlWorkerSubState =
         ControlWorkerSubState::CONTROL_WORKER_SUBSTATE_WAITING_FOR_CONNECTION;
 
@@ -727,4 +723,8 @@ bool ControlWorker::handleNetworkWorkerDisconnect(
   }
 
   return false;
+}
+
+std::string ControlWorker::getDeviceTypeName() {
+  return CONTROL_WORKER_TYPE_NAME;
 }

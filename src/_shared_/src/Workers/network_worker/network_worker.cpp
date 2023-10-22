@@ -32,7 +32,7 @@ NetworkWorker::~NetworkWorker() {
 void NetworkWorker::work(TimePoint timestamp) {}
 
 bool NetworkWorker::start() {
-  if (DeviceStatus::IDLE != this->getState()) {
+  if (DeviceStatus::IDLE != this->getDeviceStatus()) {
     LOG(WARNING)
         << "Can not start Network Worker as it is not in the correct state.";
     return false;
@@ -41,7 +41,7 @@ bool NetworkWorker::start() {
   if (NetworkWorkerOperationMode::NETWORK_WORKER_OP_MODE_SERVER ==
       this->initPayload->getOperationMode()) {
     // Start the std::listener thread.
-    this->workerState = DeviceStatus::BUSY;
+    this->deviceState = DeviceStatus::BUSY;
     this->commState =
         NetworkWorkerCommState::NETWORK_WOKER_COMM_STATE_LISTENING;
     this->listenerThread.reset(
@@ -58,13 +58,13 @@ bool NetworkWorker::start() {
     }
 
     // Start comm thread.
-    this->workerState = DeviceStatus::BUSY;
+    this->deviceState = DeviceStatus::BUSY;
     this->commState = NetworkWorkerCommState::NETWORK_WOKER_COMM_STATE_STARTING;
     this->doComm = true;
     this->commThread.reset(new std::thread(&NetworkWorker::commWorker, this));
 
   } else {
-    this->workerState = DeviceStatus::ERROR;
+    this->deviceState = DeviceStatus::ERROR;
     LOG(WARNING) << "Unknown operation mode requested from Network Worker.";
     return false;
   }
@@ -73,8 +73,8 @@ bool NetworkWorker::start() {
 }
 
 bool NetworkWorker::stop() {
-  if (DeviceStatus::OPERATING != this->getState() &&
-      DeviceStatus::BUSY != this->getState()) {
+  if (DeviceStatus::OPERATING != this->getDeviceStatus() &&
+      DeviceStatus::BUSY != this->getDeviceStatus()) {
     LOG(WARNING)
         << "Can not stop Network Worker, as it is currently not connected.";
   }
@@ -100,7 +100,7 @@ bool NetworkWorker::stop() {
   this->outgoingNetworkMessagesMutex.unlock();
 
   // Adjust states.
-  this->workerState = DeviceStatus::IDLE;
+  this->deviceState = DeviceStatus::IDLE;
   this->commState = NetworkWorkerCommState::NETWORK_WOKER_COMM_STATE_INVALID;
 
   return true;
@@ -132,20 +132,20 @@ bool NetworkWorker::initialize(std::shared_ptr<InitPayload> initPayload) {
   }
 
   this->readBuffer.clear();
-  this->workerState = DeviceStatus::INITIALIZED;
+  this->deviceState = DeviceStatus::INITIALIZED;
   this->initPayload = castedInitPayload;
   return true;
 }
 
 bool NetworkWorker::configure(
     std::shared_ptr<ConfigurationPayload> configPayload) {
-  if (this->workerState != DeviceStatus::INITIALIZED) {
+  if (this->deviceState != DeviceStatus::INITIALIZED) {
     LOG(ERROR) << "Network worker reveived a configure message while in the "
                   "incorrect state. This will be ingored.";
     return false;
   }
   // No specific configuration necessary. Adjust state to IDLE and return true.
-  this->workerState = DeviceStatus::IDLE;
+  this->deviceState = DeviceStatus::IDLE;
 
   return true;
 }
@@ -390,7 +390,7 @@ void NetworkWorker::commWorker() {
           // Handshake was successful. Proceed to next state.
           this->commState =
               NetworkWorkerCommState::NETWORK_WOKER_COMM_STATE_WORKING;
-          this->workerState = DeviceStatus::OPERATING;
+          this->deviceState = DeviceStatus::OPERATING;
           this->readBuffer.clear();
         } else {
           LOG(ERROR) << "Connection failed during handshaking. Going back to "
@@ -450,7 +450,7 @@ void NetworkWorker::commWorker() {
       }
       this->commState =
           NetworkWorkerCommState::NETWORK_WOKER_COMM_STATE_WORKING;
-      this->workerState = DeviceStatus::OPERATING;
+      this->deviceState = DeviceStatus::OPERATING;
       this->readBuffer.clear();
     }
 
@@ -510,15 +510,11 @@ void NetworkWorker::commWorker() {
   this->socketWrapper->close();
 }
 
-bool NetworkWorker::write(std::shared_ptr<HandshakeMessage> writeMsg) {
-  return true;
-}
-
 bool NetworkWorker::write(std::shared_ptr<WriteDeviceMessage> writeMsg) {
   // Does the message target this object?
   if (this->isExactTarget(writeMsg->getDestination())) {
     // This object is targeted. Just execute the default method.
-    return Worker::write(writeMsg);
+    return MessageInterface::write(writeMsg);
   } else {
     // An proxy held by this object is targeted. Put the message into the
     // outgoing network queue.
@@ -534,7 +530,7 @@ bool NetworkWorker::write(std::shared_ptr<InitDeviceMessage> initMsg) {
   // Does the message target this object?
   if (this->isExactTarget(initMsg->getDestination())) {
     // This object is targeted. Just execute the default method.
-    return Worker::write(initMsg);
+    return MessageInterface::write(initMsg);
   } else {
     // An proxy held by this object is targeted. Put the message into the
     // outgoing network queue.
@@ -550,7 +546,7 @@ bool NetworkWorker::write(std::shared_ptr<ConfigDeviceMessage> configMsg) {
   // Does the message target this object?
   if (this->isExactTarget(configMsg->getDestination())) {
     // This object is targeted. Just execute the default method.
-    return Worker::write(configMsg);
+    return MessageInterface::write(configMsg);
   } else {
     // An proxy held by this object is targeted. Put the message into the
     // outgoing network queue.
@@ -586,7 +582,7 @@ void NetworkWorker::handleLostConnection() {
     this->doComm = false;
     this->listenerThread->join();
     this->commState = NETWORK_WOKER_COMM_STATE_LISTENING;
-    this->workerState = DeviceStatus::BUSY;
+    this->deviceState = DeviceStatus::BUSY;
     this->listenerThread.reset(
         new std::thread(&NetworkWorker::listenWorker, this));
   }
@@ -595,12 +591,12 @@ void NetworkWorker::handleLostConnection() {
            this->initPayload->getOperationMode()) {
     this->doComm = false;
     this->commState = NETWORK_WOKER_COMM_STATE_ERROR;
-    this->workerState = DeviceStatus::ERROR;
+    this->deviceState = DeviceStatus::ERROR;
   }
 
   else {
     this->commState = NETWORK_WOKER_COMM_STATE_ERROR;
-    this->workerState = DeviceStatus::ERROR;
+    this->deviceState = DeviceStatus::ERROR;
   }
 
   // Send a state message to the event response ids.
@@ -615,6 +611,10 @@ void NetworkWorker::handleLostConnection() {
     responseMessages.push_back(responseMsg);
   }
   this->pushMessageQueue(responseMessages);
+}
+
+std::string NetworkWorker::getDeviceTypeName() {
+  return NETWORK_WORKER_TYPE_NAME;
 }
 
 } // namespace Workers
