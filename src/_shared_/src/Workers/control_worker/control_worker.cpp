@@ -156,8 +156,16 @@ bool ControlWorker::handleResponse(
               std::make_tuple(false, ControlWorker::UnknownDeviceSpecifier,
                               DeviceType::INVALID);
         }
+
+        // Start epxloring the remote end by sending query state messages to all remote message interfaces.
         this->controlWorkerSubState =
-            ControlWorkerSubState::CONTROL_WORKER_SUBSTATE_CONNECTED;
+            ControlWorkerSubState::CONTROL_WORKER_SUBSTATE_CONF_EXPLORE;
+        for (auto &keyValuePair : this->remoteHostIds) {
+          this->pushMessageQueue(std::shared_ptr<DeviceMessage>(
+              new WriteDeviceMessage(this->getUserId(), keyValuePair.first,
+                                     WriteDeviceTopic::WRITE_TOPIC_QUERY_STATE)));
+        }
+
 
         return true;
       } else {
@@ -207,15 +215,7 @@ bool ControlWorker::handleResponse(
         }
       }
       if (everythingResolved) {
-        // All remote ids are resolved. Adjust state and send init and config
-        // message.
-        this->controlWorkerSubState =
-            ControlWorkerSubState::CONTROL_WORKER_SUBSTATE_INIT_REMOTE;
-        this->pushMessageQueue(std::shared_ptr<DeviceMessage>(
-            new InitDeviceMessage(this->getUserId(), this->getSentryId(),
-                                  this->remoteInitPayload)));
-
-        // Start the query remote state worker.
+        // All remote ids are now resolved. Start the query remote state worker.
         this->doQueryState = false;
         if (this->queryRemoteStateThread &&
             this->queryRemoteStateThread->joinable()) {
@@ -224,6 +224,26 @@ bool ControlWorker::handleResponse(
         this->doQueryState = true;
         this->queryRemoteStateThread.reset(
             new std::thread(&ControlWorker::queryRemoteStateWorker, this));
+      }
+
+      // If the remote end is in an operating state, query the data keys,
+      // in order to be able to start the data query worker later on.
+      if (this->getStateOfRemoteId(this->getSentryId()) == DeviceStatus::OPERATING) {
+        this->controlWorkerSubState = ControlWorkerSubState::CONTROL_WORKER_SUBSTATE_CONF_GET_DATA_KEYS;
+        std::shared_ptr<DeviceMessage> requestPumpKeyMsg(
+            new WriteDeviceMessage(this->getUserId(), this->getPumpControllerId(),
+                                   WriteDeviceTopic::WRITE_TOPIC_REQUEST_KEYS));
+        std::shared_ptr<DeviceMessage> requestSpectrometerKeyMsg(
+            new WriteDeviceMessage(this->getUserId(),
+                                   this->getSpectrometerId(),
+                                   WriteDeviceTopic::WRITE_TOPIC_REQUEST_KEYS));
+        this->pushMessageQueue(requestPumpKeyMsg);
+        this->pushMessageQueue(requestSpectrometerKeyMsg);
+
+      }
+      else {
+        // Remote end is not in an operating state. Just sit idle and wait for the user to trigger remote configuration.
+        this->controlWorkerSubState = ControlWorkerSubState::CONTROL_WORKER_SUBSTATE_CONNECTED;
       }
 
       return true;
@@ -278,7 +298,6 @@ bool ControlWorker::handleResponse(
           spectrometerIt != this->remoteStatus.end()) {
         // Configuration succeeded for the remote devices. Request their data
         // keys by sending corresponding messages.
-
         std::shared_ptr<DeviceMessage> requestPumpKeyMsg(
             new WriteDeviceMessage(this->getUserId(), (*pumpIt)->getDeviceId(),
                                    WriteDeviceTopic::WRITE_TOPIC_REQUEST_KEYS));
@@ -728,3 +747,23 @@ bool ControlWorker::handleNetworkWorkerDisconnect(
 std::string ControlWorker::getDeviceTypeName() {
   return CONTROL_WORKER_TYPE_NAME;
 }
+
+DeviceStatus ControlWorker::getStateOfRemoteId(const UserId& userId) {
+  auto it = std::find_if(
+      this->remoteStatus.begin(),
+      this->remoteStatus.end(),
+      [userId](std::shared_ptr<StatusPayload> payload){
+          return payload->getDeviceStatus() == userId;
+      }
+      );
+
+  if(it != this->remoteStatus.end()) {
+    return (*it)->getDeviceStatus();
+  }
+  else {
+    return DeviceStatus::UNKNOWN_DEVICE_STATUS;
+  }
+
+  }
+
+

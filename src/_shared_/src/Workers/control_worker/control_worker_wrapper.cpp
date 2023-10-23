@@ -70,7 +70,7 @@ void ControlWorkerWrapper::periodicActionsWorker() {
   std::list<std::shared_ptr<StatusPayload>> remoteStatesCache;
   while (this->doPeriodicActions) {
     // Check the worker state.
-    DeviceStatus newWorkerState = this->controlWorker->getState();
+    DeviceStatus newWorkerState = this->controlWorker->getDeviceStatus();
     if (newWorkerState != oldWorkerState) {
       emit stateChanged(oldWorkerState, newWorkerState);
       oldWorkerState = newWorkerState;

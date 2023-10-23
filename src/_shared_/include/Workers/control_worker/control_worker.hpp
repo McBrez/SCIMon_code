@@ -203,6 +203,14 @@ private:
    */
   void dataQueryWorker();
 
+  /**
+   * @brief Helper function that searches for the given user id in the local cache and returns the status of the associated message interface.
+   * @param userId The user id that shall be queried.
+   * @return The status of the queried device.
+   */
+  DeviceStatus getStateOfRemoteId(const UserId& userId);
+
+
   /// The id of the network worker.
   UserId networkWorkerId;
   /// The currently active sub state.
