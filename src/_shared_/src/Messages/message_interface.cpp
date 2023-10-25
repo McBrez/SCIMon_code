@@ -9,10 +9,12 @@
 
 namespace Messages {
 
-MessageInterface::MessageInterface(DataManagerType dataManagerType)
+MessageInterface::MessageInterface(DeviceType deviceType,
+                                   DataManagerType dataManagerType)
     : id(UserId(this)), messageDistributor(nullptr),
       dataManager(DataManager::getDataManager(dataManagerType)),
-      deviceState(DeviceStatus::UNKNOWN_DEVICE_STATUS) {}
+      deviceType(deviceType), deviceState(DeviceStatus::UNKNOWN_DEVICE_STATUS) {
+}
 
 UserId MessageInterface::getUserId() const { return this->id; }
 
@@ -43,7 +45,7 @@ bool MessageInterface::takeMessage(std::shared_ptr<DeviceMessage> message) {
       auto writeDeviceMessage =
           dynamic_pointer_cast<WriteDeviceMessage>(message);
       if (writeDeviceMessage) {
-        // ... it is. Trigger an config call.
+        // ... it is. Trigger an write call.
         return this->write(writeDeviceMessage);
       }
 
@@ -53,7 +55,7 @@ bool MessageInterface::takeMessage(std::shared_ptr<DeviceMessage> message) {
         auto readDeviceMessage =
             dynamic_pointer_cast<ReadDeviceMessage>(message);
         if (readDeviceMessage) {
-          // ... it is. Trigger an config call.
+          // ... it is. Trigger an response call.
           return this->handleResponse(readDeviceMessage);
         } else {
           // Unknown message type. Abort here.
@@ -304,7 +306,8 @@ bool MessageInterface::write(std::shared_ptr<WriteDeviceMessage> writeMsg) {
 
     KeyResponsePayload *keyResponsePayload =
         new KeyResponsePayload(this->dataManager->getKeyMapping(),
-                               this->dataManager->getSpectrumMapping());
+                               this->dataManager->getSpectrumMapping(),
+                               this->dataManager->getTimerangeMapping());
 
     std::shared_ptr<DeviceMessage> responseMsg(
         new ReadDeviceMessage(this->getUserId(), writeMsg->getSource(),

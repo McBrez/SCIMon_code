@@ -10,9 +10,16 @@ table SpectrumMappingEntry {
     frequencies:[float64];
 }
 
+table TimerangeMappingEntry {
+	key:string;
+	timerangeBegin:uint64;
+	timerangeEnd:uint64;
+}
+
 table KeyResponsePayload {
     typeMappings:[TypeMappingEntry];
     spectrumMapping:[SpectrumMappingEntry];
+	timerangeMapping:[TimerangeMappingEntry];
 }
 
 root_type KeyResponsePayload;

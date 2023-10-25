@@ -19,9 +19,11 @@ public:
    * @brief Construct a new KeyResponsePayload object.
    * @param keyMapping The key mapping of the targeted object.
    * @param spectrumMapping The spectrum mapping of the targeted object.
+   * @param timerangeMapping The timerange mapping of the targeted object.
    */
   KeyResponsePayload(const KeyMapping &keyMapping,
-                     const SpectrumMapping &spectrumMapping);
+                     const SpectrumMapping &spectrumMapping,
+                     const TimerangeMapping &timerangeMapping);
 
   /**
    * @brief Destroy the ReadPayload object.
@@ -59,11 +61,20 @@ public:
    */
   SpectrumMapping &getSpectrumMapping();
 
+  /**
+   * @brief Returns the held time range mapping.
+   * @return The timerange mapping.
+   */
+  TimerangeMapping &getTimerangeMapping();
+
 private:
   /// The key mapping of the targeted object.
   KeyMapping keyMapping;
   /// The spectrum mapping of the targeted object.
   SpectrumMapping spectrumMapping;
+  /// The timerange mapping of the targeted object at the time this payload has
+  /// been costructed.
+  TimerangeMapping timerangeMapping;
 };
 
 } // namespace Devices

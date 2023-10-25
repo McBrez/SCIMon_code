@@ -9,6 +9,7 @@
 
 using namespace Utilities;
 using namespace HighFive;
+using namespace Core;
 
 DataManagerHdf::~DataManagerHdf() { this->close(); }
 
@@ -744,4 +745,37 @@ bool DataManagerHdf::setupSpectrumSpecific(std::string key,
   this->hdfFile->flush();
 
   return true;
+}
+
+TimerangeMapping DataManagerHdf::getTimerangeMapping() const {
+  // Get the lock.
+  std::lock_guard<std::mutex> lockGuard(this->dataManagerMutex);
+
+  // Iterate over the known keys.
+  TimerangeMapping retVal;
+  for (auto &keyValuePair : this->typeMapping) {
+    // Read timestamps for the key.
+    DataSet datasetTimestamps = this->hdfFile->getDataSet(
+        "/data/" + keyValuePair.first + "/timestamps");
+    hsize_t datasetSize = datasetTimestamps.getDimensions().front();
+    if (datasetSize <= 0) {
+      // This dataset seems to be empty. indicate that, by writing zeroes to the
+      // time range mapping.
+      retVal[keyValuePair.first] =
+          std::make_pair(TimePoint(std::chrono::milliseconds(0)),
+                         TimePoint(std::chrono::milliseconds(0)));
+
+      continue;
+    }
+    long long timestampBegin;
+    datasetTimestamps.select({0, 0}, {1, 1}).read(timestampBegin);
+    long long timestampEnd;
+    datasetTimestamps.select({datasetSize - 1, 0}, {1, 1}).read(timestampEnd);
+
+    retVal[keyValuePair.first] =
+        std::make_pair(TimePoint(std::chrono::milliseconds(timestampBegin)),
+                       TimePoint(std::chrono::milliseconds(timestampEnd)));
+  }
+
+  return retVal;
 }

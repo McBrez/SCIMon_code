@@ -48,6 +48,10 @@ typedef std::variant<int, double, std::complex<double>, std::string,
 /// Maps from a key name to a vector, containing the spectrum frequencies.
 typedef std::map<std::string, std::vector<double>> SpectrumMapping;
 
+/// Maps from a key name to a pair of time points. Those timepoints mark the
+/// oldest and most recent timestamps of a data key.
+typedef std::map<std::string, std::pair<TimePoint, TimePoint>> TimerangeMapping;
+
 /**
  * @brief Class interface to a class that manages data read and write operations
  * to persistant storage.
@@ -193,6 +197,13 @@ public:
    */
   bool isSpectrumSetup(std::string key);
 
+  /**
+   * @brief Returns the timerange mapping of the data manager. The timerange
+   * mapping contains the oldest and the most recent timestamp per data key.
+   * @return The timerange mapping at the time this method is called.
+   */
+  virtual TimerangeMapping getTimerangeMapping() const = 0;
+
 protected:
   /**
    * @brief Calculates the absolute time difference between two timepoints.
@@ -216,8 +227,9 @@ protected:
   KeyMapping typeMapping;
   /// Holds the mapping from keys to the spectrum frequencies.
   SpectrumMapping spectrumMapping;
-  /// Guard for writes to the data manager.
-  std::mutex dataManagerMutex;
+  /// Guard for writes to the data manager. Has to be mutable, as many const
+  /// methods have to access data.
+  mutable std::mutex dataManagerMutex;
 };
 } // namespace Utilities
 

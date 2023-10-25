@@ -151,6 +151,18 @@ public:
    */
   virtual std::string getDeviceTypeName() override;
 
+  /**
+   * @brief Assemble a local data key. Local data keys refer to the locally
+   * saved data manager data that has been generated on a remote message
+   * interface.
+   * @param userId The user id of the message interface the data has been
+   * generated.
+   * @param dataKey The data key on the remote and.
+   * @return The local data key.
+   */
+  std::string getLocalDataKey(UserId userId, const std::string &dataKey) const;
+  std::string getLocalDataKey(size_t userId, const std::string &dataKey) const;
+
 private:
   /**
    * @brief Returns the User id of the remote sentry from the remote id mapper.
@@ -204,12 +216,12 @@ private:
   void dataQueryWorker();
 
   /**
-   * @brief Helper function that searches for the given user id in the local cache and returns the status of the associated message interface.
+   * @brief Helper function that searches for the given user id in the local
+   * cache and returns the status of the associated message interface.
    * @param userId The user id that shall be queried.
    * @return The status of the queried device.
    */
-  DeviceStatus getStateOfRemoteId(const UserId& userId);
-
+  DeviceStatus getStateOfRemoteId(const UserId &userId);
 
   /// The id of the network worker.
   UserId networkWorkerId;
@@ -223,8 +235,9 @@ private:
   /// whether the device name and type have already been resolved..
   std::map<size_t, std::tuple<bool, std::string, DeviceType>> remoteHostIds;
   /// Holds the remote data keys. Maps from UserId to a tuple containing data
-  /// keys and spectrum mapping.
-  std::map<size_t, std::tuple<KeyMapping, SpectrumMapping>> remoteDataKeys;
+  /// keys, spectrum mapping and timerang mapping.
+  std::map<size_t, std::tuple<KeyMapping, SpectrumMapping, TimerangeMapping>>
+      remoteDataKeys;
   /// The init payload, that shall be sent to the remote host, during
   /// configuration.
   std::shared_ptr<SentryInitPayload> remoteInitPayload;

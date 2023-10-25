@@ -34,10 +34,13 @@ public:
 
   /**
    * @brief Construct the object with a automatically generated user id.
+   * @param deviceType The type of device this message interface is
+   * representing.
    * @param dataManagerType The type of the underlying data manager, that shall
    * be used.
    */
   MessageInterface(
+      DeviceType deviceType,
       DataManagerType dataManagerType = DataManagerType::DATAMANAGER_TYPE_HDF);
 
   /**

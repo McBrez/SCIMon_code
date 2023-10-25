@@ -111,6 +111,13 @@ public:
   virtual bool createKey(std::string key,
                          DataManagerDataType dataType) override;
 
+  /**
+   * @brief Returns the timerange mapping of the data manager. The timerange
+   * mapping contains the oldest and the most recent timestamp per data key.
+   * @return The timerange mapping at the time this method is called.
+   */
+  virtual TimerangeMapping getTimerangeMapping() const override;
+
 protected:
   /**
    * @brief Sets up the details of a spectrum.

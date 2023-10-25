@@ -10,8 +10,10 @@ using namespace Utilities;
 namespace Devices {
 
 KeyResponsePayload::KeyResponsePayload(const KeyMapping &keyMapping,
-                                       const SpectrumMapping &spectrumMapping)
-    : keyMapping(keyMapping), spectrumMapping(spectrumMapping) {}
+                                       const SpectrumMapping &spectrumMapping,
+                                       const TimerangeMapping &timerangeMapping)
+    : keyMapping(keyMapping), spectrumMapping(spectrumMapping),
+      timerangeMapping(timerangeMapping) {}
 
 KeyResponsePayload::~KeyResponsePayload() {}
 
@@ -46,6 +48,21 @@ std::vector<unsigned char> KeyResponsePayload::bytes() {
             spectrumMappingEntry));
   }
 
+  // Parse the timerange mapping.
+  for (auto &entry : this->getTimerangeMapping()) {
+    Serialization::Devices::TimerangeMappingEntryT *timerangeMappingEntry =
+        new Serialization::Devices::TimerangeMappingEntryT();
+    timerangeMappingEntry->key = entry.first;
+    timerangeMappingEntry->timerangeBegin =
+        entry.second.first.time_since_epoch().count();
+    timerangeMappingEntry->timerangeEnd =
+        entry.second.second.time_since_epoch().count();
+
+    intermediateObject.timerangeMapping.emplace_back(
+        std::unique_ptr<Serialization::Devices::TimerangeMappingEntryT>(
+            timerangeMappingEntry));
+  }
+
   flatbuffers::FlatBufferBuilder builder;
   builder.Finish(Serialization::Devices::KeyResponsePayload::Pack(
       builder, &intermediateObject));
@@ -63,4 +80,9 @@ KeyMapping &KeyResponsePayload::getKeyMapping() { return this->keyMapping; }
 SpectrumMapping &KeyResponsePayload::getSpectrumMapping() {
   return this->spectrumMapping;
 }
+
+TimerangeMapping &KeyResponsePayload::getTimerangeMapping() {
+  return this->timerangeMapping;
+}
+
 } // namespace Devices

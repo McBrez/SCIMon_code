@@ -14,10 +14,10 @@ using namespace Utilities;
 namespace Devices {
 
 Device::Device(DeviceType deviceType, DataManagerType dataManagerType)
-    : configurationFinished(false), initFinished(false),
-      startMessageCache(new Messages::DummyMessage()),
-      MessageInterface(dataManagerType) {
-  deviceType = deviceType;
+    : MessageInterface(deviceType, dataManagerType),
+      configurationFinished(false), initFinished(false),
+      startMessageCache(new Messages::DummyMessage()) {
+  this->deviceType = deviceType;
 }
 
 Device::~Device() {}

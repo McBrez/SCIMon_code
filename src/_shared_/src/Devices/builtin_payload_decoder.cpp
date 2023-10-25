@@ -167,7 +167,15 @@ BuiltinPayloadDecoder::decodeReadPayload(const std::vector<unsigned char> &data,
       spectrumMapping[entry->key] = entry->frequencies;
     }
 
-    return new KeyResponsePayload(keyMapping, spectrumMapping);
+    TimerangeMapping timerangeMapping;
+    for (auto &entry : keyResponsePayload->timerangeMapping) {
+      timerangeMapping[entry->key] = std::make_pair(
+          TimePoint(std::chrono::milliseconds(entry->timerangeBegin)),
+          TimePoint(std::chrono::milliseconds(entry->timerangeEnd)));
+    }
+
+    return new KeyResponsePayload(keyMapping, spectrumMapping,
+                                  timerangeMapping);
   }
 
   else {
