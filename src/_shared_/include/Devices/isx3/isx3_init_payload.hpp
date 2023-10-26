@@ -12,10 +12,9 @@ class Isx3InitPayload : public InitPayload {
 public:
   /**
    * @brief Construct a new Isx 3 Init Payload object
-   * @param ipAddress The ip address that shall be connected to.
-   * @param port The port that shall be connected to.
+   * @param comPort The COM port the device shall connect to.
    */
-  Isx3InitPayload(std::string ipAddress, int port);
+  Isx3InitPayload(int comPort);
 
   /**
    * @brief Serializes the payload into a human readable string.
@@ -23,9 +22,7 @@ public:
    */
   virtual std::string serialize() override;
 
-  std::string getIpAddress();
-
-  int getPort();
+  int getComPort() const;
 
   /**
    * @brief Serializes the payload into bytes.
@@ -41,8 +38,7 @@ public:
   int getMagicNumber() override;
 
 private:
-  std::string ipAddress;
-  int port;
+  int comPort;
 };
 } // namespace Devices
 

@@ -190,12 +190,14 @@ private:
    */
   bool handleReadPayload(std::shared_ptr<ReadPayload> readPayload);
 
+  /**
+   * @brief Worker function, that handles the communication to the actual
+   * device.
+   */
+  void commThreadWorker();
+
   /// Pointer to the communication thread.
   std::unique_ptr<std::thread> commThread;
-
-  /// Pointer to a wrapper that provides platform independent socket
-  /// functionality.
-  std::unique_ptr<SocketWrapper> socketWrapper;
 
   /// Allows extraction of data frames from the data received from the socket.
   Isx3CommandBuffer commandBuffer;
@@ -205,9 +207,6 @@ private:
 
   /// Maps from frequency point index to the actual frequency value.
   std::map<int, double> frequencyPointMap;
-
-  /// The init payload with which the device is initialized.
-  std::shared_ptr<Isx3InitPayload> initPayload;
 
   /// The send frame buffer for the communication to the device. Holds the frame
   /// data (first value of the tuple), and the accompanying ack structure

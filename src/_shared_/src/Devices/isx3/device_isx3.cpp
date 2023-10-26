@@ -16,13 +16,12 @@ namespace Devices {
 
 DeviceIsx3::DeviceIsx3()
     : Device(DeviceType::IMPEDANCE_SPECTROMETER),
-      socketWrapper(SocketWrapper::getSocketWrapper()),
       isx3CommThreadState(ISX3_COMM_THREAD_STATE_INVALID), doComm(false) {}
 
 DeviceIsx3::~DeviceIsx3() {
   this->doComm = false;
-  this->commThread->join();
-  this->socketWrapper->close();
+  if (this->commThread && this->commThread->joinable())
+    this->commThread->join();
 };
 
 std::string DeviceIsx3::getDeviceTypeName() { return ISX3_DEVICE_TYPE_NAME; }
@@ -76,14 +75,12 @@ void DeviceIsx3::commThreadWorker() {
 
       // Clear all buffers and transition into init.
       this->sendBuffer.clear();
-      this->socketWrapper->clear();
       this->isx3CommThreadState = ISX3_COMM_THREAD_STATE_LISTENING;
     }
 
     else if (ISX3_COMM_THREAD_STATE_LISTENING == this->isx3CommThreadState) {
       // Read from socket.
       std::vector<unsigned char> buffer;
-      int readBytes = this->socketWrapper->read(buffer);
       this->commandBuffer.pushBytes(buffer);
       std::vector<unsigned char> frame = this->commandBuffer.interpretBuffer();
       std::shared_ptr<ReadPayload> decodedPayload =
@@ -100,7 +97,7 @@ void DeviceIsx3::commThreadWorker() {
         std::vector<unsigned char> frame = get<0>(this->sendBuffer.front());
         this->pendingCommand = get<1>(this->sendBuffer.front());
         this->sendBuffer.pop_front();
-        this->socketWrapper->write(frame);
+        // this->socketWrapper->write(frame);
 
         this->sendBufferMutex.unlock();
 
@@ -115,7 +112,7 @@ void DeviceIsx3::commThreadWorker() {
 
       // Read from socket.
       std::vector<unsigned char> buffer;
-      int readBytes = this->socketWrapper->read(buffer);
+      int readBytes; //  = this->socketWrapper->read(buffer);
       this->commandBuffer.pushBytes(buffer);
       std::vector<unsigned char> frame = this->commandBuffer.interpretBuffer();
       std::shared_ptr<ReadPayload> decodedPayload =
@@ -366,21 +363,21 @@ bool DeviceIsx3::handleReadPayload(std::shared_ptr<ReadPayload> readPayload) {
       IsPayload copyIsPayload = *isPayload;
       this->impedanceSpectrumBuffer.push_back(copyIsPayload);
       if (coalescedIsPayload != nullptr) {
-        // Determine the destination. If responseId is set, send the messages to
-        // the response id. If not, set it to the interface that sent the start
-        // message.
-        UserId destinationId;
-        if (this->responseId.isValid()) {
-          destinationId = this->responseId;
-        } else {
-          destinationId = this->startMessageCache->getSource();
+        // Determine the destination. If there are event response ids, send the
+        // messages to the response ids. In any case, save the spectrum to the
+        // local data manager.
+        if (!this->eventResponseId.empty()) {
+          for (auto &responseId : this->eventResponseId) {
+            this->pushMessageQueue(
+                std::shared_ptr<DeviceMessage>(new ReadDeviceMessage(
+                    this->self->getUserId(), responseId,
+                    ReadDeviceTopic::READ_TOPIC_DEVICE_SPECIFIC_MSG,
+                    coalescedIsPayload, this->startMessageCache)));
+          }
         }
 
-        this->pushMessageQueue(
-            std::shared_ptr<DeviceMessage>(new ReadDeviceMessage(
-                this->self->getUserId(), destinationId,
-                ReadDeviceTopic::READ_TOPIC_DEVICE_SPECIFIC_MSG,
-                coalescedIsPayload, this->startMessageCache)));
+        // this->dataManager->write( ... );
+
       } else {
         LOG(WARNING) << "Was not able to coalesce impedance spectrums.";
       }
@@ -418,9 +415,9 @@ bool DeviceIsx3::initialize(std::shared_ptr<InitPayload> initPayload) {
   // NOTE: The following section is blocking. It would be better to not execute
   // this in the write() function and rather handle it asyncronuously.
   // Init the connection.
-  this->socketWrapper->close();
-  bool openSuccess = this->socketWrapper->open(
-      this->initPayload->getIpAddress(), this->initPayload->getPort());
+  // this->socketWrapper->close();
+  bool openSuccess; // = this->socketWrapper->open(
+  // this->initPayload->getIpAddress(), this->initPayload->getPort());
   if (!openSuccess) {
     LOG(ERROR) << "Connection to ISX3 failed.";
     this->deviceState = DeviceStatus::ERROR;
@@ -446,7 +443,7 @@ bool DeviceIsx3::initialize(std::shared_ptr<InitPayload> initPayload) {
   if (!threadInitialized) {
     // Thread was not able to initialize. Abort here.
     this->doComm = false;
-    this->socketWrapper->close();
+    // this->socketWrapper->close();
     this->deviceState = DeviceStatus::ERROR;
     LOG(ERROR) << "ISX3 COMM thread was not able to initialize.";
     return false;

@@ -1,8 +1,7 @@
 namespace Serialization.Devices;
 
 table Isx3InitPayload {
-    ipAddress:string;
-    port:int;
+    comPort:int;
 }
 
 root_type Isx3InitPayload;
