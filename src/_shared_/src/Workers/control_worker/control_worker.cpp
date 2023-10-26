@@ -382,7 +382,9 @@ bool ControlWorker::handleResponse(
     }
 
     else if (ControlWorkerSubState::CONTROL_WORKER_SUBSTATE_REMOTE_STOPPED ==
-             this->controlWorkerSubState) {
+                 this->controlWorkerSubState ||
+             ControlWorkerSubState::CONTROL_WORKER_SUBSTATE_REMOTE_RUNNING ==
+                 this->controlWorkerSubState) {
       this->handleStatusPayload(response);
 
       // If this is a data response message, write the contents to the local
@@ -414,6 +416,25 @@ bool ControlWorker::handleResponse(
 
   else if (DeviceStatus::OPERATING == this->deviceState) {
     this->handleStatusPayload(response);
+
+    // If this is a data response message, write the contents to the local
+    // data manager.
+    auto dataResponseMsg =
+        dynamic_pointer_cast<DataResponsePayload>(response->getReadPaylod());
+    if (!dataResponseMsg) {
+      return true;
+    }
+
+    LOG(INFO) << "Received a DataResponseMessage: " << std::endl
+              << dataResponseMsg->serialize();
+
+    std::string key =
+        std::to_string(response->getSource().id()) + "/" + dataResponseMsg->key;
+    this->dataManager->write(dataResponseMsg->timestamps, key,
+                             dataResponseMsg->values);
+
+    return true;
+
     return true;
   }
 

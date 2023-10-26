@@ -149,6 +149,9 @@ bool DeviceIsx3::start() {
     LOG(INFO) << "ISX3 started measurement successfully.";
     this->deviceState = DeviceStatus::OPERATING;
 
+    doWriteThread = false;
+    if (writeThread && writeThread->joinable())
+      writeThread->join();
     doWriteThread = true;
     writeThread.reset(new std::thread(Devices::writeThreadWorker,
                                       this->dataManager.get(), this));
