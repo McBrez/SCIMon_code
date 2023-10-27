@@ -20,7 +20,7 @@ Isx3PayloadDecoder::decodeInitPayload(const std::vector<unsigned char> &data,
     const Serialization::Devices::Isx3InitPayloadT *payload =
         Serialization::Devices::GetIsx3InitPayload(data.data())->UnPack();
 
-    return new Isx3InitPayload(payload->comPort);
+    return new Isx3InitPayload(payload->comPort, payload->baudRate);
   } else {
     return nullptr;
   }

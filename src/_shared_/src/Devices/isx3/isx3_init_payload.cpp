@@ -10,15 +10,17 @@
 
 namespace Devices {
 
-Isx3InitPayload::Isx3InitPayload(int comPort) : comPort(comPort) {}
+Isx3InitPayload::Isx3InitPayload(std::string comPort, int baudRate)
+    : comPort(comPort), baudRate(baudRate) {}
 
 std::string Isx3InitPayload::serialize() { return ""; }
 
-int Isx3InitPayload::getComPort() const { return this->comPort; }
+std::string Isx3InitPayload::getComPort() const { return this->comPort; }
 
 std::vector<unsigned char> Isx3InitPayload::bytes() {
   Serialization::Devices::Isx3InitPayloadT intermediateObject;
   intermediateObject.comPort = this->comPort;
+  intermediateObject.baudRate = this->baudRate;
 
   flatbuffers::FlatBufferBuilder builder;
   builder.Finish(Serialization::Devices::Isx3InitPayload::Pack(
@@ -29,5 +31,7 @@ std::vector<unsigned char> Isx3InitPayload::bytes() {
 }
 
 int Isx3InitPayload::getMagicNumber() { return MAGIC_NUMBER_ISX3_INIT_PAYLOAD; }
+
+int Isx3InitPayload::getBaudRate() const { return this->baudRate; }
 
 } // namespace Devices

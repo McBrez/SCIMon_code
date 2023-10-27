@@ -2,6 +2,7 @@
 #include <chrono>
 
 // 3rd party includes
+#include <boost/asio/io_service.hpp>>
 #include <easylogging++.h>
 
 // Project includes
@@ -16,7 +17,8 @@ namespace Devices {
 
 DeviceIsx3::DeviceIsx3()
     : Device(DeviceType::IMPEDANCE_SPECTROMETER),
-      isx3CommThreadState(ISX3_COMM_THREAD_STATE_INVALID), doComm(false) {}
+      isx3CommThreadState(ISX3_COMM_THREAD_STATE_INVALID), doComm(false),
+      serialPort(nullptr) {}
 
 DeviceIsx3::~DeviceIsx3() {
   this->doComm = false;
@@ -190,7 +192,6 @@ bool DeviceIsx3::configure(
   }
 
   // Send the data frames to the device and wait for the ACKs.
-  bool failed = false;
   for (auto cmdFrame : cmdList) {
     std::shared_ptr<Isx3CmdAckStruct> ackStruct =
         this->pushToSendBuffer(cmdFrame);
@@ -409,20 +410,26 @@ bool DeviceIsx3::initialize(std::shared_ptr<InitPayload> initPayload) {
     return false;
   }
 
-  this->initPayload = isx3InitPayload;
   this->deviceState = DeviceStatus::INITIALIZING;
 
   // NOTE: The following section is blocking. It would be better to not execute
   // this in the write() function and rather handle it asyncronuously.
   // Init the connection.
-  // this->socketWrapper->close();
-  bool openSuccess; // = this->socketWrapper->open(
-  // this->initPayload->getIpAddress(), this->initPayload->getPort());
+  LOG(INFO) << "DeviceIsx3 trys to connect to "
+            << isx3InitPayload->getComPort();
+  this->serialPort->close();
+  bool openSuccess = this->openComPort(isx3InitPayload->getComPort(),
+                                       isx3InitPayload->getBaudRate());
+
   if (!openSuccess) {
     LOG(ERROR) << "Connection to ISX3 failed.";
     this->deviceState = DeviceStatus::ERROR;
     return false;
   }
+
+  LOG(INFO) << "DeviceIsx3 established a connection to "
+            << isx3InitPayload->getComPort();
+
   // Initialize thread.
   this->isx3CommThreadState = ISX3_COMM_THREAD_STATE_INIT;
   this->doComm = true;
@@ -475,6 +482,41 @@ bool DeviceIsx3::handleResponse(std::shared_ptr<ReadDeviceMessage> response) {
 
 std::string DeviceIsx3::getDeviceSerialNumber() {
   return this->deviceSerialNumber;
+}
+
+bool DeviceIsx3::openComPort(std::string comPort, int baudRate) {
+  boost::asio::io_service io;
+
+  if (this->serialPort) {
+    this->serialPort->close();
+    this->serialPort.reset(nullptr);
+  }
+
+  this->serialPort.reset(new boost::asio::serial_port(io, comPort));
+
+  if (!this->serialPort->is_open()) {
+    return false;
+  }
+
+  this->serialPort->set_option(
+      boost::asio::serial_port_base::baud_rate(baudRate));
+  this->serialPort->set_option(
+      boost::asio::serial_port_base::character_size(8));
+  this->serialPort->set_option(boost::asio::serial_port_base::parity(
+      boost::asio::serial_port_base::parity::none));
+  this->serialPort->set_option(boost::asio::serial_port_base::stop_bits(
+      boost::asio::serial_port_base::stop_bits::one));
+
+  return true;
+}
+
+bool DeviceIsx3::closeComPort() {
+  if (this->serialPort) {
+    this->serialPort->close();
+    this->serialPort.reset(nullptr);
+  }
+
+  return true;
 }
 
 } // namespace Devices

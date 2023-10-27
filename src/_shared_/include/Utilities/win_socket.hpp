@@ -2,6 +2,7 @@
 #define WIN_SOCKET_HPP
 
 // Platform includes
+#include <windows.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
 

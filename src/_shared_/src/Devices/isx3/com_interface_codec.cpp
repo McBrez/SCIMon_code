@@ -370,7 +370,7 @@ bool ComInterfaceCodec::decodeImpedanceData(
                                (payload[14] << 8) + payload[15];
     float imagPart = *((float *)&imagPartIntermediate);
 
-    impedance = std::complex<float>({realPart, imagPart});
+    impedance = std::complex<float>(realPart, imagPart);
 
     return true;
   }
@@ -386,7 +386,7 @@ bool ComInterfaceCodec::decodeImpedanceData(
                                (payload[8] << 8) + payload[9];
     float imagPart = *((float *)&imagPartIntermediate);
 
-    impedance = std::complex<float>({realPart, imagPart});
+    impedance = std::complex<float>(realPart, imagPart);
 
     timestamp = -1.0;
     channelNumber = -1;

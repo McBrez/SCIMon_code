@@ -8,13 +8,14 @@
 #include <init_payload.hpp>
 
 namespace Devices {
+
 class Isx3InitPayload : public InitPayload {
 public:
   /**
    * @brief Construct a new Isx 3 Init Payload object
    * @param comPort The COM port the device shall connect to.
    */
-  Isx3InitPayload(int comPort);
+  Isx3InitPayload(std::string comPort, int baudRate);
 
   /**
    * @brief Serializes the payload into a human readable string.
@@ -22,7 +23,8 @@ public:
    */
   virtual std::string serialize() override;
 
-  int getComPort() const;
+  std::string getComPort() const;
+  int getBaudRate() const;
 
   /**
    * @brief Serializes the payload into bytes.
@@ -38,7 +40,8 @@ public:
   int getMagicNumber() override;
 
 private:
-  int comPort;
+  std::string comPort;
+  int baudRate;
 };
 } // namespace Devices
 

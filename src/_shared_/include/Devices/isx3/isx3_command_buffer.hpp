@@ -7,7 +7,8 @@
 
 namespace Devices {
 /**
- * @brief Provides a class extracts Sciospec COM interface frames from a buffer.
+ * @brief Provides a class that extracts Sciospec COM interface frames from a
+ * buffer.
  */
 class Isx3CommandBuffer {
 public:
