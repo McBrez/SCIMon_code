@@ -61,10 +61,15 @@ build_flatbuffers(
     "${FB_INCLUDE_DIR}"
     scimon_message_lib_fb_headers
     ""
-    "${FB_OUT_DIR}"
+    "${CMAKE_CURRENT_BINARY_DIR}"
     ""
     ""
 )
+
+# Add boost library.
+set(Boost_USE_STATIC_LIBS        ON)
+set(BOOST_ROOT ${BOOST_ROOT} C:/local/boost_1_83_0)
+find_package(Boost 1.83.0 REQUIRED)
 
 add_library(scimon_message STATIC)
 target_include_directories(scimon_message PUBLIC
@@ -86,6 +91,8 @@ target_include_directories(scimon_message PUBLIC
     ${3RDPARTY_DIR}/elveflow/x64/
 
     ${FB_OUT_DIR}
+
+    ${Boost_INCLUDE_DIRS}
 )
 target_sources(scimon_message PUBLIC
     ${INCLUDE_DIR}/Core/common.hpp
@@ -229,6 +236,7 @@ add_dependencies(scimon_message scimon_message_lib_fb_headers)
 target_link_libraries(scimon_message
     PUBLIC flatbuffers
     PUBLIC HighFive
+    PUBLIC ${Boost_LIBRARIES}
 )
 
 # Enforce C++20
@@ -245,6 +253,13 @@ target_compile_definitions(scimon_message
 
 # OS specific configuration.
 if (WIN32)  
+
+    target_compile_definitions(scimon_message
+        # Exclude a few windows headers by default.
+        PUBLIC WIN32_LEAN_AND_MEAN
+        # Force easylogging++ to use winsock2 (Otherwise there is an incompatibility with boost).
+        PUBLIC ELPP_WINSOCK2
+    )
     # Find the elveflow library.
     find_library(LIB_ELVEFLOW Elveflow64 ${3RDPARTY_DIR}/elveflow/x64)
     # Link to libraries.

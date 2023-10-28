@@ -1,8 +1,6 @@
 #ifndef DEVICE_ISX3_HPP
 #define DEVICE_ISX3_HPP
 
-#define WIN32_LEAN_AND_MEAN
-
 // 3rd party includes
 #include <boost/asio/serial_port.hpp>
 

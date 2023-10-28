@@ -417,10 +417,16 @@ bool DeviceIsx3::initialize(std::shared_ptr<InitPayload> initPayload) {
   // Init the connection.
   LOG(INFO) << "DeviceIsx3 trys to connect to "
             << isx3InitPayload->getComPort();
-  this->serialPort->close();
-  bool openSuccess = this->openComPort(isx3InitPayload->getComPort(),
-                                       isx3InitPayload->getBaudRate());
-
+  this->closeComPort();
+  bool openSuccess;
+  try {
+    openSuccess = this->openComPort(isx3InitPayload->getComPort(),
+                                    isx3InitPayload->getBaudRate());
+  } catch (...) {
+    LOG(ERROR) << "Connection to ISX3 failed.";
+    this->deviceState = DeviceStatus::ERROR;
+    return false;
+  }
   if (!openSuccess) {
     LOG(ERROR) << "Connection to ISX3 failed.";
     this->deviceState = DeviceStatus::ERROR;
@@ -511,7 +517,7 @@ bool DeviceIsx3::openComPort(std::string comPort, int baudRate) {
 }
 
 bool DeviceIsx3::closeComPort() {
-  if (this->serialPort) {
+  if (this->serialPort && this->serialPort->is_open()) {
     this->serialPort->close();
     this->serialPort.reset(nullptr);
   }

@@ -45,6 +45,7 @@ add_subdirectory(${PROJECT_DIR}/control)
 
 # --------------------------------------------------------------------- Tests --
 add_subdirectory(${TEST_DIR}/test_ob1)
+add_subdirectory(${TEST_DIR}/test_isx3)
 add_subdirectory(${TEST_DIR}/test_is_measurement)
 add_subdirectory(${TEST_DIR}/test_utility)
 add_subdirectory(${TEST_DIR}/test_sciospec_com_interface)
