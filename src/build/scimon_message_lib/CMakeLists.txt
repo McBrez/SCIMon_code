@@ -51,7 +51,6 @@ set(
 list(
     TRANSFORM FB_FILES REPLACE .fbs _generated.h
     OUTPUT_VARIABLE FB_FILES_GENERATED)
-set(FB_OUT_DIR ${RES_DIR}/flatbuffers)
 # Instruct flatbuffers to generate object oriented API.
 set(FLATBUFFERS_FLATC_SCHEMA_EXTRA_ARGS 
     ${FLATBUFFERS_FLATC_SCHEMA_EXTRA_ARGS} --gen-object-api)
@@ -64,6 +63,11 @@ build_flatbuffers(
     "${CMAKE_CURRENT_BINARY_DIR}"
     ""
     ""
+)
+get_target_property(
+    FB_GENERATED_INCLUDES_DIR
+    scimon_message_lib_fb_headers
+    GENERATED_INCLUDES_DIR
 )
 
 # Add boost library.
@@ -90,8 +94,7 @@ target_include_directories(scimon_message PUBLIC
     ${3RDPARTY_DIR}/flatbuffers/include
     ${3RDPARTY_DIR}/elveflow/x64/
 
-    ${FB_OUT_DIR}
-
+    ${FB_GENERATED_INCLUDES_DIR}
     ${Boost_INCLUDE_DIRS}
 )
 target_sources(scimon_message PUBLIC
