@@ -17,6 +17,7 @@ public:
    * @param loopInterval The interval of the run loop.
    */
   MessageDistributor(int loopInterval);
+  MessageDistributor(std::chrono::milliseconds loopInterval);
 
   /**
    * @brief Takes the given message. It will be delivered on the next call of
@@ -65,9 +66,9 @@ public:
    */
   void stop();
 
-    /**
-     * @brief Returns whether the message distributor is currently running.
-    */
+  /**
+   * @brief Returns whether the message distributor is currently running.
+   */
   bool isRunning() const;
 
 private:

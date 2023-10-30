@@ -1,78 +1,64 @@
-#undef _HAS_STD_BYTE
-
-// Standard includes
-#include <thread>
-
 // 3rd party includes
 #define CATCH_CONFIG_MAIN
 #include <catch2/catch.hpp>
 #include <easylogging++.h>
 
 // Project includes
-#include <config_device_message.hpp>
-#include <device_isx3_win.hpp>
-#include <init_message_isx3.hpp>
-#include <is_configuration.hpp>
-#include <isx3_software_mocker.hpp>
+#include <device_isx3.hpp>
+#include <isx3_is_conf_payload.hpp>
+#include <message_distributor.hpp>
 
 using namespace Devices;
 
 INITIALIZE_EASYLOGGINGPP
 
-TEST_CASE("Testing the implementation of the Sciospec ISX3 device",
-          "[Devices]") {
+TEST_CASE("Test the ISX3 Device.") {
+  // Build up logic.
+  const std::string comPort = "COM3";
+  const int baudRate = 182000;
+  std::shared_ptr<DeviceIsx3> dut(new DeviceIsx3());
+  MessageDistributor messageDistributor(std::chrono::milliseconds(500));
+  messageDistributor.addParticipant(dut);
+  std::thread messageDistributorWorker(&MessageDistributor::run,
+                                       &messageDistributor);
 
-  // Uncomment, if ISX3 Software shall be mocked.
-  // #define MOCK_ISX3_SOFTWARE
+  SECTION("Establish connection to COM Port") {
 
-  SECTION("Initializing") {
-    int telnetPort = 2811;
-#ifdef MOCK_ISX3_SOFTWARE
-    // Create the ISX3 sofware mocker.
-    Isx3SoftwareMocker softwareMocker(telnetPort);
-    softwareMocker.run();
-#endif
-    // Create the DUT.
-    DeviceIsx3 *dut = new DeviceIsx3Win();
-    // Create an init message.
+    std::shared_ptr<InitPayload> initPayload(
+        new Isx3InitPayload(comPort, baudRate));
     std::shared_ptr<InitDeviceMessage> initMsg(
-        new InitMessageIsx3("127.0.0.1", telnetPort));
-    REQUIRE(dut->write(initMsg) == true);
+        new InitDeviceMessage(UserId(), dut->getUserId(), initPayload));
+    bool writeSuccess = dut->write(initMsg);
 
-    // After an init message, an empty response is expected.
-    std::shared_ptr<DeviceMessage> response = dut->read();
-    REQUIRE(!response);
+    REQUIRE(writeSuccess);
+    REQUIRE(dut->getDeviceStatus() == DeviceStatus::INITIALIZED);
 
-    // Configure the dut.
-    DeviceConfiguration *deviceConfig = new IsConfiguration(
-        10.0, 100.0, 3, 0, "BNC", IsScale::LINEAR_SCALE, 0.0, 250.0, 0, 0);
-    std::shared_ptr<ConfigDeviceMessage> configMsg(
-        new ConfigDeviceMessage(deviceConfig));
-    REQUIRE(dut->write(configMsg) == true);
+    SECTION("Configure the Device") {
+      std::shared_ptr<ConfigurationPayload> configPayload(new Isx3IsConfPayload(
+          10.0, 1000.0, 10, 0, std::map<ChannelFunction, int>(),
+          IsScale::LINEAR_SCALE,
+          MeasurmentConfigurationRange::MEAS_CONFIG_RANGE_100UA,
+          MeasurmentConfigurationChannel::MEAS_CONFIG_CHANNEL_EXT_PORT_2,
+          MeasurementConfiguration::MEAS_CONFIG_2_POINT, 1.0, 1.0));
+      std::shared_ptr<ConfigDeviceMessage> configMsg(
+          new ConfigDeviceMessage(UserId(), dut->getUserId(), configPayload));
+      bool writeSuccess = dut->write(configMsg);
 
-    // After an configure message, an empty response is expected.
-    response = dut->read();
-    REQUIRE(!response);
+      REQUIRE(writeSuccess);
+      REQUIRE(dut->getDeviceStatus() == DeviceStatus::IDLE);
 
-    // Start measuring.
-    std::shared_ptr<WriteDeviceMessage> startMsg(
-        new WriteDeviceMessage(WriteDeviceTopic::RUN_TOPIC));
-    REQUIRE(dut->write(startMsg) == true);
+      SECTION("Start the Measurement") {
+        std::shared_ptr<WriteDeviceMessage> startMsg(new WriteDeviceMessage(
+            UserId(), dut->getUserId(), WriteDeviceTopic::WRITE_TOPIC_RUN));
+        bool writeSuccess = dut->write(startMsg);
 
-    // Do some reads.
-    for (int i = 0; i < 10; i++) {
-      std::this_thread::sleep_for(std::chrono::seconds(1));
-      auto readMsg = dut->read();
-
-      if (readMsg) {
-        LOG(INFO) << readMsg->serialize();
+        REQUIRE(writeSuccess);
+        REQUIRE(dut->getDeviceStatus() == DeviceStatus::OPERATING);
       }
     }
-
-#ifdef MOCK_ISX3_SOFTWARE
-    softwareMocker.stop();
-#endif
-    // Delete the dut again.
-    delete dut;
   }
+
+  // Tear down logic.
+  messageDistributor.stop();
+  messageDistributorWorker.join();
 }

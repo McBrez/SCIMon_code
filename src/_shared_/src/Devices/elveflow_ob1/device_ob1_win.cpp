@@ -75,8 +75,8 @@ void DeviceOb1Win::configureWorker(
     LOG(INFO) << "Finished calibration of OB1 successfully.";
     this->configurationFinished = true;
     this->deviceState = DeviceStatus::IDLE;
-    this->onConfigured(this->deviceConfiguration->getKeyMapping(),
-                       this->deviceConfiguration->getSpectrumMapping());
+    this->onConfigured(this->configPayload->getKeyMapping(),
+                       this->configPayload->getSpectrumMapping());
 
     return;
   } else {

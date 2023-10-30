@@ -10,19 +10,17 @@
 
 namespace Devices {
 
-Isx3InitPayload::Isx3InitPayload(std::string ipAddress, int port)
-    : ipAddress(ipAddress), port(port) {}
+Isx3InitPayload::Isx3InitPayload(std::string comPort, int baudRate)
+    : comPort(comPort), baudRate(baudRate) {}
 
 std::string Isx3InitPayload::serialize() { return ""; }
 
-std::string Isx3InitPayload::getIpAddress() { return this->ipAddress; }
-
-int Isx3InitPayload::getPort() { return this->port; }
+std::string Isx3InitPayload::getComPort() const { return this->comPort; }
 
 std::vector<unsigned char> Isx3InitPayload::bytes() {
   Serialization::Devices::Isx3InitPayloadT intermediateObject;
-  intermediateObject.ipAddress = this->ipAddress;
-  intermediateObject.port = this->port;
+  intermediateObject.comPort = this->comPort;
+  intermediateObject.baudRate = this->baudRate;
 
   flatbuffers::FlatBufferBuilder builder;
   builder.Finish(Serialization::Devices::Isx3InitPayload::Pack(
@@ -33,5 +31,7 @@ std::vector<unsigned char> Isx3InitPayload::bytes() {
 }
 
 int Isx3InitPayload::getMagicNumber() { return MAGIC_NUMBER_ISX3_INIT_PAYLOAD; }
+
+int Isx3InitPayload::getBaudRate() const { return this->baudRate; }
 
 } // namespace Devices

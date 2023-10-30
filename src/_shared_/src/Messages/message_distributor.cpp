@@ -10,6 +10,9 @@ namespace Messages {
 MessageDistributor::MessageDistributor(int loopInterval)
     : loopInterval(Duration(loopInterval)) {}
 
+MessageDistributor::MessageDistributor(std::chrono::milliseconds loopInterval)
+    : loopInterval(loopInterval) {}
+
 void MessageDistributor::takeMessage(std::shared_ptr<DeviceMessage> message) {
   this->messageCache.push_back(message);
 }
@@ -69,6 +72,7 @@ std::list<std::shared_ptr<StatusPayload>> MessageDistributor::getStatus() {
 }
 
 void MessageDistributor::run() {
+  this->doRun = true;
   while (this->doRun) {
     // Get the current time.
     TimePoint now(Core::getNow());

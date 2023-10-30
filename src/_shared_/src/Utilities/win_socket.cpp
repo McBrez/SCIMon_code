@@ -1,10 +1,6 @@
-// Platform includes
-#define WIN32_LEAN_AND_MEAN
+// Standard includes
 #include <stdio.h>
 #include <stdlib.h>
-#include <windows.h>
-#include <winsock2.h>
-#include <ws2tcpip.h>
 
 // 3rd party includes
 #include <easylogging++.h>

@@ -2,7 +2,6 @@
 #define SOCKET_WRAPPER_HPP
 
 // Standard includes
-#include <memory>
 #include <string>
 #include <vector>
 
