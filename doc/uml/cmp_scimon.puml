@@ -1,0 +1,54 @@
+@startuml
+
+title SCIMon - Component Diagram
+
+component "Control" {
+    [Network Worker] as NetworkWorkerControl
+    [Message Distributor] as MessageDistributorControl
+    [Control Worker] as ControlWorker
+    [GUI]
+    
+    interface "Message Interface" as MessageInterfaceControl
+    interface "Gui Wrapper" as GuiWrapper
+    
+    GUI --( GuiWrapper 
+    ControlWorker -- GuiWrapper
+    NetworkWorkerControl --( MessageInterfaceControl
+    ControlWorker --( MessageInterfaceControl
+    MessageDistributorControl -- MessageInterfaceControl
+    NetworkWorkerControl -- ControlPort
+    
+} 
+
+component "Sentry" {
+  [Message Distributor] as MessageDistributorSentry
+  [Device 1] as Device1
+  [Device 2] as Device2
+  [Worker]
+  
+  interface "Message Interface" as  MessageInterfaceSentry
+  [Network Worker] as NetworkWorkerSentry
+  MessageDistributorSentry -up- MessageInterfaceSentry
+  Device1 --( MessageInterfaceSentry
+  Device2 --( MessageInterfaceSentry
+  Worker --( MessageInterfaceSentry
+  NetworkWorkerSentry --( MessageInterfaceSentry
+}
+
+[Physical Device 1] as PhysicalDevice1
+[Physical Device 2] as PhysicalDevice2
+
+interface "Vendor-specific Protocoll" as VendorSpecificProtocoll1
+interface "Vendor-specific Protocoll" as VendorSpecificProtocoll2
+interface "Message Interface" as MessageInterfaceIp
+PhysicalDevice1 -up- VendorSpecificProtocoll1
+PhysicalDevice2 -up- VendorSpecificProtocoll2
+
+Device1 -down-( VendorSpecificProtocoll1
+Device2 -down-( VendorSpecificProtocoll2
+
+NetworkWorkerSentry -up- MessageInterfaceIp
+NetworkWorkerControl -down-( MessageInterfaceIp
+
+
+@enduml

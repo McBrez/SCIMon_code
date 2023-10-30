@@ -256,7 +256,6 @@ target_compile_definitions(scimon_message
 
 # OS specific configuration.
 if (WIN32)  
-
     target_compile_definitions(scimon_message
         # Exclude a few windows headers by default.
         PUBLIC WIN32_LEAN_AND_MEAN
