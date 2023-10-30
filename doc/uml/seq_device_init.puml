@@ -1,6 +1,6 @@
 @startuml
 
-Title "Sentry Sequence Chart"
+Title "Sentry Initialization"
 
 actor User
 
@@ -14,7 +14,6 @@ end box
 
 autonumber 
 
-== Initialization == 
 User -> NetworkWorker : InitDeviceMessage
 activate NetworkWorker
 NetworkWorker -> MessageDistributor : InitDeviceMessage
@@ -31,17 +30,30 @@ activate DeviceIsx3
 MessageDistributor -> DeviceOb1 : DeviceOb1InitMessage
 deactivate MessageDistributor
 activate DeviceOb1
+SentinelWorker -> DeviceIsx3 : GetState
+activate DeviceIsx3
+activate DeviceOb1
+DeviceIsx3 --> SentinelWorker : Still Initializing
+deactivate DeviceIsx3
+SentinelWorker -> DeviceOb1 : GetState
+DeviceOb1 --> SentinelWorker : Still Initializing 
+deactivate DeviceOb1
+deactivate DeviceOb1
+deactivate DeviceIsx3
+
+SentinelWorker -> DeviceIsx3 : GetState
+activate DeviceIsx3
+SentinelWorker -> DeviceOb1 : GetState
+activate DeviceOb1
+DeviceIsx3 --> SentinelWorker : Is initialized
+deactivate DeviceIsx3
+DeviceOb1 --> SentinelWorker : Is initialized 
+deactivate DeviceOb1
+
+
+
 
 
 deactivate SentinelWorker
-
-
-== Configuration == 
-
-== Start == 
-
-== Reconfiguration == 
-
-== Stop == 
 
 @enduml

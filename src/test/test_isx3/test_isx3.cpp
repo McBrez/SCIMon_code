@@ -14,10 +14,11 @@ INITIALIZE_EASYLOGGINGPP
 
 TEST_CASE("Test the ISX3 Device.") {
   // Build up logic.
-  const std::string comPort = "COM1";
+  const std::string comPort = "COM3";
   const int baudRate = 182000;
   std::shared_ptr<DeviceIsx3> dut(new DeviceIsx3());
   MessageDistributor messageDistributor(std::chrono::milliseconds(500));
+  messageDistributor.addParticipant(dut);
   std::thread messageDistributorWorker(&MessageDistributor::run,
                                        &messageDistributor);
 
