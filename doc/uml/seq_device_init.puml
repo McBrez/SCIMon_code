@@ -1,0 +1,47 @@
+@startuml
+
+Title "Sentry Sequence Chart"
+
+actor User
+
+box "Sentry" 
+participant NetworkWorker 
+participant MessageDistributor
+participant SentinelWorker
+participant DeviceIsx3
+participant DeviceOb1
+end box
+
+autonumber 
+
+== Initialization == 
+User -> NetworkWorker : InitDeviceMessage
+activate NetworkWorker
+NetworkWorker -> MessageDistributor : InitDeviceMessage
+deactivate NetworkWorker
+activate MessageDistributor
+MessageDistributor -> SentinelWorker : InitDeviceMessage
+deactivate MessageDistributor
+activate SentinelWorker
+SentinelWorker -> MessageDistributor : DeviceIsx3InitMessage
+activate MessageDistributor
+SentinelWorker -> MessageDistributor : DeviceOb1InitMessage
+MessageDistributor -> DeviceIsx3 : DeviceIsx3InitMessage
+activate DeviceIsx3
+MessageDistributor -> DeviceOb1 : DeviceOb1InitMessage
+deactivate MessageDistributor
+activate DeviceOb1
+
+
+deactivate SentinelWorker
+
+
+== Configuration == 
+
+== Start == 
+
+== Reconfiguration == 
+
+== Stop == 
+
+@enduml
