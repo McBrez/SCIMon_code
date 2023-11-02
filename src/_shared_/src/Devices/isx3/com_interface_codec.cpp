@@ -229,11 +229,7 @@ std::list<std::vector<unsigned char>> ComInterfaceCodec::encodeMessage(
                                ? FrequencyScale::FREQ_SCALE_LINEAR
                                : FrequencyScale::FREQ_SCALE_LOGARITHMIC;
   std::list<std::vector<unsigned char>> commandList;
-  // Set measurement type to full range impedance spectroscopy.
-  commandList.push_back(this->buildCmdInitMeasurement(
-      false,
-      MeasurementMode::MEASUREMENT_MODE_FULL_RANGE_IMPEDANCE_SPECTROSCOPY));
-  // Configure the given frequency std::list.
+  // Configure the given frequency list.
   commandList.push_back(this->buildCmdSetSetup(
       static_cast<float>(confPayload->frequencyFrom),
       static_cast<float>(confPayload->frequencyTo),

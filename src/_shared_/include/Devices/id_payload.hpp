@@ -33,6 +33,14 @@ public:
    */
   virtual int getMagicNumber() override;
 
+  int getDeviceIdentifier() const;
+
+  std::string getManufacturer() const;
+
+  DeviceType getDeviceType() const;
+
+  int getSerialNumber() const;
+
 private:
   /// The manufacturer of the device.
   std::string manufacturer;

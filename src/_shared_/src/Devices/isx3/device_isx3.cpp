@@ -9,6 +9,7 @@
 #include <common.hpp>
 #include <data_manager.hpp>
 #include <device_isx3.hpp>
+#include <id_payload.hpp>
 #include <is_configuration.hpp>
 #include <isx3_ack_payload.hpp>
 #include <utilities.hpp>
@@ -64,7 +65,6 @@ DeviceIsx3::pushToSendBuffer(const std::vector<unsigned char> &bytes) {
 }
 
 void DeviceIsx3::commThreadWorker() {
-
   while (this->doComm) {
     if (ISX3_COMM_THREAD_STATE_INVALID == this->isx3CommThreadState) {
       LOG(ERROR) << "ISX3 Communication thread transitioned into invalid "
@@ -74,24 +74,31 @@ void DeviceIsx3::commThreadWorker() {
 
     else if (ISX3_COMM_THREAD_STATE_INIT == this->isx3CommThreadState) {
       LOG(INFO) << "Worker thread is initializing.";
-
-      // Clear all buffers and transition into init.
+      // Clear all buffers.
       this->sendBuffer.clear();
+
       this->isx3CommThreadState = ISX3_COMM_THREAD_STATE_LISTENING;
+
+      this->commThreadInitCv.notify_all();
     }
 
     else if (ISX3_COMM_THREAD_STATE_LISTENING == this->isx3CommThreadState) {
-      // Read from socket.
+      // Read from serial port.
       std::vector<unsigned char> buffer;
+      this->serialPort->read_some(boost::asio::buffer(buffer));
+      // Push the bytes into the command buffer.
       this->commandBuffer.pushBytes(buffer);
+      // Try to extract a frame from the command buffer.
       std::vector<unsigned char> frame = this->commandBuffer.interpretBuffer();
+      // Try to decode a payload from the frame.
       std::shared_ptr<ReadPayload> decodedPayload =
           this->comInterfaceCodec.decodeMessage(frame);
+      // If a payload has been decoded, handle it accordingly.
       if (decodedPayload) {
         this->handleReadPayload(decodedPayload);
       }
 
-      // If there something in the write buffer, write it to the socket.
+      // If there is something in the write buffer, write it to the serial port.
       // Transition to ISX3_COMM_THREAD_STATE_WAITING_FOR_ACK.
       if (!this->sendBuffer.empty()) {
         this->sendBufferMutex.lock();
@@ -99,7 +106,7 @@ void DeviceIsx3::commThreadWorker() {
         std::vector<unsigned char> frame = get<0>(this->sendBuffer.front());
         this->pendingCommand = get<1>(this->sendBuffer.front());
         this->sendBuffer.pop_front();
-        // this->socketWrapper->write(frame);
+        this->serialPort->write_some(boost::asio::buffer(frame));
 
         this->sendBufferMutex.unlock();
 
@@ -114,7 +121,7 @@ void DeviceIsx3::commThreadWorker() {
 
       // Read from socket.
       std::vector<unsigned char> buffer;
-      int readBytes; //  = this->socketWrapper->read(buffer);
+      this->serialPort->read_some(boost::asio::buffer(buffer));
       this->commandBuffer.pushBytes(buffer);
       std::vector<unsigned char> frame = this->commandBuffer.interpretBuffer();
       std::shared_ptr<ReadPayload> decodedPayload =
@@ -130,7 +137,7 @@ void DeviceIsx3::commThreadWorker() {
       std::shared_ptr<Isx3AckPayload> ackPayload =
           dynamic_pointer_cast<Isx3AckPayload>(decodedPayload);
       if (ackPayload) {
-        // This is an ack. Update the ack cache and return to std::listening.
+        // This is an ack. Update the ack cache and return to listening.
         LOG(INFO) << "Got ACK for Command " << this->pendingCommand->cmdTag
                   << ".";
         this->pendingCommand->acked = ackPayload->getAckType();
@@ -182,7 +189,7 @@ bool DeviceIsx3::configure(
 
   this->deviceState = DeviceStatus::CONFIGURING;
 
-  // Try to parse the payload into a std::list of data frames.
+  // Try to parse the payload into a list of data frames.
   std::list<std::vector<unsigned char>> cmdList =
       this->comInterfaceCodec.encodeMessage(isConfiguration);
   if (cmdList.empty()) {
@@ -211,16 +218,23 @@ bool DeviceIsx3::configure(
   double frequencyIncrement =
       (isConfiguration->frequencyTo - isConfiguration->frequencyFrom) /
       isConfiguration->measurementPoints;
+  //  This vecotr will have the same freuencies as frequencyPointMap. It is
+  //  built parallel, so the call to onConfigured() is more convenient.
+  std::vector<double> frequencies;
   for (int i = 0; i < isConfiguration->measurementPoints; i++) {
-    this->frequencyPointMap[i] =
-        isConfiguration->frequencyFrom + frequencyIncrement * i;
+    double currFreq = isConfiguration->frequencyFrom + frequencyIncrement * i;
+    this->frequencyPointMap[i] = currFreq;
+    frequencies.push_back(currFreq);
   }
 
-  this->configurationFinished = true;
+  this->currentSpectrumKey =
+      std::format("{:%Y%m%d%H%M}", Core::getNow()) + "_impedanceMeasurement";
   this->deviceState = DeviceStatus::IDLE;
 
-  return this->onConfigured(deviceConfiguration->getKeyMapping(),
-                            deviceConfiguration->getSpectrumMapping());
+  return this->onConfigured(
+      Utilities::KeyMapping{
+          {this->currentSpectrumKey, DATAMANAGER_DATA_TYPE_SPECTRUM}},
+      Utilities::SpectrumMapping{{this->currentSpectrumKey, frequencies}});
 }
 
 bool DeviceIsx3::waitForAck(std::shared_ptr<Isx3CmdAckStruct> ackStruct,
@@ -243,7 +257,7 @@ bool DeviceIsx3::start() {
 
     std::shared_ptr<Isx3CmdAckStruct> ackStruct = this->pushToSendBuffer(
         this->comInterfaceCodec.buildCmdStartImpedanceMeasurement(true));
-    if (this->waitForAck(ackStruct), 1000) {
+    if (this->waitForAck(ackStruct, 1000)) {
       LOG(INFO) << "ISX3 started measurement successfully.";
       this->deviceState = DeviceStatus::OPERATING;
 
@@ -286,18 +300,20 @@ bool DeviceIsx3::stop() {
 }
 
 bool DeviceIsx3::specificWrite(std::shared_ptr<WriteDeviceMessage> writeMsg) {
+  // Device does not support specific writes.
+
   return false;
 }
 
 std::list<std::shared_ptr<DeviceMessage>>
 DeviceIsx3::specificRead(TimePoint timestamp) {
+  // Device does not provide specific reads.
   return std::list<std::shared_ptr<DeviceMessage>>();
 }
 
 ReadPayload *DeviceIsx3::coalesceImpedanceSpectrums(
     const std::list<IsPayload> &impedanceSpectrums,
     const std::map<int, double> &frequencyPointMap) {
-
   if (impedanceSpectrums.empty()) {
     return nullptr;
   }
@@ -306,7 +322,7 @@ ReadPayload *DeviceIsx3::coalesceImpedanceSpectrums(
   std::list<std::complex<double>> impedances;
   int channelNumber = impedanceSpectrums.front().getChannelNumber();
   double timestamp = impedanceSpectrums.front().getTimestamp();
-  for (auto impedanceSpectrum : impedanceSpectrums) {
+  for (auto &impedanceSpectrum : impedanceSpectrums) {
     ImpedanceSpectrum impedanceSpectrumObject =
         impedanceSpectrum.getImpedanceSpectrum();
     double frequencyPoint = get<0>(impedanceSpectrumObject.front());
@@ -364,9 +380,9 @@ bool DeviceIsx3::handleReadPayload(std::shared_ptr<ReadPayload> readPayload) {
       IsPayload copyIsPayload = *isPayload;
       this->impedanceSpectrumBuffer.push_back(copyIsPayload);
       if (coalescedIsPayload != nullptr) {
-        // Determine the destination. If there are event response ids, send the
-        // messages to the response ids. In any case, save the spectrum to the
-        // local data manager.
+        // Determine the destination. If there are event response ids, send
+        // the messages to the response ids. In any case, save the spectrum to
+        // the local data manager.
         if (!this->eventResponseId.empty()) {
           for (auto &responseId : this->eventResponseId) {
             this->pushMessageQueue(
@@ -376,8 +392,14 @@ bool DeviceIsx3::handleReadPayload(std::shared_ptr<ReadPayload> readPayload) {
                     coalescedIsPayload, this->startMessageCache)));
           }
         }
-
-        // this->dataManager->write( ... );
+        // Write the impedance spectrum.
+        IsPayload *coalescedIsPayloadConcrete =
+            static_cast<IsPayload *>(coalescedIsPayload);
+        this->dataManager->write(
+            TimePoint(std::chrono::milliseconds(static_cast<long long>(
+                coalescedIsPayloadConcrete->getTimestamp()))),
+            this->currentSpectrumKey,
+            Value(coalescedIsPayloadConcrete->getImpedanceSpectrum()));
 
       } else {
         LOG(WARNING) << "Was not able to coalesce impedance spectrums.";
@@ -393,8 +415,17 @@ bool DeviceIsx3::handleReadPayload(std::shared_ptr<ReadPayload> readPayload) {
   }
 
   else {
-    // Uknown payload. Return false.
-    return false;
+    // It is not an IS payload. Is it a device id payload?
+    auto idPayload = dynamic_pointer_cast<IdPayload>(readPayload);
+    if (idPayload) {
+      // Cache the id payload.
+      this->deviceId = idPayload;
+
+      return true;
+    } else {
+      // Uknown payload. Return false.
+      return false;
+    }
   }
 }
 
@@ -412,8 +443,8 @@ bool DeviceIsx3::initialize(std::shared_ptr<InitPayload> initPayload) {
 
   this->deviceState = DeviceStatus::INITIALIZING;
 
-  // NOTE: The following section is blocking. It would be better to not execute
-  // this in the write() function and rather handle it asyncronuously.
+  // NOTE: The following section is blocking. It would be better to not
+  // execute this in the write() function and rather handle it asyncronuously.
   // Init the connection.
   LOG(INFO) << "DeviceIsx3 trys to connect to "
             << isx3InitPayload->getComPort();
@@ -436,33 +467,29 @@ bool DeviceIsx3::initialize(std::shared_ptr<InitPayload> initPayload) {
   LOG(INFO) << "DeviceIsx3 established a connection to "
             << isx3InitPayload->getComPort();
 
-  // Initialize thread.
-  this->isx3CommThreadState = ISX3_COMM_THREAD_STATE_INIT;
+  // Reset and initialize the comm worker thread.
+  this->doComm = false;
+  if (this->commThread && this->commThread->joinable()) {
+    this->commThread->join();
+  }
   this->doComm = true;
+  this->isx3CommThreadState = ISX3_COMM_THREAD_STATE_INIT;
   this->commThread = std::unique_ptr<std::thread>(
       new std::thread(&DeviceIsx3::commThreadWorker, this));
-
-  // Wait until communication thread is std::listening.
-  int retryCounter = 0;
-  bool threadInitialized = false;
-  while (retryCounter < 100) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    if (this->isx3CommThreadState == ISX3_COMM_THREAD_STATE_LISTENING) {
-      threadInitialized = true;
-      break;
-    }
-    retryCounter++;
-  }
-  if (!threadInitialized) {
-    // Thread was not able to initialize. Abort here.
+  // Wait until communication thread is listening.
+  std::unique_lock lk(this->commThreadInitMutex);
+  std::cv_status waitResult =
+      this->commThreadInitCv.wait_for(lk, std::chrono::seconds(10));
+  if (waitResult == std::cv_status::timeout) {
+    // comm thread did not respond within acceptable time. Return here.
     this->doComm = false;
-    // this->socketWrapper->close();
     this->deviceState = DeviceStatus::ERROR;
-    LOG(ERROR) << "ISX3 COMM thread was not able to initialize.";
+
     return false;
   }
 
-  // Send the init command.
+  // Send a few commands to the device.
+  this->pushToSendBuffer(this->comInterfaceCodec.buildCmdGetDeviceId());
   std::shared_ptr<Isx3CmdAckStruct> ackStruct =
       this->pushToSendBuffer(this->comInterfaceCodec.buildCmdSetSetup());
   // Wait for acknowledgement.
@@ -487,7 +514,11 @@ bool DeviceIsx3::handleResponse(std::shared_ptr<ReadDeviceMessage> response) {
 }
 
 std::string DeviceIsx3::getDeviceSerialNumber() {
-  return this->deviceSerialNumber;
+  if (this->deviceId) {
+    return "";
+  } else {
+    return std::to_string(this->deviceId->getSerialNumber());
+  }
 }
 
 bool DeviceIsx3::openComPort(std::string comPort, int baudRate) {
