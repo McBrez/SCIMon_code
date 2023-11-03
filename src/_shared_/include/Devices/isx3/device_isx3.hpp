@@ -5,6 +5,7 @@
 #include <boost/asio/serial_port.hpp>
 
 // Standard includes
+#include <condition_variable>
 #include <functional>
 #include <list>
 #include <map>
@@ -16,6 +17,7 @@
 // Project includes
 #include <com_interface_codec.hpp>
 #include <device.hpp>
+#include <id_payload.hpp>
 #include <is_payload.hpp>
 #include <isx3_cmd_ack_struct.hpp>
 #include <isx3_command_buffer.hpp>
@@ -257,14 +259,20 @@ private:
   /// Guards the acknowledgement cache.
   std::mutex sentFramesCacheMutex;
 
-  /// The serial number of the device.
-  std::string deviceSerialNumber;
-
   /// The name of the current spectrum key.
   std::string currentSpectrumKey;
 
   /// The port that is used to communicate with the device.
   std::unique_ptr<boost::asio::serial_port> serialPort;
+
+  /// Conditional variable, that is used when initializing the comm thread.
+  std::condition_variable commThreadInitCv;
+
+  /// A mutex that is used together with commThreadInitCv.
+  std::mutex commThreadInitMutex;
+
+  /// Caches information about the physical device.
+  std::shared_ptr<IdPayload> deviceId;
 };
 } // namespace Devices
 

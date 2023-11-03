@@ -17,4 +17,12 @@ std::vector<unsigned char> IdPayload::bytes() {
 
 int IdPayload::getMagicNumber() { return MAGIC_NUMBER_ID_PAYLOAD; }
 
+int IdPayload::getDeviceIdentifier() const { return this->deviceIdentifier; }
+
+std::string IdPayload::getManufacturer() const { return this->manufacturer; }
+
+DeviceType IdPayload::getDeviceType() const { return this->deviceType; }
+
+int IdPayload::getSerialNumber() const { return this->serialNumber; }
+
 } // namespace Devices
