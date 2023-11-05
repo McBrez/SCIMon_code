@@ -70,10 +70,7 @@ get_target_property(
     GENERATED_INCLUDES_DIR
 )
 
-# Add boost library.
-set(Boost_USE_STATIC_LIBS        ON)
-set(BOOST_ROOT ${BOOST_ROOT} C:/local/boost_1_83_0)
-find_package(Boost 1.83.0 REQUIRED)
+
 
 add_library(scimon_message STATIC)
 target_include_directories(scimon_message PUBLIC
@@ -239,7 +236,6 @@ add_dependencies(scimon_message scimon_message_lib_fb_headers)
 target_link_libraries(scimon_message
     PUBLIC flatbuffers
     PUBLIC HighFive
-    PUBLIC ${Boost_LIBRARIES}
 )
 
 # Enforce C++20

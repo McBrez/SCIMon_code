@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.26)
 project(SCIMon)
 
 set(PROJECT_DIR src/build)
@@ -34,6 +34,12 @@ target_compile_definitions(flatbuffers PUBLIC NOMINMAX=1)
 # HighFive
 set(HIGHFIVE_USE_BOOST Off)
 add_subdirectory(${3RDPARTY_DIR}/HighFive)
+
+# Boost
+set(Boost_USE_STATIC_LIBS ON)
+set(Boost_COMPILER ${Boost_COMPILER} vc143)
+set(BOOST_ROOT ${BOOST_ROOT} C:/local/boost_1_83_0)
+find_package(Boost 1.83.0 COMPONENTS thread)
 
 # --------------------------------------------------------- Project Libraries --
 

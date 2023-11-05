@@ -1,5 +1,6 @@
 // 3rd party includes
 #define CATCH_CONFIG_MAIN
+#include <boost/thread.hpp>
 #include <catch2/catch.hpp>
 #include <easylogging++.h>
 
@@ -10,13 +11,16 @@
 
 using namespace Devices;
 
+boost::asio::io_service io;
+boost::thread t(boost::bind(&boost::asio::io_service::run, &io));
+
 INITIALIZE_EASYLOGGINGPP
 
 TEST_CASE("Test the ISX3 Device.") {
   // Build up logic.
   const std::string comPort = "COM3";
   const int baudRate = 182000;
-  std::shared_ptr<DeviceIsx3> dut(new DeviceIsx3());
+  std::shared_ptr<DeviceIsx3> dut(new DeviceIsx3(io));
   MessageDistributor messageDistributor(std::chrono::milliseconds(500));
   messageDistributor.addParticipant(dut);
   std::thread messageDistributorWorker(&MessageDistributor::run,
