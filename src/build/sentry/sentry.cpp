@@ -1,6 +1,8 @@
 // 3rd party includes
 #include <Elveflow64_shim.h>
 #include <argparse.hpp>
+#include <boost/asio/io_service.hpp>
+#include <boost/thread.hpp>
 #include <easylogging++.h>
 
 // Project includes
@@ -22,6 +24,8 @@ using namespace Devices;
 using namespace Workers;
 
 #define DEFAULT_MESSAGE_DISTRIBUTOR_LOOP_INTERVAL 50
+
+boost::asio::io_service io;
 
 int main(int argc, char *argv[]) {
   LOG(INFO) << "Starting up sentry.";
@@ -52,7 +56,7 @@ int main(int argc, char *argv[]) {
 
   // Create Devices and add them to the distributor immediatelly.
   messageDistributor.addParticipant(
-      std::shared_ptr<MessageInterface>(new DeviceIsx3()));
+      std::shared_ptr<MessageInterface>(new DeviceIsx3(io)));
   messageDistributor.addParticipant(
       std::shared_ptr<MessageInterface>(new DeviceOb1Win()));
   std::shared_ptr<MessageInterface> networkWorker(new NetworkWorker());

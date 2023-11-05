@@ -302,6 +302,8 @@ ComInterfaceCodec::buildCmdStartImpedanceMeasurement(bool state) {
 
   if (state) {
     payload.push_back(0x01);
+    payload.push_back(0x00);
+    payload.push_back(0x00);
   } else {
     payload.push_back(0x00);
   }

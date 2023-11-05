@@ -5,6 +5,7 @@
 #include <easylogging++.h>
 
 // Project includes
+#include <blocking_reader.hpp>
 #include <common.hpp>
 #include <data_manager.hpp>
 #include <device_isx3.hpp>
@@ -64,6 +65,9 @@ DeviceIsx3::pushToSendBuffer(const std::vector<unsigned char> &bytes) {
 }
 
 void DeviceIsx3::commThreadWorker() {
+
+  blocking_reader blockingReader(this->serialPort, 500, this->io);
+
   while (this->doComm) {
     if (ISX3_COMM_THREAD_STATE_INVALID == this->isx3CommThreadState) {
       LOG(ERROR) << "ISX3 Communication thread transitioned into invalid "
@@ -83,8 +87,8 @@ void DeviceIsx3::commThreadWorker() {
 
     else if (ISX3_COMM_THREAD_STATE_LISTENING == this->isx3CommThreadState) {
       // Read from serial port.
-      std::vector<unsigned char> buffer;
-      this->serialPort->read_some(boost::asio::buffer(buffer));
+      std::vector<unsigned char> buffer(ACK_BUFFER_LEN);
+      blockingReader.read(buffer);
       // Push the bytes into the command buffer.
       this->commandBuffer.pushBytes(buffer);
       // Try to extract a frame from the command buffer.
@@ -118,9 +122,9 @@ void DeviceIsx3::commThreadWorker() {
       // Only read from socket. If the ack has been received transition back to
       // ISX3_COMM_THREAD_STATE_LISTENING.
 
-      // Read from socket.
-      std::vector<unsigned char> buffer;
-      this->serialPort->read_some(boost::asio::buffer(buffer));
+      // Read from serial port..
+      std::vector<unsigned char> buffer(ACK_BUFFER_LEN);
+      blockingReader.read(buffer);
       this->commandBuffer.pushBytes(buffer);
       std::vector<unsigned char> frame = this->commandBuffer.interpretBuffer();
       std::shared_ptr<ReadPayload> decodedPayload =
@@ -394,10 +398,9 @@ bool DeviceIsx3::handleReadPayload(std::shared_ptr<ReadPayload> readPayload) {
         // Write the impedance spectrum.
         IsPayload *coalescedIsPayloadConcrete =
             static_cast<IsPayload *>(coalescedIsPayload);
+        LOG(INFO) << "Writing spectrum to data manager ...";
         this->dataManager->write(
-            TimePoint(std::chrono::milliseconds(static_cast<long long>(
-                coalescedIsPayloadConcrete->getTimestamp()))),
-            this->currentSpectrumKey,
+            Core::getNow(), this->currentSpectrumKey,
             Value(coalescedIsPayloadConcrete->getImpedanceSpectrum()));
 
       } else {
@@ -524,7 +527,7 @@ bool DeviceIsx3::openComPort(std::string comPort, int baudRate) {
 
   if (this->serialPort) {
     this->serialPort->close();
-    this->serialPort.reset(nullptr);
+    this->serialPort.reset();
   }
 
   this->serialPort.reset(new boost::asio::serial_port(this->io, comPort));
@@ -548,7 +551,7 @@ bool DeviceIsx3::openComPort(std::string comPort, int baudRate) {
 bool DeviceIsx3::closeComPort() {
   if (this->serialPort && this->serialPort->is_open()) {
     this->serialPort->close();
-    this->serialPort.reset(nullptr);
+    this->serialPort.reset();
   }
 
   return true;

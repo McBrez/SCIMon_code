@@ -10,10 +10,11 @@ add_executable(sentry
 )
 
 target_link_libraries(sentry
-    PUBLIC scimon_message
+    PRIVATE scimon_message
+    PRIVATE Boost::thread
 )
 
-target_include_directories(sentry PUBLIC
+target_include_directories(sentry PRIVATE
     .
     ${INCLUDE_DIR}/Workers/sentry_worker
 

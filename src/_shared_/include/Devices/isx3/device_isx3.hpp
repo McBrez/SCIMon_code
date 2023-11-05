@@ -31,7 +31,7 @@
 /// The default count of wait cycles that acknowledgments are waited for.
 #define DEFAULT_ACK_WAIT_CYCLES 10
 /// The default time an acknowledgment wait cycles lasts. In milliseconds.
-#define DEFAULT_ACK_WAIT_DURATION 100
+#define DEFAULT_ACK_WAIT_DURATION 1000
 
 using namespace Utilities;
 
@@ -266,7 +266,7 @@ private:
   std::string currentSpectrumKey;
 
   /// The port that is used to communicate with the device.
-  std::unique_ptr<boost::asio::serial_port> serialPort;
+  std::shared_ptr<boost::asio::serial_port> serialPort;
 
   /// Conditional variable, that is used when initializing the comm thread.
   std::condition_variable commThreadInitCv;

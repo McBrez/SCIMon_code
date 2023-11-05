@@ -99,6 +99,7 @@ target_sources(scimon_message PUBLIC
     ${INCLUDE_DIR}/Utilities/utilities.hpp
     ${INCLUDE_DIR}/Utilities/utilities_flatbuffers.hpp
     ${INCLUDE_DIR}/Utilities/socket_wrapper.hpp
+    ${INCLUDE_DIR}/Utilities/blocking_reader.hpp
     ${INCLUDE_DIR}/Utilities/data_manager/data_manager.hpp
     ${INCLUDE_DIR}/Utilities/data_manager/data_manager_hdf.hpp
     ${INCLUDE_DIR}/Messages/message_factory.hpp
@@ -162,6 +163,7 @@ target_sources(scimon_message PUBLIC
     ${SOURCE_DIR}/Utilities/utilities_flatbuffers.cpp
     ${SOURCE_DIR}/Utilities/socket_wrapper.cpp
     ${SOURCE_DIR}/Utilities/win_socket.cpp
+    ${SOURCE_DIR}/Utilities/blocking_reader.cpp
     ${SOURCE_DIR}/Utilities/data_manager/data_manager.cpp
     ${SOURCE_DIR}/Utilities/data_manager/data_manager_hdf.cpp
     ${SOURCE_DIR}/Messages/message_distributor.cpp
