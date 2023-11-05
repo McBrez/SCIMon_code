@@ -2,6 +2,7 @@
 #define DEVICE_ISX3_HPP
 
 // 3rd party includes
+#include <boost/asio/io_service.hpp>
 #include <boost/asio/serial_port.hpp>
 
 // Standard includes
@@ -51,8 +52,10 @@ class DeviceIsx3 : public Device {
 public:
   /**
    * @brief Construct a new Device Isx 3 object
+   * @param io A reference to the io service context of boost. Is used for
+   * serial port communication.
    */
-  DeviceIsx3();
+  DeviceIsx3(boost::asio::io_service &io);
 
   /**
    * @brief Destroy the Device Isx 3 object
@@ -273,6 +276,9 @@ private:
 
   /// Caches information about the physical device.
   std::shared_ptr<IdPayload> deviceId;
+
+  /// Reference to the boost io context. Used for serial port communication.
+  boost::asio::io_service &io;
 };
 } // namespace Devices
 

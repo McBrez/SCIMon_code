@@ -2,7 +2,6 @@
 #include <chrono>
 
 // 3rd party includes
-#include <boost/asio/io_service.hpp>>
 #include <easylogging++.h>
 
 // Project includes
@@ -16,10 +15,10 @@
 
 namespace Devices {
 
-DeviceIsx3::DeviceIsx3()
+DeviceIsx3::DeviceIsx3(boost::asio::io_service &io)
     : Device(DeviceType::IMPEDANCE_SPECTROMETER),
       isx3CommThreadState(ISX3_COMM_THREAD_STATE_INVALID), doComm(false),
-      serialPort(nullptr) {}
+      serialPort(nullptr), io(io) {}
 
 DeviceIsx3::~DeviceIsx3() {
   this->doComm = false;
@@ -522,14 +521,13 @@ std::string DeviceIsx3::getDeviceSerialNumber() {
 }
 
 bool DeviceIsx3::openComPort(std::string comPort, int baudRate) {
-  boost::asio::io_service io;
 
   if (this->serialPort) {
     this->serialPort->close();
     this->serialPort.reset(nullptr);
   }
 
-  this->serialPort.reset(new boost::asio::serial_port(io, comPort));
+  this->serialPort.reset(new boost::asio::serial_port(this->io, comPort));
 
   if (!this->serialPort->is_open()) {
     return false;
