@@ -161,7 +161,7 @@ ComInterfaceCodec::decodeMessage(std::vector<unsigned char> bytes) {
     short fNumber;
     float timestamp;
     short channelNumber;
-    std::complex<float> impedance;
+    std::complex<double> impedance;
     bool decodeSuccess = this->decodeImpedanceData(payload, fNumber, timestamp,
                                                    channelNumber, impedance);
     if (!decodeSuccess) {
@@ -170,8 +170,7 @@ ComInterfaceCodec::decodeMessage(std::vector<unsigned char> bytes) {
       return std::shared_ptr<ReadPayload>(
           new IsPayload(channelNumber, timestamp,
                         std::list<double>({static_cast<double>(fNumber)}),
-                        std::list<std::complex<double>>(
-                            {static_cast<std::complex<double>>(impedance)})));
+                        std::list<std::complex<double>>({(impedance)})));
     }
   }
 
@@ -346,7 +345,7 @@ std::vector<unsigned char> ComInterfaceCodec::getRawBytes(T value,
 }
 bool ComInterfaceCodec::decodeImpedanceData(
     const std::vector<unsigned char> &payload, short &fNumber, float &timestamp,
-    short &channelNumber, std::complex<float> &impedance) {
+    short &channelNumber, std::complex<double> &impedance) {
 
   // Check if payload has expected length.
   // NOTE: Other formats are available. Those are not yet implemented.
@@ -368,7 +367,8 @@ bool ComInterfaceCodec::decodeImpedanceData(
                                (payload[14] << 8) + payload[15];
     float imagPart = *((float *)&imagPartIntermediate);
 
-    impedance = std::complex<float>(realPart, imagPart);
+    impedance = std::complex<double>(static_cast<double>(realPart),
+                                     static_cast<double>(imagPart));
 
     return true;
   }

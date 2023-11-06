@@ -19,7 +19,7 @@ INITIALIZE_EASYLOGGINGPP
 TEST_CASE("Test the ISX3 Device.") {
   // Build up logic.
   boost::asio::io_service io;
-  boost::thread t(boost::bind(&boost::asio::io_service::run, &io));
+  // boost::thread t(boost::bind(&boost::asio::io_service::run, &io));
   const std::string comPort = "COM3";
   const int baudRate = 256000;
   std::shared_ptr<DeviceIsx3> dut(new DeviceIsx3(io));
@@ -84,5 +84,7 @@ TEST_CASE("Test the ISX3 Device.") {
   messageDistributorWorker.join();
 
   io.stop();
-  t.join();
+  io.reset();
+
+  // t.join();
 }

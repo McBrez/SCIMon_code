@@ -22,6 +22,9 @@ DeviceIsx3::DeviceIsx3(boost::asio::io_service &io)
       serialPort(nullptr), io(io) {}
 
 DeviceIsx3::~DeviceIsx3() {
+
+  this->io.reset();
+
   this->doComm = false;
   if (this->commThread && this->commThread->joinable())
     this->commThread->join();
@@ -408,6 +411,17 @@ bool DeviceIsx3::handleReadPayload(std::shared_ptr<ReadPayload> readPayload) {
             Core::getNow(), this->currentSpectrumKey,
             Value(coalescedIsPayloadConcrete->getImpedanceSpectrum()));
 
+        for (auto &impedance :
+             coalescedIsPayloadConcrete->getImpedanceSpectrum()) {
+
+          Impedance imp = std::get<Impedance>(impedance);
+          double absoluteValue = std::abs(imp);
+          LOG(WARNING) << std::to_string(absoluteValue);
+          if (absoluteValue > 40000.0) {
+            LOG(WARNING) << "Got unlikely impedance.";
+          }
+        }
+
       } else {
         LOG(WARNING) << "Was not able to coalesce impedance spectrums.";
       }
@@ -497,6 +511,9 @@ bool DeviceIsx3::initialize(std::shared_ptr<InitPayload> initPayload) {
 
   // Send a few commands to the device.
   this->pushToSendBuffer(this->comInterfaceCodec.buildCmdGetDeviceId());
+
+  this->pushToSendBuffer(
+      this->comInterfaceCodec.buildCmdStartImpedanceMeasurement(false));
   std::shared_ptr<Isx3CmdAckStruct> ackStruct =
       this->pushToSendBuffer(this->comInterfaceCodec.buildCmdSetSetup());
   // Wait for acknowledgement.
@@ -505,7 +522,7 @@ bool DeviceIsx3::initialize(std::shared_ptr<InitPayload> initPayload) {
     this->deviceState = DeviceStatus::INITIALIZED;
 
     // Init complete. Call the hook. Do not create any keys yet.
-    this->onInitialized(this->getDeviceSerialNumber(), Utilities::KeyMapping(),
+    this->onInitialized("isx3", Utilities::KeyMapping(),
                         Utilities::SpectrumMapping());
 
     return true;

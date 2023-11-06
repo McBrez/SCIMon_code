@@ -597,14 +597,6 @@ bool ControlWorker::setRemoteWorkerState(UserId remoteId, bool state) {
 }
 
 UserId ControlWorker::getPumpControllerId() {
-  UserId retVal;
-  for (auto keyValuePair : this->remoteHostIds) {
-    if (get<1>(keyValuePair.second) == SENTRY_WORKER_TYPE_NAME) {
-      retVal = keyValuePair.first;
-      break;
-    }
-  }
-
   auto it = std::find_if(
       this->remoteHostIds.begin(), this->remoteHostIds.end(),
       [](std::pair<size_t, std::tuple<bool, std::string, DeviceType>> pair) {
@@ -612,21 +604,13 @@ UserId ControlWorker::getPumpControllerId() {
       });
 
   if (it != this->remoteHostIds.end()) {
-    return it->first;
+    return UserId(it->first);
   } else {
     return UserId();
   }
 }
 
 UserId ControlWorker::getSpectrometerId() {
-  UserId retVal;
-  for (auto keyValuePair : this->remoteHostIds) {
-    if (get<1>(keyValuePair.second) == SENTRY_WORKER_TYPE_NAME) {
-      retVal = keyValuePair.first;
-      break;
-    }
-  }
-
   auto it = std::find_if(
       this->remoteHostIds.begin(), this->remoteHostIds.end(),
       [](std::pair<size_t, std::tuple<bool, std::string, DeviceType>> pair) {
@@ -634,7 +618,7 @@ UserId ControlWorker::getSpectrometerId() {
       });
 
   if (it != this->remoteHostIds.end()) {
-    return it->first;
+    return UserId(it->first);
   } else {
     return UserId();
   }
@@ -744,6 +728,11 @@ std::vector<std::tuple<TimePoint, ImpedanceSpectrum>>
 ControlWorker::getSpectra(TimePoint from, TimePoint to) {
   // Get the id of the spectrometer.
   UserId spectrometerId = getSpectrometerId();
+
+  // Check, if the spectrometer is already known.
+  if (!this->remoteDataKeys.contains(spectrometerId.id())) {
+    return std::vector<std::tuple<TimePoint, ImpedanceSpectrum>>();
+  }
 
   // Get the data keys of the spectrometer and find the ones that refer to a
   // spectrum.

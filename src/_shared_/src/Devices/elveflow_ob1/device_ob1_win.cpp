@@ -97,25 +97,27 @@ void DeviceOb1Win::configureWorker(
     KeyMapping keyMapping{
         {nowStr + "/channel1/setpoint", DATAMANAGER_DATA_TYPE_DOUBLE},
         {nowStr + "/channel1/currPressure", DATAMANAGER_DATA_TYPE_DOUBLE},
-        {nowStr + "/channel1/unit", DATAMANAGER_DATA_TYPE_STRING},
+        // {nowStr + "/channel1/unit", DATAMANAGER_DATA_TYPE_STRING},
         {nowStr + "/channel2/setpoint", DATAMANAGER_DATA_TYPE_DOUBLE},
         {nowStr + "/channel2/currPressure", DATAMANAGER_DATA_TYPE_DOUBLE},
-        {nowStr + "/channel2/unit", DATAMANAGER_DATA_TYPE_STRING},
+        // {nowStr + "/channel2/unit", DATAMANAGER_DATA_TYPE_STRING},
         {nowStr + "/channel3/setpoint", DATAMANAGER_DATA_TYPE_DOUBLE},
         {nowStr + "/channel3/currPressure", DATAMANAGER_DATA_TYPE_DOUBLE},
-        {nowStr + "/channel3/unit", DATAMANAGER_DATA_TYPE_STRING},
+        // {nowStr + "/channel3/unit", DATAMANAGER_DATA_TYPE_STRING},
         {nowStr + "/channel4/setpoint", DATAMANAGER_DATA_TYPE_DOUBLE},
-        {nowStr + "/channel4/currPressure", DATAMANAGER_DATA_TYPE_DOUBLE},
-        {nowStr + "/channel4/unit", DATAMANAGER_DATA_TYPE_STRING}};
+        {nowStr + "/channel4/currPressure", DATAMANAGER_DATA_TYPE_DOUBLE}
+        // {nowStr + "/channel4/unit", DATAMANAGER_DATA_TYPE_STRING}};
+    };
     SpectrumMapping spectrumMapping;
 
     this->onConfigured(keyMapping, spectrumMapping);
-
-    this->dataManager->write(now, nowStr + "/channel1/unit", Value("BAR"));
-    this->dataManager->write(now, nowStr + "/channel2/unit", Value("BAR"));
-    this->dataManager->write(now, nowStr + "/channel3/unit", Value("BAR"));
-    this->dataManager->write(now, nowStr + "/channel4/unit", Value("BAR"));
-
+    /*
+        this->dataManager->write(now, nowStr + "/channel1/unit",
+       Value("BAR")); this->dataManager->write(now, nowStr + "/channel2/unit",
+       Value("BAR")); this->dataManager->write(now, nowStr + "/channel3/unit",
+       Value("BAR")); this->dataManager->write(now, nowStr + "/channel4/unit",
+       Value("BAR"));
+    */
     return;
   } else {
     LOG(INFO) << "Finished calibration of OB1 with an error.";
@@ -147,8 +149,8 @@ bool DeviceOb1Win::start() {
       return false;
     }
   } else {
-    LOG(WARNING)
-        << "OB1 cannot be started, as it is not yet initialized or configured.";
+    LOG(WARNING) << "OB1 cannot be started, as it is not yet initialized or "
+                    "configured.";
     return false;
   }
 }
@@ -169,8 +171,8 @@ bool DeviceOb1Win::stop() {
       return false;
     }
   } else {
-    LOG(WARNING)
-        << "OB1 cannot be stopped, as it is not yet initialized or configured.";
+    LOG(WARNING) << "OB1 cannot be stopped, as it is not yet initialized or "
+                    "configured.";
     return false;
   }
 }

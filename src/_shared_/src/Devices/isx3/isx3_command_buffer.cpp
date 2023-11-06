@@ -45,7 +45,7 @@ std::list<std::vector<unsigned char>> Isx3CommandBuffer::interpretBuffer() {
     }
     auto bufferIt = this->buffer.begin();
     unsigned char len = *(++bufferIt);
-    if (len > this->buffer.size() - 1) {
+    if (len >= this->buffer.size() - 1) {
       // Buffer ends prematurely. It might be the case that the closing command
       // tag has not been received yet. Return here and wait until more bytes
       // have been received.

@@ -227,9 +227,6 @@ protected:
   KeyMapping typeMapping;
   /// Holds the mapping from keys to the spectrum frequencies.
   SpectrumMapping spectrumMapping;
-  /// Guard for writes to the data manager. Has to be mutable, as many const
-  /// methods have to access data.
-  mutable std::mutex dataManagerMutex;
 };
 } // namespace Utilities
 

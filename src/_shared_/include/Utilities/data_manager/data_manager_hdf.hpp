@@ -171,6 +171,10 @@ private:
 
   /// The default chunking size.
   const hsize_t defaultChunkingSize = 1024;
+
+  /// Guard for reads and writes to the data manager. It has to be static, as
+  /// HD5 does not allow to read/write to multiple files simultaneously.
+  static std::mutex dataManagerMutex;
 };
 } // namespace Utilities
 

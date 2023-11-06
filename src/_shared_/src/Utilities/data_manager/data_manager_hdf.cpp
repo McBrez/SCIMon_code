@@ -11,6 +11,8 @@ using namespace Utilities;
 using namespace HighFive;
 using namespace Core;
 
+std::mutex DataManagerHdf::dataManagerMutex = std::mutex();
+
 DataManagerHdf::~DataManagerHdf() { this->close(); }
 
 bool DataManagerHdf::read(TimePoint timestamp, const std::string &key,

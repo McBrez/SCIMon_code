@@ -169,10 +169,11 @@ void ControlWorkerWrapper::startConfig() {
           MeasurmentConfigurationRange::MEAS_CONFIG_RANGE_10MA,
           MeasurmentConfigurationChannel::MEAS_CONFIG_CHANNEL_EXT_PORT,
           MeasurementConfiguration::MEAS_CONFIG_2_POINT, 1.0, 1.0),
-      new Ob1InitPayload(
-          "123123", std::make_tuple(
-                        Z_regulator_type_m1000_1000_mbar, Z_regulator_type_none,
-                        Z_regulator_type_none, Z_regulator_type_none)),
+      new Ob1InitPayload("01FB0FA3",
+                         std::make_tuple(Z_regulator_type_m1000_1000_mbar,
+                                         Z_regulator_type_none,
+                                         Z_regulator_type_none,
+                                         Z_regulator_type_none)),
       new Ob1ConfPayload()));
   std::shared_ptr<SentryConfigPayload> configPayload(new SentryConfigPayload(
       SentryWorkerMode::SENTRY_WORKER_MODE_MANUAL, Duration(), Duration()));

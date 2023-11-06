@@ -24,15 +24,17 @@ DataResponsePayload::constructDataResponsePayload(
   auto valuesItBegin = values.begin();
   do {
     auto timestampsItEnd =
-        timestamps.end() - timestamps.begin() >
+        std::distance(timestampsItBegin, timestamps.end()) >
                 SCIMON_RESPONSE_PAYLOAD_MAX_MESSAGE_LENGTH
-            ? timestampsItBegin + SCIMON_RESPONSE_PAYLOAD_MAX_MESSAGE_LENGTH
+            ? std::next(timestampsItBegin,
+                        SCIMON_RESPONSE_PAYLOAD_MAX_MESSAGE_LENGTH)
             : timestamps.end();
 
     auto valuesItEnd =
-        values.end() - values.begin() >
+        std::distance(valuesItBegin, values.end()) >
                 SCIMON_RESPONSE_PAYLOAD_MAX_MESSAGE_LENGTH
-            ? valuesItBegin + SCIMON_RESPONSE_PAYLOAD_MAX_MESSAGE_LENGTH
+            ? std::next(valuesItBegin,
+                        SCIMON_RESPONSE_PAYLOAD_MAX_MESSAGE_LENGTH)
             : values.end();
 
     std::vector<TimePoint> timepointVec(timestampsItBegin, timestampsItEnd);
@@ -99,6 +101,9 @@ std::string DataResponsePayload::serialize() {
 }
 
 std::vector<unsigned char> DataResponsePayload::DataResponsePayload::bytes() {
+
+  flatbuffers::FlatBufferBuilder builder;
+
   Serialization::Devices::DataResponsePayloadT intermediateObject;
   intermediateObject.from = this->from.time_since_epoch().count();
   intermediateObject.to = this->to.time_since_epoch().count();
@@ -119,16 +124,25 @@ std::vector<unsigned char> DataResponsePayload::DataResponsePayload::bytes() {
     // int
     if (variantIdx == 0) {
       valueUnion.Set(std::get<int>(value));
-    } else if (variantIdx == 1) {
+    }
+    // double
+    else if (variantIdx == 1) {
       valueUnion.Set(std::get<double>(value));
-    } else if (variantIdx == 2) {
+    }
+    // impedance
+    else if (variantIdx == 2) {
       Impedance valueImpedance = std::get<Impedance>(value);
       Serialization::Devices::complex valueComplex{valueImpedance.real(),
                                                    valueImpedance.imag()};
       valueUnion.Set(valueComplex);
-    } else if (variantIdx == 3) {
-      valueUnion.Set(std::get<std::string>(value));
-    } else if (variantIdx == 4) {
+    }
+    // string
+    else if (variantIdx == 3) {
+      std::string valueStr = std::get<std::string>(value);
+      valueUnion.Set(builder.CreateString(valueStr));
+    }
+    // spectrum
+    else if (variantIdx == 4) {
       ImpedanceSpectrum is = std::get<ImpedanceSpectrum>(value);
 
       Serialization::Devices::IsPayloadT isPayload;
@@ -153,7 +167,6 @@ std::vector<unsigned char> DataResponsePayload::DataResponsePayload::bytes() {
     intermediateObject.values.push_back(valueUnion);
   }
 
-  flatbuffers::FlatBufferBuilder builder;
   builder.Finish(Serialization::Devices::DataResponsePayload::Pack(
       builder, &intermediateObject));
   uint8_t *buffer = builder.GetBufferPointer();
