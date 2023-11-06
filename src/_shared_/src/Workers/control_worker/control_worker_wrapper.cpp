@@ -1,3 +1,6 @@
+// 3rd party includes
+#include <Elveflow64_shim.h>
+
 // Project includes
 #include <control_worker_wrapper.hpp>
 #include <isx3_init_payload.hpp>
@@ -155,14 +158,21 @@ QString ControlWorkerWrapper::controlWorkerSubStateToString(
 void ControlWorkerWrapper::startConfig() {
 
   std::shared_ptr<SentryInitPayload> initPayload(new SentryInitPayload(
-      new Isx3InitPayload("127.0.0.1", 8888),
+      new Isx3InitPayload("COM3", 115200),
       new Isx3IsConfPayload(
-          10.0, 1000.0, 10, 0, std::map<ChannelFunction, int>(),
+          10.0, 1000.0, 10, 0,
+          std::map<ChannelFunction, int>{{ChannelFunction::CHAN_FUNC_CP, 0x0C},
+                                         {ChannelFunction::CHAN_FUNC_RP, 39},
+                                         {ChannelFunction::CHAN_FUNC_WP, 0x0F},
+                                         {ChannelFunction::CHAN_FUNC_WS, 39}},
           IsScale::LINEAR_SCALE,
-          MeasurmentConfigurationRange::MEAS_CONFIG_RANGE_100UA,
-          MeasurmentConfigurationChannel::MEAS_CONFIG_CHANNEL_EXT_PORT_2,
+          MeasurmentConfigurationRange::MEAS_CONFIG_RANGE_10MA,
+          MeasurmentConfigurationChannel::MEAS_CONFIG_CHANNEL_EXT_PORT,
           MeasurementConfiguration::MEAS_CONFIG_2_POINT, 1.0, 1.0),
-      new Ob1InitPayload("123123", ChannelConfiguration()),
+      new Ob1InitPayload(
+          "123123", std::make_tuple(
+                        Z_regulator_type_m1000_1000_mbar, Z_regulator_type_none,
+                        Z_regulator_type_none, Z_regulator_type_none)),
       new Ob1ConfPayload()));
   std::shared_ptr<SentryConfigPayload> configPayload(new SentryConfigPayload(
       SentryWorkerMode::SENTRY_WORKER_MODE_MANUAL, Duration(), Duration()));

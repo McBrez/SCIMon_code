@@ -16,7 +16,9 @@ void Isx3CommandBuffer::pushBytes(const std::vector<unsigned char> &bytes) {
   }
 }
 
-std::vector<unsigned char> Isx3CommandBuffer::interpretBuffer() {
+std::list<std::vector<unsigned char>> Isx3CommandBuffer::interpretBuffer() {
+
+  std::list<std::vector<unsigned char>> retVal;
 
   while (true) {
     // Search for the next command tag.
@@ -31,7 +33,7 @@ std::vector<unsigned char> Isx3CommandBuffer::interpretBuffer() {
       }
     }
     if (!cmdTagFound) {
-      return std::vector<unsigned char>();
+      break;
     }
 
     // Opening command tag detected. The next byte should contain the length of
@@ -39,7 +41,7 @@ std::vector<unsigned char> Isx3CommandBuffer::interpretBuffer() {
     // Note: The smallest frame is 3 bytes. Anything shorter than that cannot be
     // a valid frame.
     if (this->buffer.size() < 3) {
-      return std::vector<unsigned char>();
+      break;
     }
     auto bufferIt = this->buffer.begin();
     unsigned char len = *(++bufferIt);
@@ -47,7 +49,7 @@ std::vector<unsigned char> Isx3CommandBuffer::interpretBuffer() {
       // Buffer ends prematurely. It might be the case that the closing command
       // tag has not been received yet. Return here and wait until more bytes
       // have been received.
-      return std::vector<unsigned char>();
+      break;
     }
     std::advance(bufferIt, len + 1);
     if (*bufferIt != cmdTag) {
@@ -55,13 +57,16 @@ std::vector<unsigned char> Isx3CommandBuffer::interpretBuffer() {
       // frame. Remove it from the buffer and start interpretation again.
       this->buffer.pop_front();
     } else {
-      // Found closing command tag. Remove the frame from the buffer and return.
+      // Found closing command tag. Remove the frame from the buffer, add it to
+      // retVal, and try to find another frame.
       std::vector<unsigned char> extractedFrame(this->buffer.begin(),
                                                 ++bufferIt);
       this->buffer.erase(this->buffer.begin(), bufferIt);
-      return extractedFrame;
+      retVal.push_back(extractedFrame);
     }
   }
+
+  return retVal;
 }
 
 unsigned int Isx3CommandBuffer::clear() {

@@ -26,11 +26,11 @@ public:
   void pushBytes(const std::vector<unsigned char> &bytes);
 
   /**
-   * @brief Interprets the buffer and tries to extract a data frame from it.
-   * @return Will contain a data frame if one has been found. Empty vector if
-   * none has been discovered.
+   * @brief Interprets the buffer and tries to extract data frames from it.
+   * @return Will contain a list of data frames if one has been found. Empty
+   * list if none have been discovered.
    */
-  std::vector<unsigned char> interpretBuffer();
+  std::list<std::vector<unsigned char>> interpretBuffer();
 
   /**
    * @brief Clears the internal buffer.

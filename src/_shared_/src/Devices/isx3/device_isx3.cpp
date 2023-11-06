@@ -92,13 +92,16 @@ void DeviceIsx3::commThreadWorker() {
       // Push the bytes into the command buffer.
       this->commandBuffer.pushBytes(buffer);
       // Try to extract a frame from the command buffer.
-      std::vector<unsigned char> frame = this->commandBuffer.interpretBuffer();
+      std::list<std::vector<unsigned char>> frames =
+          this->commandBuffer.interpretBuffer();
       // Try to decode a payload from the frame.
-      std::shared_ptr<ReadPayload> decodedPayload =
-          this->comInterfaceCodec.decodeMessage(frame);
-      // If a payload has been decoded, handle it accordingly.
-      if (decodedPayload) {
-        this->handleReadPayload(decodedPayload);
+      for (auto &frame : frames) {
+        std::shared_ptr<ReadPayload> decodedPayload =
+            this->comInterfaceCodec.decodeMessage(frame);
+        // If a payload has been decoded, handle it accordingly.
+        if (decodedPayload) {
+          this->handleReadPayload(decodedPayload);
+        }
       }
 
       // If there is something in the write buffer, write it to the serial port.
@@ -122,40 +125,42 @@ void DeviceIsx3::commThreadWorker() {
       // Only read from socket. If the ack has been received transition back to
       // ISX3_COMM_THREAD_STATE_LISTENING.
 
-      // Read from serial port..
+      // Read from serial port ...
       std::vector<unsigned char> buffer(ACK_BUFFER_LEN);
       blockingReader.read(buffer);
+      // ... push the received data into the command buffer and try to find
+      // frames ...
       this->commandBuffer.pushBytes(buffer);
-      std::vector<unsigned char> frame = this->commandBuffer.interpretBuffer();
-      std::shared_ptr<ReadPayload> decodedPayload =
-          this->comInterfaceCodec.decodeMessage(frame);
-      if (!decodedPayload) {
-        // Nothing could be decoded. Continue reading in next iteration of the
-        // loop.
-        continue;
-      }
+      std::list<std::vector<unsigned char>> frames =
+          this->commandBuffer.interpretBuffer();
+      // ... decode the frames ...
+      for (auto &frame : frames) {
+        std::shared_ptr<ReadPayload> decodedPayload =
+            this->comInterfaceCodec.decodeMessage(frame);
 
-      // Decide what to do with the extracted payload.
-      // Try to cast it to a ack payload.
-      std::shared_ptr<Isx3AckPayload> ackPayload =
-          dynamic_pointer_cast<Isx3AckPayload>(decodedPayload);
-      if (ackPayload) {
-        // This is an ack. Update the ack cache and return to listening.
-        LOG(INFO) << "Got ACK for Command " << this->pendingCommand->cmdTag
-                  << ".";
-        this->pendingCommand->acked = ackPayload->getAckType();
-        this->isx3CommThreadState = ISX3_COMM_THREAD_STATE_LISTENING;
-      }
+        // Decide what to do with the extracted payload.
+        // Try to cast it to a ack payload.
+        std::shared_ptr<Isx3AckPayload> ackPayload =
+            dynamic_pointer_cast<Isx3AckPayload>(decodedPayload);
+        if (ackPayload) {
+          // This is an ack. Update the ack cache and return to listening.
+          LOG(INFO) << "Got ACK for Command " << this->pendingCommand->cmdTag
+                    << ".";
+          this->pendingCommand->acked = ackPayload->getAckType();
+          this->isx3CommThreadState = ISX3_COMM_THREAD_STATE_LISTENING;
+        }
 
-      else {
-        // This is not an ack. It could still be measurement data. Handle that
-        // in handleReadPayload().
-        bool handleSuccess = this->handleReadPayload(decodedPayload);
-        if (!handleSuccess) {
-          // Payload could not be handled. Transition to invalid state.
-          LOG(ERROR) << "Could not handle the received payload. Worker thread "
-                        "is shutting down.";
-          this->isx3CommThreadState = ISX3_COMM_THREAD_STATE_INVALID;
+        else {
+          // This is not an ack. It could still be measurement data. Handle that
+          // in handleReadPayload().
+          bool handleSuccess = this->handleReadPayload(decodedPayload);
+          if (!handleSuccess) {
+            // Payload could not be handled. Transition to invalid state.
+            LOG(ERROR)
+                << "Could not handle the received payload. Worker thread "
+                   "is shutting down.";
+            this->isx3CommThreadState = ISX3_COMM_THREAD_STATE_INVALID;
+          }
         }
       }
     }
@@ -202,7 +207,7 @@ bool DeviceIsx3::configure(
   }
 
   // Send the data frames to the device and wait for the ACKs.
-  for (auto cmdFrame : cmdList) {
+  for (auto &cmdFrame : cmdList) {
     std::shared_ptr<Isx3CmdAckStruct> ackStruct =
         this->pushToSendBuffer(cmdFrame);
     bool gotAck = this->waitForAck(ackStruct);
@@ -517,9 +522,9 @@ bool DeviceIsx3::handleResponse(std::shared_ptr<ReadDeviceMessage> response) {
 
 std::string DeviceIsx3::getDeviceSerialNumber() {
   if (this->deviceId) {
-    return "";
-  } else {
     return std::to_string(this->deviceId->getSerialNumber());
+  } else {
+    return "";
   }
 }
 

@@ -11,7 +11,7 @@
 namespace Devices {
 
 /// Typedef for a channelconfiguration. The integers of the tuple shall have the
-/// values defind in ElveflowXX.h
+/// values defined in ElveflowXX.h
 using ChannelConfiguration = std::tuple<int, int, int, int>;
 
 /**

@@ -93,6 +93,11 @@ private:
   void
   configureWorker(std::shared_ptr<ConfigurationPayload> deviceConfiguration);
 
+  /**
+   * @brief Queries the worker repeatedly in order to get the current pressure.
+   */
+  void worker();
+
   /// Id of the OB1 device. Used by the OB1 driver.
   int ob1Id;
 
@@ -108,6 +113,18 @@ private:
 
   /// The name of the device.
   std::string ob1DeviceName;
+
+  /// Pointer to the worker thread object.
+  std::unique_ptr<std::thread> workerThread;
+
+  /// Flag that control the worker thread execution.
+  bool doWork;
+
+  /// The period of the worker thread loop.
+  std::chrono::milliseconds workerThreadPeriod;
+
+  /// The timestamp of the current measurement.
+  std::string currentMeasurementTimestamp;
 };
 } // namespace Devices
 

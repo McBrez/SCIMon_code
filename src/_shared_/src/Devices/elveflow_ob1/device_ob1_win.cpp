@@ -14,13 +14,20 @@ namespace Devices {
 DeviceOb1Win::DeviceOb1Win()
     : DeviceOb1(), ob1Id(-1),
       calibration(new double[Constants::Ob1CalibrationArrayLen]),
-      cachedPressures({{1, 0.0}, {2, 0.0}, {3, 0.0}, {4, 0.0}}) {}
+      cachedPressures({{1, 0.0}, {2, 0.0}, {3, 0.0}, {4, 0.0}}), doWork(false),
+      workerThread(nullptr), workerThreadPeriod(1000),
+      currentMeasurementTimestamp("") {}
 
 DeviceOb1Win::~DeviceOb1Win() {
   OB1_Destructor(ob1Id);
   delete[] calibration;
   if (this->configurationThread) {
     this->configurationThread->join();
+  }
+
+  this->doWork = false;
+  if (this->workerThread && this->workerThread->joinable()) {
+    this->workerThread->join();
   }
 }
 
@@ -35,6 +42,12 @@ bool DeviceOb1Win::initialize(std::shared_ptr<InitPayload> initPayload) {
   }
 
   this->deviceState = DeviceStatus::INITIALIZING;
+
+  // Stop the worker thread, in case it is running.
+  this->doWork = false;
+  if (this->workerThread && this->workerThread->joinable()) {
+    this->workerThread->join();
+  }
 
   char *deviceName = new char[ob1InitPayload->getDeviceName().length() + 1];
   strcpy(deviceName, ob1InitPayload->getDeviceName().c_str());
@@ -75,8 +88,33 @@ void DeviceOb1Win::configureWorker(
     LOG(INFO) << "Finished calibration of OB1 successfully.";
     this->configurationFinished = true;
     this->deviceState = DeviceStatus::IDLE;
-    this->onConfigured(this->configPayload->getKeyMapping(),
-                       this->configPayload->getSpectrumMapping());
+
+    // Set up the key mappings. There are three data keys for each channel. One
+    // for the setpoint, one for the current pressure and one for the unit.
+    TimePoint now = Core::getNow();
+    std::string nowStr = std::format("{:%Y%m%d%H%M}", now);
+    this->currentMeasurementTimestamp = nowStr;
+    KeyMapping keyMapping{
+        {nowStr + "/channel1/setpoint", DATAMANAGER_DATA_TYPE_DOUBLE},
+        {nowStr + "/channel1/currPressure", DATAMANAGER_DATA_TYPE_DOUBLE},
+        {nowStr + "/channel1/unit", DATAMANAGER_DATA_TYPE_STRING},
+        {nowStr + "/channel2/setpoint", DATAMANAGER_DATA_TYPE_DOUBLE},
+        {nowStr + "/channel2/currPressure", DATAMANAGER_DATA_TYPE_DOUBLE},
+        {nowStr + "/channel2/unit", DATAMANAGER_DATA_TYPE_STRING},
+        {nowStr + "/channel3/setpoint", DATAMANAGER_DATA_TYPE_DOUBLE},
+        {nowStr + "/channel3/currPressure", DATAMANAGER_DATA_TYPE_DOUBLE},
+        {nowStr + "/channel3/unit", DATAMANAGER_DATA_TYPE_STRING},
+        {nowStr + "/channel4/setpoint", DATAMANAGER_DATA_TYPE_DOUBLE},
+        {nowStr + "/channel4/currPressure", DATAMANAGER_DATA_TYPE_DOUBLE},
+        {nowStr + "/channel4/unit", DATAMANAGER_DATA_TYPE_STRING}};
+    SpectrumMapping spectrumMapping;
+
+    this->onConfigured(keyMapping, spectrumMapping);
+
+    this->dataManager->write(now, nowStr + "/channel1/unit", Value("BAR"));
+    this->dataManager->write(now, nowStr + "/channel2/unit", Value("BAR"));
+    this->dataManager->write(now, nowStr + "/channel3/unit", Value("BAR"));
+    this->dataManager->write(now, nowStr + "/channel4/unit", Value("BAR"));
 
     return;
   } else {
@@ -140,6 +178,7 @@ bool DeviceOb1Win::stop() {
 bool DeviceOb1Win::configure(
     std::shared_ptr<ConfigurationPayload> configPayload) {
   // Create a new thread and start it.
+  this->deviceState = DeviceStatus::CONFIGURING;
   this->configurationThread.reset(
       new std::thread(&DeviceOb1Win::configureWorker, this, configPayload));
   return true;
@@ -184,6 +223,7 @@ bool DeviceOb1Win::specificWrite(std::shared_ptr<WriteDeviceMessage> writeMsg) {
   // Is it a set pressure payload?
   auto setPressurePayload =
       dynamic_pointer_cast<SetPressurePayload>(writeMsg->getPayload());
+  TimePoint now = Core::getNow();
   if (setPressurePayload) {
     // It is a set pressure message. Set them now.
     std::vector<double> setPressures = setPressurePayload->getPressures();
@@ -192,6 +232,11 @@ bool DeviceOb1Win::specificWrite(std::shared_ptr<WriteDeviceMessage> writeMsg) {
           OB1_Set_Press(this->ob1Id, i + 1, setPressures[i], this->calibration,
                         Constants::Ob1CalibrationArrayLen);
       this->cachedPressures[i + 1] = setPressures[i];
+
+      std::string key = this->currentMeasurementTimestamp + "/channel" +
+                        std::to_string(i + 1) + "/setpoint";
+      this->dataManager->write(now, key, Value(setPressures[i]));
+
       LOG(DEBUG) << "Set pressure " << setPressures[i] << " on channel "
                  << i + 1 << ", with return value " << retVal;
     }
@@ -204,6 +249,39 @@ bool DeviceOb1Win::specificWrite(std::shared_ptr<WriteDeviceMessage> writeMsg) {
 }
 std::string DeviceOb1Win::getDeviceSerialNumber() {
   return this->ob1DeviceName;
+}
+
+void DeviceOb1Win::worker() {
+  while (this->doWork) {
+    TimePoint now = Core::getNow();
+    double pressureCh1;
+    double pressureCh2;
+    double pressureCh3;
+    double pressureCh4;
+    OB1_Get_Press(this->ob1Id, 0, 1, this->calibration, &pressureCh1,
+                  Constants::Ob1CalibrationArrayLen);
+    OB1_Get_Press(this->ob1Id, 1, 0, this->calibration, &pressureCh2,
+                  Constants::Ob1CalibrationArrayLen);
+    OB1_Get_Press(this->ob1Id, 2, 0, this->calibration, &pressureCh3,
+                  Constants::Ob1CalibrationArrayLen);
+    OB1_Get_Press(this->ob1Id, 3, 0, this->calibration, &pressureCh4,
+                  Constants::Ob1CalibrationArrayLen);
+
+    std::string keyChannel1 =
+        this->currentMeasurementTimestamp + "/channel1/currPressure";
+    this->dataManager->write(now, keyChannel1, Value(pressureCh1));
+    std::string keyChannel2 =
+        this->currentMeasurementTimestamp + "/channel2/currPressure";
+    this->dataManager->write(now, keyChannel2, Value(pressureCh2));
+    std::string keyChannel3 =
+        this->currentMeasurementTimestamp + "/channel3/currPressure";
+    this->dataManager->write(now, keyChannel3, Value(pressureCh3));
+    std::string keyChannel4 =
+        this->currentMeasurementTimestamp + "/channel4/currPressure";
+    this->dataManager->write(now, keyChannel4, Value(pressureCh4));
+
+    std::this_thread::sleep_for(this->workerThreadPeriod);
+  }
 }
 
 } // namespace Devices

@@ -16,7 +16,7 @@ enum PressureUnit { PSI = 0, BAR = 1 };
  */
 class SetPressurePayload : public WritePayload {
 public:
-  /**a
+  /**
    * @brief Construct a new ReadPayload object.
    */
   SetPressurePayload(const std::vector<double> &pressures,
