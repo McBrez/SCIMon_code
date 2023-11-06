@@ -406,10 +406,14 @@ bool DeviceIsx3::handleReadPayload(std::shared_ptr<ReadPayload> readPayload) {
         // Write the impedance spectrum.
         IsPayload *coalescedIsPayloadConcrete =
             static_cast<IsPayload *>(coalescedIsPayload);
-        LOG(INFO) << "Writing spectrum to data manager ...";
-        this->dataManager->write(
-            Core::getNow(), this->currentSpectrumKey,
-            Value(coalescedIsPayloadConcrete->getImpedanceSpectrum()));
+        Value impedanceSpectrumValue(
+            coalescedIsPayloadConcrete->getImpedanceSpectrum());
+        LOG(DEBUG) << "Writing spectrum to data manager ...";
+        bool writeSuccess = this->dataManager->write(
+            Core::getNow(), this->currentSpectrumKey, impedanceSpectrumValue);
+
+        if (!writeSuccess)
+          LOG(ERROR) << "ISX3 write failed.";
 
         for (auto &impedance :
              coalescedIsPayloadConcrete->getImpedanceSpectrum()) {
