@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>563</width>
-    <height>699</height>
+    <height>746</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -167,7 +167,7 @@
    <property name="geometry">
     <rect>
      <x>290</x>
-     <y>650</y>
+     <y>660</y>
      <width>80</width>
      <height>24</height>
     </rect>
@@ -180,7 +180,7 @@
    <property name="geometry">
     <rect>
      <x>420</x>
-     <y>650</y>
+     <y>660</y>
      <width>80</width>
      <height>24</height>
     </rect>
@@ -213,6 +213,51 @@
    </property>
    <property name="text">
     <string>Stop</string>
+   </property>
+  </widget>
+  <widget class="QComboBox" name="cmb_channel_selection">
+   <property name="geometry">
+    <rect>
+     <x>290</x>
+     <y>700</y>
+     <width>72</width>
+     <height>24</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="btn_set_pressure">
+   <property name="geometry">
+    <rect>
+     <x>440</x>
+     <y>700</y>
+     <width>80</width>
+     <height>24</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Set</string>
+   </property>
+  </widget>
+  <widget class="QDoubleSpinBox" name="spn_pressure">
+   <property name="geometry">
+    <rect>
+     <x>370</x>
+     <y>700</y>
+     <width>62</width>
+     <height>25</height>
+    </rect>
+   </property>
+   <property name="suffix">
+    <string> bar</string>
+   </property>
+   <property name="minimum">
+    <double>-2.000000000000000</double>
+   </property>
+   <property name="maximum">
+    <double>2.000000000000000</double>
+   </property>
+   <property name="singleStep">
+    <double>0.010000000000000</double>
    </property>
   </widget>
  </widget>

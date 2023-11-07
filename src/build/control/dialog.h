@@ -25,6 +25,7 @@ public slots:
                                 ControlWorkerSubState newState);
   void onRemoteStatesChanged(QList<std::shared_ptr<StatusPayload>> oldStates,
                              QList<std::shared_ptr<StatusPayload>> newStates);
+  void onSetPressure();
 
 private:
   Ui::Dialog *ui;

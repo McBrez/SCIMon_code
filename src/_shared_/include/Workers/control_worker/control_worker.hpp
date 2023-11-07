@@ -163,6 +163,8 @@ public:
   std::string getLocalDataKey(UserId userId, const std::string &dataKey) const;
   std::string getLocalDataKey(size_t userId, const std::string &dataKey) const;
 
+  bool setPressure(int channel, double pressure);
+
 private:
   /**
    * @brief Returns the User id of the remote sentry from the remote id mapper.

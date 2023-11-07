@@ -12,11 +12,20 @@ Dialog::Dialog(QWidget *parent)
       spectroplot(new Gui::Spectroplot(std::vector<double>{0.0}, this)) {
 
   ui->setupUi(this);
+
   this->spectroplot->setContentsMargins(0, 5, 0, 10);
   this->spectroplot->resize(400, 200);
 
   this->ui->tbl_control_workers->setRowCount(1);
   this->ui->tbl_control_workers->setColumnCount(2);
+
+  ui->cmb_channel_selection->addItems(QStringList() << "Ch1"
+                                                    << "Ch2"
+                                                    << "Ch3"
+                                                    << "Ch4");
+
+  QObject::connect(this->ui->btn_set_pressure, &QPushButton::clicked, this,
+                   &Dialog::onSetPressure);
 
   QObject::connect(this, &Dialog::finished, &this->controlWorkerWrapper,
                    &ControlWorkerWrapper::shutdown);
@@ -102,6 +111,7 @@ void Dialog::onRemoteStatesChanged(
 
   int row = 0;
   for (auto newState : newStates) {
+    // Update the table.
     QString deviceName = QString::fromStdString(newState->getDeviceName());
     QString state = QString::fromStdString(
         Device::deviceStatusToString(newState->getDeviceStatus()));
@@ -114,4 +124,12 @@ void Dialog::onRemoteStatesChanged(
                                           new QTableWidgetItem(deviceType));
     row++;
   }
+}
+
+void Dialog::onSetPressure() {
+
+  int channel = this->ui->cmb_channel_selection->currentIndex() + 1;
+  double pressure = this->ui->spn_pressure->value();
+
+  this->controlWorkerWrapper.setPressure(channel, pressure);
 }

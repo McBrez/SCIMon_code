@@ -10,6 +10,7 @@
 #include <network_worker_init_payload.hpp>
 #include <network_worker_state_payload.hpp>
 #include <request_data_payload.hpp>
+#include <set_pressure_payload.hpp>
 
 using namespace Workers;
 
@@ -865,4 +866,18 @@ std::string ControlWorker::getLocalDataKey(UserId userId,
 std::string ControlWorker::getLocalDataKey(size_t userId,
                                            const std::string &dataKey) const {
   return std::to_string(userId) + "/" + dataKey;
+}
+
+bool ControlWorker::setPressure(int channel, double pressure) {
+  std::vector<double> pressures(4, 0.0);
+  pressures[channel - 1] = pressure;
+
+  std::shared_ptr<SetPressurePayload> setPressurePayload(
+      new SetPressurePayload(pressures, PressureUnit::BAR));
+  std::shared_ptr<WriteDeviceMessage> writeMsg(new WriteDeviceMessage(
+      this->getUserId(), this->getPumpControllerId(),
+      WriteDeviceTopic::WRITE_TOPIC_DEVICE_SPECIFIC, setPressurePayload));
+  this->pushMessageQueue(writeMsg);
+
+  return true;
 }

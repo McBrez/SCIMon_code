@@ -75,6 +75,8 @@ public slots:
 
   void stop_ob1();
 
+  void setPressure(int channel, double pressure);
+
   /**
    * @brief Converts the given enum value to a QString.
    * @param subState The enum value that shall be converted to a string.
