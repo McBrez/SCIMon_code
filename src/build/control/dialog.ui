@@ -260,6 +260,52 @@
     <double>0.010000000000000</double>
    </property>
   </widget>
+  <widget class="QLabel" name="label">
+   <property name="geometry">
+    <rect>
+     <x>40</x>
+     <y>650</y>
+     <width>81</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>ISX3 COM Port:</string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="txt_isxComPort">
+   <property name="geometry">
+    <rect>
+     <x>130</x>
+     <y>640</y>
+     <width>113</width>
+     <height>24</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_2">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>680</y>
+     <width>101</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>OB1 Device name:</string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="txt_ob1DeviceName">
+   <property name="geometry">
+    <rect>
+     <x>130</x>
+     <y>680</y>
+     <width>113</width>
+     <height>24</height>
+    </rect>
+   </property>
+  </widget>
  </widget>
  <resources/>
  <connections/>

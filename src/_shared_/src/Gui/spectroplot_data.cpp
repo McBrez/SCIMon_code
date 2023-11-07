@@ -4,7 +4,8 @@
 
 namespace Gui {
 
-SpectrogramData::SpectrogramData(std::vector<double> frequencies)
+SpectrogramData::SpectrogramData(std::vector<double> frequencies,
+                                 std::chrono::seconds retentionPeriod)
     : frequencies(frequencies), impedanceMax(0.0, 0.0) {
 
   this->intervals[Qt::XAxis] =
@@ -71,6 +72,21 @@ bool SpectrogramData::pushSpectrum(TimePoint timestamp,
       static_cast<double>(timestamp.time_since_epoch().count());
   this->dataMap[timestampDouble] = impedances;
 
+#if 0
+  // Remove timestamp/value pairs that are beyond the retention period.
+  QMap<double, std::vector<Impedance>> tempMap;
+  TimePoint now = Core::getNow();
+
+  for(int i = 0; i < this->dataMap.size(); ) {
+
+  }
+
+
+
+  for (auto &keyValuePair : this->dataMap) {
+
+  }
+#endif
   // Adjust the intervals.
   // Y axis - timestamps
   QList<double> keys = this->dataMap.keys();

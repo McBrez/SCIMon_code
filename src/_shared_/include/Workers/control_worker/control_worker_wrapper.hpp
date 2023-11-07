@@ -55,7 +55,7 @@ public slots:
    */
   void startConnection(QString ip, int port);
 
-  void startConfig();
+  void startConfig(QString comPort, QString ob1DeviceName);
 
   /**
    * @brief Sends a start command to the underlying worker.

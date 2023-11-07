@@ -48,14 +48,16 @@ class SpectroplotDateScaleEngine : public QwtDateScaleEngine {
 
 Spectroplot::Spectroplot(const std::vector<double> &frequencies,
                          QWidget *parent)
-    : QwtPlot(parent), data(new SpectrogramData(frequencies)) {
+    : QwtPlot(parent),
+      data(new SpectrogramData(frequencies, std::chrono::seconds(30))) {
 
   this->m_spectrogram.reset(new QwtPlotSpectrogram());
   this->m_spectrogram->setRenderThreadCount(
       0); // use system specific thread count
   this->m_spectrogram->setCachePolicy(QwtPlotRasterItem::PaintCache);
 
-  this->m_spectrogram->setData(new SpectrogramData(frequencies));
+  this->m_spectrogram->setData(
+      new SpectrogramData(frequencies, std::chrono::seconds(30)));
   this->m_spectrogram->attach(this);
 
   const QwtInterval zInterval =

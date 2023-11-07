@@ -37,8 +37,11 @@ Dialog::Dialog(QWidget *parent)
                          this->ui->txt_port->text().toInt());
                    });
   QObject::connect(this->ui->btn_configControl, &QPushButton::clicked,
-                   &this->controlWorkerWrapper,
-                   &ControlWorkerWrapper::startConfig);
+                   &this->controlWorkerWrapper, [this]() {
+                     this->controlWorkerWrapper.startConfig(
+                         this->ui->txt_isxComPort->text(),
+                         this->ui->txt_ob1DeviceName->text());
+                   });
 
   QObject::connect(&this->controlWorkerWrapper,
                    &ControlWorkerWrapper::stateChanged, this,

@@ -20,7 +20,8 @@ namespace Gui {
 class SpectrogramData : public QwtRasterData {
 
 public:
-  SpectrogramData(std::vector<double> frequencies);
+  SpectrogramData(std::vector<double> frequencies,
+                  std::chrono::seconds retentionPeriod);
 
   virtual QwtInterval interval(Qt::Axis axis) const override;
 
@@ -42,6 +43,9 @@ private:
   /// Caches the maximum impedance value. Used for calculation of the data
   /// intervals.
   Impedance impedanceMax;
+
+  /// Data that is older than the retention period is discarded.
+  std::chrono::seconds retentionPeriod;
 };
 } // namespace Gui
 
