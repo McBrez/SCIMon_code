@@ -224,7 +224,7 @@ private:
   bool decodeImpedanceData(const std::vector<unsigned char> &payload,
                            short &fNumber, float &timestamp,
                            short &channelNumber,
-                           std::complex<float> &impedance);
+                           std::complex<double> &impedance);
 
   /**
    * @brief Decodes an acknowledgment payload received from the device.
