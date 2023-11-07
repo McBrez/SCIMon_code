@@ -118,6 +118,13 @@ void DeviceOb1Win::configureWorker(
        Value("BAR")); this->dataManager->write(now, nowStr + "/channel4/unit",
        Value("BAR"));
     */
+
+    this->doWork = true;
+    if (this->workerThread && this->workerThread->joinable()) {
+      this->workerThread->join();
+    }
+    this->workerThread.reset(new std::thread(&DeviceOb1Win::worker, this));
+
     return;
   } else {
     LOG(INFO) << "Finished calibration of OB1 with an error.";
@@ -229,7 +236,7 @@ bool DeviceOb1Win::specificWrite(std::shared_ptr<WriteDeviceMessage> writeMsg) {
   if (setPressurePayload) {
     // It is a set pressure message. Set them now.
     std::vector<double> setPressures = setPressurePayload->getPressures();
-    for (int i = 0; i > setPressures.size(); i++) {
+    for (int i = 0; i < setPressures.size(); i++) {
       int retVal =
           OB1_Set_Press(this->ob1Id, i + 1, setPressures[i], this->calibration,
                         Constants::Ob1CalibrationArrayLen);

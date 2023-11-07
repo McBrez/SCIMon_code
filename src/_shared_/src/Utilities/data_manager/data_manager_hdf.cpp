@@ -313,6 +313,8 @@ bool DataManagerHdf::open(std::string name) {
     return false;
   }
 
+  std::lock_guard<std::mutex> lockGuard(this->dataManagerMutex);
+
   File *file = new File(name, File::ReadWrite);
   if (!file->isValid()) {
     delete file;
@@ -348,6 +350,8 @@ bool DataManagerHdf::open(std::string name, KeyMapping keyMapping, bool force) {
     // It is. Can not open another file.
     return false;
   }
+
+  std::lock_guard<std::mutex> lockGuard(this->dataManagerMutex);
 
   // Try to create the file.
   File *file = nullptr;
@@ -557,6 +561,10 @@ bool DataManagerHdf::extendingWrite(const std::vector<TimePoint> &timestamp,
   this->extendDataSet("/data/" + key + "/values", extendSize);
   newIdx = this->extendDataSet("/data/" + key + +"/timestamps", extendSize);
 
+  if (newIdx == -1) {
+    return false;
+  }
+
   // Write the timestamp to the dataset.
   DataSet datasetTimestamps =
       this->hdfFile->getDataSet("/data/" + key + "/timestamps");
@@ -694,7 +702,7 @@ template <class T>
 bool DataManagerHdf::transformValueVector(const std::vector<Value> &origVec,
                                           std::vector<T> &transformedVec) {
   transformedVec.reserve(origVec.size());
-  for (auto origVecValue : origVec) {
+  for (auto &origVecValue : origVec) {
     transformedVec.emplace_back(std::get<T>(origVecValue));
   }
   return true;
@@ -705,7 +713,7 @@ bool DataManagerHdf::transformTimestampVector(
     std::vector<long long> &transformedVec) {
 
   transformedVec.reserve(origVec.size());
-  for (auto origVecValue : origVec) {
+  for (auto &origVecValue : origVec) {
     transformedVec.emplace_back(
         std::chrono::duration_cast<std::chrono::milliseconds>(
             origVecValue.time_since_epoch())

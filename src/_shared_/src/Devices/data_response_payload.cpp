@@ -123,11 +123,15 @@ std::vector<unsigned char> DataResponsePayload::DataResponsePayload::bytes() {
     size_t variantIdx = value.index();
     // int
     if (variantIdx == 0) {
-      valueUnion.Set(std::get<int>(value));
+      Serialization::Devices::DataResponsePayloadValueIntT intVal;
+      intVal.value = std::get<int>(value);
+      valueUnion.Set(intVal);
     }
     // double
     else if (variantIdx == 1) {
-      valueUnion.Set(std::get<double>(value));
+      Serialization::Devices::DataResponsePayloadValueFloatT floatVal;
+      floatVal.value = std::get<double>(value);
+      valueUnion.Set(floatVal);
     }
     // impedance
     else if (variantIdx == 2) {

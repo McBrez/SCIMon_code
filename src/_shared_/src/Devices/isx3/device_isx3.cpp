@@ -408,23 +408,11 @@ bool DeviceIsx3::handleReadPayload(std::shared_ptr<ReadPayload> readPayload) {
             static_cast<IsPayload *>(coalescedIsPayload);
         Value impedanceSpectrumValue(
             coalescedIsPayloadConcrete->getImpedanceSpectrum());
-        LOG(DEBUG) << "Writing spectrum to data manager ...";
         bool writeSuccess = this->dataManager->write(
             Core::getNow(), this->currentSpectrumKey, impedanceSpectrumValue);
 
         if (!writeSuccess)
           LOG(ERROR) << "ISX3 write failed.";
-
-        for (auto &impedance :
-             coalescedIsPayloadConcrete->getImpedanceSpectrum()) {
-
-          Impedance imp = std::get<Impedance>(impedance);
-          double absoluteValue = std::abs(imp);
-          LOG(WARNING) << std::to_string(absoluteValue);
-          if (absoluteValue > 40000.0) {
-            LOG(WARNING) << "Got unlikely impedance.";
-          }
-        }
 
       } else {
         LOG(WARNING) << "Was not able to coalesce impedance spectrums.";

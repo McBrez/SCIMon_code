@@ -143,9 +143,6 @@ public:
    */
   virtual std::string getDeviceTypeName() override;
 
-  /// Reads are halted as long as the internal buffer is bigger than this.
-  const size_t bufferOverflowSize = 4096;
-
 private:
   /**
    * @brief Handles the state machine, in case the socket got closed. If the

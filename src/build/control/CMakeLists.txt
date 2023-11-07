@@ -93,8 +93,14 @@ if (WIN32)
           COMMAND ${CMAKE_COMMAND} -E copy_if_different
            "${DLL_ELVEFLOW}"
            $<TARGET_FILE_DIR:control>/Elveflow64.dll)
+
+       set(INSTALL_DIR $ENV{ProgramFiles}/SCIMon)
+
 endif (WIN32)
 if (UNIX)
     
 endif (UNIX)
 
+install(TARGETS control
+    DESTINATION ${INSTALL_DIR}
+)

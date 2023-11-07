@@ -461,17 +461,16 @@ void NetworkWorker::commWorker() {
       // messages. Put interpreted messages into messageOut. Then, send
       // messages meant for the communication partner over.
 
-      // Read from socket, if the  buffer is not overflowing.
-      if (this->readBuffer.size() > this->bufferOverflowSize) {
-        int readSuccess = this->socketWrapper->read(this->readBuffer);
-        if (readSuccess < 0) {
-          // Connection seems to be closed.
-          LOG(ERROR) << "Other end point seems to have closed the connection. "
-                        "Closing down socket.";
-          this->handleLostConnection();
-          break;
-        }
+      // Read from socket.
+      int readSuccess = this->socketWrapper->read(this->readBuffer);
+      if (readSuccess < 0) {
+        // Connection seems to be closed.
+        LOG(ERROR) << "Other end point seems to have closed the connection. "
+                      "Closing down socket.";
+        this->handleLostConnection();
+        break;
       }
+
       std::shared_ptr<DeviceMessage> msg =
           MessageFactory::getInstace()->decodeMessage(this->readBuffer);
       // If a message could be decoded, push it to the queue.
@@ -499,6 +498,7 @@ void NetworkWorker::commWorker() {
         }
       }
       this->outgoingNetworkMessagesMutex.unlock();
+
     }
 
     else {
