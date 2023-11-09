@@ -203,14 +203,15 @@ MessageFactory::encodeMessage(std::shared_ptr<DeviceMessage> msg) {
       builder, &intermediateObject));
   uint8_t *buffer = builder.GetBufferPointer();
 
-  // Wrap the buffer with two length bytes an the message type.
-  int msgLen = builder.GetSize() & 0xFFFF;
+  // Wrap the buffer with four length bytes and the message type.
+  unsigned int msgLen = builder.GetSize();
   std::vector<unsigned char> bufferVect = std::vector<unsigned char>(
       (const unsigned char *)buffer,
       (const unsigned char *)buffer + builder.GetSize());
-
-  bufferVect.insert(bufferVect.begin(), (msgLen & 0xFF00) >> 8);
-  bufferVect.insert(bufferVect.begin(), (msgLen & 0x00FF));
+  bufferVect.insert(bufferVect.begin(), (msgLen & 0xFF000000) >> 24);
+  bufferVect.insert(bufferVect.begin(), (msgLen & 0x00FF0000) >> 16);
+  bufferVect.insert(bufferVect.begin(), (msgLen & 0x0000FF00) >> 8);
+  bufferVect.insert(bufferVect.begin(), (msgLen & 0x000000FF));
   bufferVect.insert(bufferVect.begin(), messageType);
   bufferVect.push_back(messageType);
 
@@ -243,12 +244,19 @@ MessageFactory::extractFrame(std::list<unsigned char> &buffer) {
       return nullptr;
     }
 
-    // Opening message type tag detected. The next two bytes should contain
+    // The smallest possible message is 6 bytes in length. If the buffer is
+    // smaller than that, no message will ever be decodable.
+    if (buffer.size() < 6) {
+      return nullptr;
+    }
+
+    // Opening message type tag detected. The next four bytes should contain
     // the length of the frame. Look ahead and find the closing message type
     // tag.
     auto bufferIt = buffer.begin();
-    unsigned short len = *(++bufferIt) + (*(++bufferIt) << 8);
-    if (len > buffer.size() - 1) {
+    unsigned int len = *(++bufferIt) + (*(++bufferIt) << 8) +
+                       (*(++bufferIt) << 16) + (*(++bufferIt) << 24);
+    if (len > (buffer.size() - 6)) {
       // Buffer ends prematurely. It might be the case that the closing
       // command tag has not been received yet. Return here and wait until
       // more bytes have been received.
@@ -280,7 +288,8 @@ MessageFactory::decodeFrame(std::vector<unsigned char> *buffer,
   MessageType messageType = static_cast<MessageType>(*bufferIt);
 
   // Get the frame length from the next two bytes.
-  short msgLen = *(++bufferIt) + (*(++bufferIt) << 8);
+  short msgLen = *(++bufferIt) + (*(++bufferIt) << 8) + (*(++bufferIt) << 16) +
+                 (*(++bufferIt) << 24);
 
   // Create a new vector that only contains the flatbuffer payload. flatbuffer
   // will take ownership of this pointer.

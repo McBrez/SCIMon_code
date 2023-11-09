@@ -158,7 +158,7 @@ ComInterfaceCodec::decodeMessage(std::vector<unsigned char> bytes) {
   }
 
   else if (ISX3_COMMAND_TAG_START_IMPEDANCE_MEAS == commandTag) {
-    short fNumber;
+    unsigned short fNumber;
     float timestamp;
     short channelNumber;
     std::complex<double> impedance;
@@ -344,8 +344,8 @@ std::vector<unsigned char> ComInterfaceCodec::getRawBytes(T value,
   return buffer;
 }
 bool ComInterfaceCodec::decodeImpedanceData(
-    const std::vector<unsigned char> &payload, short &fNumber, float &timestamp,
-    short &channelNumber, std::complex<double> &impedance) {
+    const std::vector<unsigned char> &payload, unsigned short &fNumber,
+    float &timestamp, short &channelNumber, std::complex<double> &impedance) {
 
   // Check if payload has expected length.
   // NOTE: Other formats are available. Those are not yet implemented.

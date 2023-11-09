@@ -160,7 +160,7 @@ void ControlWorkerWrapper::startConfig(QString comPort, QString ob1DeviceName) {
   std::shared_ptr<SentryInitPayload> initPayload(new SentryInitPayload(
       new Isx3InitPayload(comPort.toStdString(), 115200),
       new Isx3IsConfPayload(
-          10.0, 1000.0, 10, 0,
+          10.0, 1000000.0, 1000, 0,
           std::map<ChannelFunction, int>{{ChannelFunction::CHAN_FUNC_CP, 0x0C},
                                          {ChannelFunction::CHAN_FUNC_RP, 39},
                                          {ChannelFunction::CHAN_FUNC_WP, 0x0F},

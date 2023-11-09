@@ -222,7 +222,7 @@ private:
    * @return TRUE if the payload could be successfully decoded. FALSE otherwise.
    */
   bool decodeImpedanceData(const std::vector<unsigned char> &payload,
-                           short &fNumber, float &timestamp,
+                           unsigned short &fNumber, float &timestamp,
                            short &channelNumber,
                            std::complex<double> &impedance);
 

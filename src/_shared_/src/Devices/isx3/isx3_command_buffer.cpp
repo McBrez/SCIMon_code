@@ -21,7 +21,8 @@ std::list<std::vector<unsigned char>> Isx3CommandBuffer::interpretBuffer() {
   std::list<std::vector<unsigned char>> retVal;
 
   while (true) {
-    // Search for the next command tag.
+    // Search for the next command tag. Discard all non-command tags that are
+    // encountered until one is found.
     unsigned char cmdTag = 0x00;
     bool cmdTagFound = false;
     while (this->buffer.size() > 0 && !cmdTagFound) {
@@ -33,6 +34,7 @@ std::list<std::vector<unsigned char>> Isx3CommandBuffer::interpretBuffer() {
       }
     }
     if (!cmdTagFound) {
+      // There was no command tag in the buffer. Return here.
       break;
     }
 
@@ -45,7 +47,7 @@ std::list<std::vector<unsigned char>> Isx3CommandBuffer::interpretBuffer() {
     }
     auto bufferIt = this->buffer.begin();
     unsigned char len = *(++bufferIt);
-    if (len >= this->buffer.size() - 1) {
+    if (len > (this->buffer.size() - 3)) {
       // Buffer ends prematurely. It might be the case that the closing command
       // tag has not been received yet. Return here and wait until more bytes
       // have been received.

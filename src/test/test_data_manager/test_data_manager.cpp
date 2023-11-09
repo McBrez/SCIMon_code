@@ -451,6 +451,80 @@ TEST_CASE("Test vectorized reads and writes of the HDF data manager") {
   REQUIRE(readTimestampsSpectrum == std::vector<TimePoint>{});
 }
 
+void writeWorker(bool *doWork, std::shared_ptr<DataManagerHdf> dataManager) {
+  std::vector<double> testFrequencies{1.0,     10.0,     100.0,    1000.0,
+                                      10000.0, 100000.0, 1000000.0};
+  std::vector<Impedance> testImpedances{{1.0, 2.0},  {3.0, 4.0},  {5.0, 6.0},
+                                        {7.0, 8.0},  {9.0, 10.0}, {11.0, 12.0},
+                                        {13.0, 14.0}};
+  ImpedanceSpectrum testSpectrum;
+  Utilities::joinImpedanceSpectrum(testFrequencies, testImpedances,
+                                   testSpectrum);
+
+  while (*doWork) {
+
+    dataManager->write(Core::getNow(), "spectrum", Value(testSpectrum));
+    dataManager->write(Core::getNow(), "double", Value(1234.5678));
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  }
+}
+
+void readWorker(bool *doWork, std::shared_ptr<DataManagerHdf> dataManager) {
+  TimePoint now = Core::getNow();
+  while (*doWork) {
+    std::vector<TimePoint> timestamps;
+    std::vector<Value> values;
+    std::vector<Value> values2;
+    dataManager->read(now, Core::getNow(), "sepctrum", timestamps, values);
+    dataManager->read(now, Core::getNow(), "double", timestamps, values2);
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  }
+}
+
+#define THREAD_COUNT 10
+TEST_CASE("Test multi-threaded operation") {
+
+  for (int i = 0; i < THREAD_COUNT; i++) {
+    std::string fileName = TestFileName + std::to_string(i) + ".hdf";
+    std::remove(fileName.c_str());
+  }
+
+  std::vector<std::shared_ptr<DataManagerHdf>> duts(THREAD_COUNT);
+  std::vector<std::unique_ptr<std::thread>> workerThreads;
+  std::vector<std::unique_ptr<std::thread>> readerThreads;
+  bool doWorkFlags[THREAD_COUNT];
+
+  KeyMapping keyMapping;
+  keyMapping["int"] = DataManagerDataType::DATAMANAGER_DATA_TYPE_INT;
+  keyMapping["double"] = DataManagerDataType::DATAMANAGER_DATA_TYPE_DOUBLE;
+  keyMapping["string"] = DataManagerDataType::DATAMANAGER_DATA_TYPE_STRING;
+  keyMapping["complex"] = DataManagerDataType::DATAMANAGER_DATA_TYPE_COMPLEX;
+  keyMapping["spectrum"] = DataManagerDataType::DATAMANAGER_DATA_TYPE_SPECTRUM;
+
+  std::vector<double> testFrequencies{1.0,     10.0,     100.0,    1000.0,
+                                      10000.0, 100000.0, 1000000.0};
+
+  // Open the data managers and start writer threads.
+  for (int i = 0; i < THREAD_COUNT; i++) {
+    duts[i].reset(new DataManagerHdf());
+    REQUIRE(duts[i]->open(TestFileName + std::to_string(i), keyMapping));
+    REQUIRE(duts[i]->setupSpectrum("spectrum", testFrequencies));
+    doWorkFlags[i] = true;
+    workerThreads.emplace_back(std::unique_ptr<std::thread>(
+        new std::thread(&writeWorker, &doWorkFlags[i], duts[i])));
+    readerThreads.emplace_back(std::unique_ptr<std::thread>(
+        new std::thread(&readWorker, &doWorkFlags[i], duts[i])));
+  }
+
+  std::this_thread::sleep_for(std::chrono::seconds(30));
+
+  for (int i = 0; i < THREAD_COUNT; i++) {
+    doWorkFlags[i] = false;
+    workerThreads[i]->join();
+    readerThreads[i]->join();
+  }
+}
+
 #ifdef CATCH_CONFIG_ENABLE_BENCHMARKING
 
 #define TEST_VECTOR_SIZE 2000

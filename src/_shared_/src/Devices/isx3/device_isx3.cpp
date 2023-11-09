@@ -324,8 +324,8 @@ DeviceIsx3::specificRead(TimePoint timestamp) {
 
 ReadPayload *DeviceIsx3::coalesceImpedanceSpectrums(
     const std::list<IsPayload> &impedanceSpectrums,
-    const std::map<int, double> &frequencyPointMap) {
-  if (impedanceSpectrums.empty()) {
+    std::map<int, double> &frequencyPointMap) {
+  if (impedanceSpectrums.size() != frequencyPointMap.size()) {
     return nullptr;
   }
 
@@ -336,10 +336,12 @@ ReadPayload *DeviceIsx3::coalesceImpedanceSpectrums(
   for (auto &impedanceSpectrum : impedanceSpectrums) {
     ImpedanceSpectrum impedanceSpectrumObject =
         impedanceSpectrum.getImpedanceSpectrum();
-    double frequencyPoint = get<0>(impedanceSpectrumObject.front());
+    double frequencyPoint =
+        static_cast<int>(get<0>(impedanceSpectrumObject.front())) %
+        frequencyPointMap.size();
     std::complex<double> impedance = get<1>(impedanceSpectrumObject.front());
     frequencyValues.push_back(
-        this->frequencyPointMap[static_cast<int>(frequencyPoint)]);
+        frequencyPointMap[static_cast<int>(frequencyPoint)]);
     impedances.push_back(impedance);
   }
 
@@ -376,14 +378,26 @@ bool DeviceIsx3::handleReadPayload(std::shared_ptr<ReadPayload> readPayload) {
       dynamic_pointer_cast<IsPayload>(readPayload);
   if (isPayload) {
     // Impedance spectrum data from an ISX3 device is received one
-    // frequency point at a time. Aggregate the frequency point until the
+    // frequency point at a time. Aggregate the frequency points until the
     // whole spectrum is ready to be transmitted. If a spectrum with the
     // frequency point 0 is received, it is expected that a impedance spectrum
     // has been completed, and a new one has started. Coalesce the current
     // buffer into a single spectrum, then clear it and add the current
     // impedance spectrum to it.
-    if (this->impedanceSpectrumBuffer.empty() ||
-        get<0>(isPayload->getImpedanceSpectrum().front()) == 0.0) {
+    int frequencyPoint =
+        static_cast<int>(get<0>(isPayload->getImpedanceSpectrum().front()));
+    if (frequencyPoint == 0) {
+      // Check if the buffer is empty.
+      if (this->impedanceSpectrumBuffer.empty()) {
+        // The impedance spectrum buffer is empty. This is most likely the case,
+        // when the first ever impedance point has been received. Just push the
+        // impedance point into the buffer and return.
+        IsPayload copyIsPayload = *isPayload;
+        this->impedanceSpectrumBuffer.push_back(copyIsPayload);
+
+        return true;
+      }
+
       // Coalesce the spectrum and generate a message.
       ReadPayload *coalescedIsPayload = this->coalesceImpedanceSpectrums(
           this->impedanceSpectrumBuffer, this->frequencyPointMap);
@@ -411,17 +425,56 @@ bool DeviceIsx3::handleReadPayload(std::shared_ptr<ReadPayload> readPayload) {
         bool writeSuccess = this->dataManager->write(
             Core::getNow(), this->currentSpectrumKey, impedanceSpectrumValue);
 
+        for (auto &impedancePoint :
+             coalescedIsPayloadConcrete->getImpedanceSpectrum()) {
+          LOG(INFO) << std::get<double>(impedancePoint) << "\t"
+                    << std::get<Impedance>(impedancePoint);
+        }
+
         if (!writeSuccess)
           LOG(ERROR) << "ISX3 write failed.";
 
       } else {
+        this->impedanceSpectrumBuffer.clear();
         LOG(WARNING) << "Was not able to coalesce impedance spectrums.";
       }
 
     } else {
-      // Timestamp did not change. Push impedance spectrum to buffer.
-      IsPayload copyIsPayload = *isPayload;
-      this->impedanceSpectrumBuffer.push_back(copyIsPayload);
+      // This is not the beginning of a new spectrum.
+      // Check if the buffer is empty.
+      if (this->impedanceSpectrumBuffer.empty()) {
+        // At this point, the first point of the spectrum is not in the buffer
+        // and the current frequency point is not 0. This should not be the
+        // case. Clear the buffer and return.
+        this->impedanceSpectrumBuffer.clear();
+
+        LOG(WARNING) << "Inconsistent spectrum buffer state. The current "
+                        "spectrum will be lost.";
+
+        return false;
+      }
+
+      // Check if the current frequency point is the direct successor of the
+      // most recently received one.
+      int bufferFrequencypoint = static_cast<int>(std::get<0>(
+          this->impedanceSpectrumBuffer.back().getImpedanceSpectrum().front()));
+      if (frequencyPoint - bufferFrequencypoint == 1) {
+        // The received frequency point is the direct successor of the most
+        // recently received one. Push the spectrum to the buffer.
+        IsPayload copyIsPayload = *isPayload;
+        this->impedanceSpectrumBuffer.push_back(copyIsPayload);
+
+        return true;
+      } else {
+        // It seems that a frequency point has been skipped. The spectrum is
+        // compromised and will be omitted. Clear the buffer and return.
+        this->impedanceSpectrumBuffer.clear();
+
+        LOG(WARNING) << "Missed a frequency point. This impedance spectrum "
+                        "measurement is lost.";
+
+        return false;
+      }
     }
 
     return true;

@@ -189,7 +189,7 @@ private:
    */
   ReadPayload *
   coalesceImpedanceSpectrums(const std::list<IsPayload> &impedanceSpectrums,
-                             const std::map<int, double> &frequencyPointMap);
+                             std::map<int, double> &frequencyPointMap);
 
   /**
    * @brief Helper function of the worker thread, that handles a read payload,
