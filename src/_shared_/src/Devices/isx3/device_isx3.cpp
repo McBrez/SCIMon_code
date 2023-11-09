@@ -377,6 +377,11 @@ bool DeviceIsx3::handleReadPayload(std::shared_ptr<ReadPayload> readPayload) {
   std::shared_ptr<IsPayload> isPayload =
       dynamic_pointer_cast<IsPayload>(readPayload);
   if (isPayload) {
+    // Impedance spectra are only handled, if the device is currently operating.
+    if (DeviceStatus::OPERATING != this->deviceState) {
+      return false;
+    }
+
     // Impedance spectrum data from an ISX3 device is received one
     // frequency point at a time. Aggregate the frequency points until the
     // whole spectrum is ready to be transmitted. If a spectrum with the
@@ -478,6 +483,7 @@ bool DeviceIsx3::handleReadPayload(std::shared_ptr<ReadPayload> readPayload) {
     }
 
     return true;
+
   }
 
   else {
@@ -554,15 +560,23 @@ bool DeviceIsx3::initialize(std::shared_ptr<InitPayload> initPayload) {
     return false;
   }
 
-  // Send a few commands to the device.
-  this->pushToSendBuffer(this->comInterfaceCodec.buildCmdGetDeviceId());
-
-  this->pushToSendBuffer(
+  // Send a few commands to the device ...
+  // ... stop any measurement that is currently running ...
+  std::shared_ptr<Isx3CmdAckStruct> ackStructStop = this->pushToSendBuffer(
       this->comInterfaceCodec.buildCmdStartImpedanceMeasurement(false));
+  bool positiveAck = this->waitForAck(ackStructStop);
+  if (!positiveAck) {
+    LOG(ERROR) << "Could not stop the measurement.";
+    this->deviceState = DeviceStatus::ERROR;
+
+    return false;
+  }
+
+  this->pushToSendBuffer(this->comInterfaceCodec.buildCmdGetDeviceId());
   std::shared_ptr<Isx3CmdAckStruct> ackStruct =
       this->pushToSendBuffer(this->comInterfaceCodec.buildCmdSetSetup());
   // Wait for acknowledgement.
-  bool positiveAck = this->waitForAck(ackStruct);
+  positiveAck = this->waitForAck(ackStruct);
   if (positiveAck) {
     this->deviceState = DeviceStatus::INITIALIZED;
 

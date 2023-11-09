@@ -396,9 +396,6 @@ bool ControlWorker::handleResponse(
         return true;
       }
 
-      LOG(INFO) << "Received a DataResponseMessage: " << std::endl
-                << dataResponseMsg->serialize();
-
       std::string key = std::to_string(response->getSource().id()) + "/" +
                         dataResponseMsg->key;
       this->dataManager->write(dataResponseMsg->timestamps, key,

@@ -475,8 +475,8 @@ void NetworkWorker::commWorker() {
           MessageFactory::getInstace()->decodeMessage(this->readBuffer);
       // If a message could be decoded, push it to the queue.
       if (msg) {
-        LOG(DEBUG) << "Network worker decoded a " << msg->serialize()
-                   << " from " << msg->getSource().id() << ".";
+        VLOG(1) << "Network worker decoded a " << msg->serialize() << " from "
+                << msg->getSource().id() << ".";
         this->pushMessageQueue(msg);
       }
 

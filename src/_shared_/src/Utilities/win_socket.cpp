@@ -22,7 +22,7 @@ WinSocket::~WinSocket() {
 bool WinSocket::listenConnection(int port) {
   if (this->isConnected) {
     LOG(WARNING)
-        << "Can not start std::listening, as an connection is already open.";
+        << "Can not start listening, as an connection is already open.";
     return false;
   }
 
@@ -211,7 +211,7 @@ int WinSocket::read(std::vector<unsigned char> &bytes) {
   // Receive bytes.
   int iResult = recv(this->connectSocket, recvbuf, this->getBufferLength(), 0);
   if (iResult > 0) {
-    LOG(DEBUG) << "Bytes received: " << std::to_string(iResult);
+    VLOG(1) << "Bytes received: " << std::to_string(iResult);
     // Append received bytes to the bytes vector.
     bytes.insert(bytes.end(), (unsigned char *)recvbuf,
                  (unsigned char *)recvbuf + iResult);
