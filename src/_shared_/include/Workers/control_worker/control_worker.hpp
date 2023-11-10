@@ -137,13 +137,23 @@ public:
   bool setRemoteWorkerState(UserId remoteId, bool state);
 
   /**
-   * @brief Returns impedance spectra of the most recent data sereis.
+   * @brief Returns impedance spectra of the most recent data series.
    * @param from Start of the queried time interval.
    * @param to End of the queried time interval.
    * @return A vector of impedance spectra.
    */
   std::vector<std::tuple<TimePoint, ImpedanceSpectrum>>
   getSpectra(TimePoint from, TimePoint to);
+
+  /**
+   * @brief Returns pressure values of the most recent data series.
+   * @param from Start of the queried time interval.
+   * @param to End of the queried time interval.
+   * @return A mapping that maps from channel name to a vector containing tuples
+   * of Timestamps/pressure values.
+   */
+  std::map<std::string, std::vector<std::tuple<TimePoint, double>>>
+  getPressures(TimePoint from, TimePoint to);
 
   /**
    * @brief Return the name of the device type.
@@ -162,6 +172,10 @@ public:
    */
   std::string getLocalDataKey(UserId userId, const std::string &dataKey) const;
   std::string getLocalDataKey(size_t userId, const std::string &dataKey) const;
+  std::vector<std::string>
+  getLocalDataKey(UserId userId, const std::vector<std::string> &dataKey) const;
+  std::vector<std::string>
+  getLocalDataKey(size_t userId, const std::vector<std::string> &dataKey) const;
 
   bool setPressure(int channel, double pressure);
 

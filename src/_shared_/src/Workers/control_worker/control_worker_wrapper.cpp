@@ -19,7 +19,8 @@ ControlWorkerWrapper::ControlWorkerWrapper(int messageDistributorInterval,
       messageDistributor(new MessageDistributor(messageDistributorInterval)),
       networkWorker(new NetworkWorker()), controlWorker(new ControlWorker()),
       messageThread(nullptr), doPeriodicActions(true),
-      recentSpectrumQueryTimestamp() {
+      recentSpectrumQueryTimestamp(), recentCurrentPressureTimestamp(),
+      recentSetPointPressureTimestamp() {
   // Init the message factory.
   MessageFactory::createInstace(
       {std::shared_ptr<PayloadDecoder>(new Isx3PayloadDecoder()),
@@ -99,7 +100,7 @@ void ControlWorkerWrapper::periodicActionsWorker() {
       remoteStatesCache = remoteStates;
     }
 
-    // Query for new spectrum data.
+    // Query for data.
     TimePoint now = getNow();
     std::vector<std::tuple<TimePoint, ImpedanceSpectrum>> newIsData =
         this->controlWorker->getSpectra(this->recentSpectrumQueryTimestamp,
@@ -107,6 +108,14 @@ void ControlWorkerWrapper::periodicActionsWorker() {
     if (!newIsData.empty()) {
       emit newSpectrumData(newIsData);
       this->recentSpectrumQueryTimestamp = now;
+    }
+
+    std::map<std::string, std::vector<std::tuple<TimePoint, double>>>
+        newCurrPressData = this->controlWorker->getPressures(
+            this->recentCurrentPressureTimestamp, now);
+    if (!newCurrPressData.empty()) {
+      emit newPressureData(newCurrPressData);
+      this->recentCurrentPressureTimestamp = now;
     }
 
     std::this_thread::sleep_for(std::chrono::seconds(1));

@@ -88,10 +88,29 @@ signals:
   void stateChanged(DeviceStatus oldState, DeviceStatus newState);
   void subStateChanged(ControlWorkerSubState oldState,
                        ControlWorkerSubState newState);
+  /**
+   * @brief Emitted, when a state of an device changed on the remote end.
+   * @param oldStates The states before they have changed.
+   * @param newStates The states now.
+   */
   void remoteStateChanged(QList<std::shared_ptr<StatusPayload>> oldStates,
                           QList<std::shared_ptr<StatusPayload>> newStates);
+
+  /**
+   * @brief Emitted, when new impedance spectrum data has become available.
+   * @param data The new data. Vector containing tuples of timestamps and
+   * impedance spectra.
+   */
   void newSpectrumData(
       const std::vector<std::tuple<TimePoint, ImpedanceSpectrum>> &data);
+  /**
+   * @brief Emitted, when new pressure data has become available.
+   * @param data The new data. Maps from channel name to a vector containing
+   * timestamp/pressure tuples.
+   */
+  void newPressureData(
+      const std::map<std::string, std::vector<std::tuple<TimePoint, double>>>
+          &data);
 
 private:
   std::shared_ptr<MessageDistributor> messageDistributor;
@@ -103,6 +122,8 @@ private:
 
   /// The timestamp of the most recent spectrum query.
   TimePoint recentSpectrumQueryTimestamp;
+  TimePoint recentCurrentPressureTimestamp;
+  TimePoint recentSetPointPressureTimestamp;
 };
 
 #endif

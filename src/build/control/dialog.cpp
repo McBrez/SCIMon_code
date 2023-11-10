@@ -1,5 +1,8 @@
-// Qt includes
+// 3rd party includes
+// Qt
 #include "dialog.h"
+// Qwt
+#include <qwt_scale_widget.h>
 
 // UI includes
 #include "ui_dialog.h"
@@ -9,12 +12,19 @@
 
 Dialog::Dialog(QWidget *parent)
     : QDialog(parent), ui(new Ui::Dialog), controlWorkerWrapper(100, parent),
-      spectroplot(new Gui::Spectroplot(std::vector<double>{0.0}, this)) {
+      spectroplot(new Gui::Spectroplot(std::vector<double>{0.0}, this)),
+      linePlot(new Gui::ControllerPlot(this)) {
 
   ui->setupUi(this);
 
   this->spectroplot->setContentsMargins(0, 5, 0, 10);
   this->spectroplot->resize(400, 200);
+
+  this->linePlot->resize(400, 200);
+  this->linePlot->move(500, 0);
+  this->linePlot->enableAxis(QwtAxis::YLeft, false);
+  this->linePlot->enableAxis(QwtAxis::YRight, true);
+  this->linePlot->axisWidget(QwtAxis::YRight)->setTitle("Pressure (bar)");
 
   this->ui->tbl_control_workers->setRowCount(1);
   this->ui->tbl_control_workers->setColumnCount(2);

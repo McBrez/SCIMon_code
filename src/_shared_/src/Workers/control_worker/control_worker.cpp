@@ -878,3 +878,114 @@ bool ControlWorker::setPressure(int channel, double pressure) {
 
   return true;
 }
+
+std::map<std::string, std::vector<std::tuple<TimePoint, double>>>
+ControlWorker::getPressures(TimePoint from, TimePoint to) {
+  // Get the id of the pump controller.
+  UserId pumpControllerId = getPumpControllerId();
+
+  // Check, if the pump controller is already known.
+  if (!pumpControllerId.isValid() ||
+      !this->remoteDataKeys.contains(pumpControllerId.id())) {
+    return std::map<std::string, std::vector<std::tuple<TimePoint, double>>>();
+  }
+
+  // Get the data keys of the pump controller and find the ones that refer to a
+  // spectrum.
+  KeyMapping keyMap =
+      std::get<KeyMapping>(this->remoteDataKeys[pumpControllerId.id()]);
+
+  // Find the node that contains the most recent measurment.
+  TimePoint mostRecentMeasurement = TimePoint();
+  for (auto &keyValue : keyMap) {
+    std::vector<std::string> split = Utilities::split(keyValue.first, '/');
+    if (split.size() != 3) {
+      continue;
+    }
+    int year, month, day, hour, minute;
+    sscanf_s(split.front().c_str(), "%4i%2i%2i%2i%2i", &year, &month, &day,
+             &hour, &minute);
+    TimePoint timestamp;
+    timestamp += std::chrono::years(year) + std::chrono::months(month) +
+                 std::chrono::days(day) + std::chrono::hours(hour) +
+                 std::chrono::minutes(minute);
+
+    if (timestamp > mostRecentMeasurement) {
+      mostRecentMeasurement = timestamp;
+    }
+  }
+  std::string mostRecentMeasurementStr =
+      std::format("{:%Y%m%d%H%M}", mostRecentMeasurement);
+
+  // Find the keys that contain mostRecentMeasurementStr.
+  std::vector<std::string> mostRecentKeys;
+  for (auto &keyValue : keyMap) {
+    size_t pos = keyValue.first.find(mostRecentMeasurementStr);
+    if (pos != std::string::npos) {
+      mostRecentKeys.push_back(keyValue.first);
+    }
+  }
+
+  // Transform the remote keys to a local ones.
+  std::vector<std::string> targetKeys =
+      this->getLocalDataKey(pumpControllerId.id(), mostRecentKeys);
+
+  // Read from the data manager and build the return mapping.
+  std::map<std::string, std::vector<std::tuple<TimePoint, double>>> retVal;
+  for (auto &targetKey : targetKeys) {
+    std::vector<TimePoint> timestamps;
+    std::vector<Value> values;
+    bool success =
+        this->dataManager->read(from, to, targetKey, timestamps, values);
+    if (!success) {
+      LOG(ERROR)
+          << "Could not receive new pressure values from the data manager.";
+      continue;
+    }
+
+    // Transform std::vector<Value> to std::vector<double>
+    std::vector<double> pressures;
+    std::transform(values.cbegin(), values.cend(),
+                   std::back_inserter(pressures),
+                   [](Value value) { return std::get<double>(value); });
+
+    // Glob timestamps and values together.
+    std::vector<std::tuple<TimePoint, double>> dataVector;
+    std::transform(timestamps.cbegin(), timestamps.cend(), pressures.cbegin(),
+                   std::back_inserter(dataVector),
+                   [](TimePoint timepoint, double value) {
+                     return std::make_tuple(timepoint, value);
+                   });
+
+    // Add the vector to the mapping.
+    retVal[targetKey] = dataVector;
+  }
+
+  return retVal;
+}
+
+std::vector<std::string>
+ControlWorker::getLocalDataKey(UserId userId,
+                               const std::vector<std::string> &dataKey) const {
+
+  std::vector<std::string> retVal;
+
+  for (auto &it : dataKey) {
+    retVal.emplace_back(this->getLocalDataKey(userId, it));
+  }
+
+  return retVal;
+}
+
+std::vector<std::string>
+ControlWorker::getLocalDataKey(size_t userId,
+                               const std::vector<std::string> &dataKey) const {
+
+  std::vector<std::string> retVal;
+
+  for (auto &it : dataKey) {
+    retVal.emplace_back(this->getLocalDataKey(UserId(userId), it));
+  }
+
+  return retVal;
+}

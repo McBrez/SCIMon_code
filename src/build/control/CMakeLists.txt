@@ -17,11 +17,15 @@ qt_add_executable(control
     ${INCLUDE_DIR}/Workers/control_worker/control_worker_wrapper.hpp
     ${INCLUDE_DIR}/Gui/spectroplot.hpp
     ${INCLUDE_DIR}/Gui/spectroplot_data.hpp
+    ${INCLUDE_DIR}/Gui/line_plot.hpp
+    ${INCLUDE_DIR}/Gui/controller_plot.hpp
 
     dialog.cpp
     ${SOURCE_DIR}/Workers/control_worker/control_worker_wrapper.cpp
     ${SOURCE_DIR}/Gui/spectroplot.cpp
     ${SOURCE_DIR}/Gui/spectroplot_data.cpp
+    ${SOURCE_DIR}/Gui/line_plot.cpp
+    ${SOURCE_DIR}/Gui/controller_plot.cpp
 
     dialog.ui
 )
