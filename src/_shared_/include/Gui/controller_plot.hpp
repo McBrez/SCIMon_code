@@ -17,13 +17,15 @@ public:
 public slots:
 
   /**
-   * @brief createCurve
-   * @param title
-   * @param isSetPoint
+   * @brief Create a pair or setPoint/currValue curves.
+   * @param setPointTitle The name of the set point curve
+   * @param curValueTitle The name of the current value curve.
    * @return
    */
   bool createCurvePair(const QString &setPointTitle,
                        const QString &curValueTitle);
+
+
 };
 } // namespace Gui
 #endif

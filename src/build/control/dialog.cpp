@@ -92,19 +92,31 @@ Dialog::Dialog(QWidget *parent)
                                           std::get<ImpedanceSpectrum>(tup));
         }
       });
+  QObject::connect(&this->controlWorkerWrapper,
+                   &ControlWorkerWrapper::newPressureData, this,
+                   &Dialog::handleNewPressureData);
 
   this->controlWorkerWrapper.startStateQuery();
 }
 
 Dialog::~Dialog() { delete ui; }
 
-void Dialog::onControlStateChanged(DeviceStatus oldState,
-                                   DeviceStatus newState) {
+void Dialog::handleNewPressureData(
+    const std::map<std::string, std::vector<std::tuple<TimePoint, double>>>
+        &data) {
 
-  QString newStateStr =
-      QString::fromStdString(Devices::Device::deviceStatusToString(newState));
-  this->ui->tbl_control_workers->setItem(0, 0,
-                                         new QTableWidgetItem(newStateStr));
+  // Check if there are new curves.
+  QStringList knownCurveTitles = this->linePlot->getCurveTitle();
+  QStringList dataCurveTitles;
+  for (auto &keyValuePair : data) {
+    dataCurveTitles << QString(keyValuePair.first);
+  }
+  // Curves that are in dataCurveTitles, but not in knownCurveTitles are new.
+  QSet
+
+  // Add new curves.
+
+  // Push data.
 }
 
 void Dialog::onControlSubStateChanged(ControlWorkerSubState oldState,
@@ -115,10 +127,18 @@ void Dialog::onControlSubStateChanged(ControlWorkerSubState oldState,
                                          new QTableWidgetItem(newStateStr));
 }
 
+void Dialog::onControlStateChanged(DeviceStatus oldState,
+                                   DeviceStatus newState) {
+
+  QString newStateStr =
+      QString::fromStdString(Devices::Device::deviceStatusToString(newState));
+  this->ui->tbl_control_workers->setItem(0, 0,
+                                         new QTableWidgetItem(newStateStr));
+}
+
 void Dialog::onRemoteStatesChanged(
     QList<std::shared_ptr<StatusPayload>> oldStates,
     QList<std::shared_ptr<StatusPayload>> newStates) {
-
   this->ui->tbl_remote_workers->setRowCount(newStates.count() + 1);
   this->ui->tbl_remote_workers->setColumnCount(3);
 
@@ -140,7 +160,6 @@ void Dialog::onRemoteStatesChanged(
 }
 
 void Dialog::onSetPressure() {
-
   int channel = this->ui->cmb_channel_selection->currentIndex() + 1;
   double pressure = this->ui->spn_pressure->value();
 

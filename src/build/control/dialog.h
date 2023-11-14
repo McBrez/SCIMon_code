@@ -26,6 +26,9 @@ public slots:
                                 ControlWorkerSubState newState);
   void onRemoteStatesChanged(QList<std::shared_ptr<StatusPayload>> oldStates,
                              QList<std::shared_ptr<StatusPayload>> newStates);
+  void handleNewPressureData(
+      const std::map<std::string, std::vector<std::tuple<TimePoint, double>>>
+          &data);
   void onSetPressure();
 
 private:

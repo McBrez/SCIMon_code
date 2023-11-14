@@ -23,12 +23,13 @@ public:
   LinePlot(QWidget *parent = Q_NULLPTR);
 
 public slots:
+
   void pushData(const QString &title,
                 const std::vector<std::tuple<TimePoint, double>> &data);
   void resetData();
   bool createCurve(const QString &title, QPen pen);
   bool removeCurve(const QString &title);
-
+  QStringList getCurveTitle() const;
 private:
   QList<QwtPlotCurve *> curves;
   QMap<QString, QPolygonF *> curveData;

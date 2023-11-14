@@ -103,4 +103,14 @@ bool LinePlot::removeCurve(const QString &title) {
 
 void LinePlot::resetData() {}
 
+QStringList LinePlot::getCurveTitle() const {
+  QStringList retVal;
+
+  for (auto &curve : this->curves) {
+    retVal << curve->title().text();
+  }
+
+  return retVal;
+}
+
 } // namespace Gui
