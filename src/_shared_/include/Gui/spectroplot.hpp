@@ -17,7 +17,7 @@ class Spectroplot : public QwtPlot {
   Q_OBJECT
 
 public:
-  Spectroplot(const std::vector<double> &frequencies,
+  Spectroplot(const std::vector<double> &frequencies, Core::Duration duration,
               QWidget *parent = Q_NULLPTR);
 
 signals:
@@ -30,6 +30,7 @@ private:
   void rescalePlot();
   std::unique_ptr<QwtPlotSpectrogram> m_spectrogram;
   SpectrogramData *data;
+  Core::Duration duration;
 };
 } // namespace Gui
 #endif

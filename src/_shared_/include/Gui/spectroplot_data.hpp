@@ -29,6 +29,13 @@ public:
 
   bool pushSpectrum(TimePoint timestamp, const ImpedanceSpectrum &spectrum);
 
+  /**
+   * @brief Removes data that is older than the given timestamp.
+   * @param timestamp
+   * @return
+   */
+  int removeBefore(TimePoint timestamp);
+
 private:
   /// The value ranges of the held data.
   QwtInterval intervals[3];

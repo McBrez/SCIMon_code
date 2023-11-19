@@ -37,15 +37,14 @@ void writeThreadWorker(DataManager *dataManager, DeviceIsx3 *device) {
   }
 }
 
-DeviceIsx3::DeviceIsx3()
+DeviceIsx3::DeviceIsx3(boost::asio::io_service &io)
     : Device(DeviceType::IMPEDANCE_SPECTROMETER),
-      socketWrapper(SocketWrapper::getSocketWrapper()),
-      isx3CommThreadState(ISX3_COMM_THREAD_STATE_INVALID), doComm(false) {}
+      isx3CommThreadState(ISX3_COMM_THREAD_STATE_INVALID), doComm(false),
+      io(io) {}
 
 DeviceIsx3::~DeviceIsx3() {
   this->doComm = false;
   this->commThread->join();
-  this->socketWrapper->close();
 
   if (doWriteThread) {
     doWriteThread = false;
@@ -193,7 +192,7 @@ DeviceIsx3::specificRead(TimePoint timestamp) {
 
 ReadPayload *DeviceIsx3::coalesceImpedanceSpectrums(
     const std::list<IsPayload> &impedanceSpectrums,
-    const std::map<int, double> &frequencyPointMap) {
+    std::map<int, double> &frequencyPointMap) {
 
   if (impedanceSpectrums.empty()) {
     return nullptr;
@@ -299,9 +298,7 @@ bool DeviceIsx3::handleResponse(std::shared_ptr<ReadDeviceMessage> response) {
   return true;
 }
 
-std::string DeviceIsx3::getDeviceSerialNumber() {
-  return this->deviceSerialNumber;
-}
+std::string DeviceIsx3::getDeviceSerialNumber() { return ""; }
 
 std::string DeviceIsx3::getCurrentSpectrumKey() const {
   return this->currentSpectrumKey;

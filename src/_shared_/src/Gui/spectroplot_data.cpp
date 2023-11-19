@@ -106,4 +106,28 @@ bool SpectrogramData::pushSpectrum(TimePoint timestamp,
   return true;
 }
 
+int SpectrogramData::removeBefore(TimePoint timestamp) {
+  // Cast the timestamp to a double.
+  double timestampDouble =
+      static_cast<double>(timestamp.time_since_epoch().count());
+
+  // Remove entries that are older than the timestamp.
+  int removeCount = this->dataMap.removeIf(
+      [timestampDouble](
+          std::pair<const double &, std::vector<Impedance> &> entry) {
+        return entry.first < timestampDouble;
+      });
+
+  // Adjust intervals.
+  QList<double> keys = this->dataMap.keys();
+  if (!keys.empty()) {
+    double timestampMin = *std::min_element(keys.begin(), keys.end());
+    double timestampMax = *std::max_element(keys.begin(), keys.end());
+
+    this->intervals[Qt::YAxis].setInterval(timestampMin, timestampMax);
+  }
+
+  return removeCount;
+}
+
 } // namespace Gui

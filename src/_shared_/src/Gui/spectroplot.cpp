@@ -47,9 +47,10 @@ class SpectroplotDateScaleEngine : public QwtDateScaleEngine {
 };
 
 Spectroplot::Spectroplot(const std::vector<double> &frequencies,
-                         QWidget *parent)
+                         Core::Duration duration, QWidget *parent)
     : QwtPlot(parent),
-      data(new SpectrogramData(frequencies, std::chrono::seconds(30))) {
+      data(new SpectrogramData(frequencies, std::chrono::seconds(30))),
+      duration(duration) {
 
   this->m_spectrogram.reset(new QwtPlotSpectrogram());
   this->m_spectrogram->setRenderThreadCount(
@@ -102,9 +103,16 @@ Spectroplot::Spectroplot(const std::vector<double> &frequencies,
 void Spectroplot::pushSpectrum(TimePoint timestamp,
                                const ImpedanceSpectrum &spectrum) {
 
+  TimePoint removeBeforeTs = Core::getNow() - this->duration;
+
+  // Remove old data ...
+  this->data->removeBefore(removeBeforeTs);
+
+  // ... push the new one ...
   this->data->pushSpectrum(timestamp, spectrum);
   this->m_spectrogram->setData(this->data);
 
+  // ... and adjust the intervals.
   QwtInterval zInterval = this->data->interval(Qt::ZAxis);
   this->axisWidget(QwtAxis::YRight)
       ->setColorMap(zInterval, new QwtLinearColorMap());

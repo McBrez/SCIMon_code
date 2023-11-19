@@ -1,3 +1,6 @@
+// Standard includes
+#include <random>
+
 // 3rd party includes
 #include <Elveflow64_shim.h>
 
@@ -22,6 +25,11 @@ DeviceOb1Win::~DeviceOb1Win() {
   if (this->configurationThread) {
     this->configurationThread->join();
   }
+
+  if (this->workerThread) {
+    this->doWork = false;
+    this->workerThread->join();
+  }
 }
 
 bool DeviceOb1Win::initialize(std::shared_ptr<InitPayload> initPayload) {
@@ -35,7 +43,9 @@ bool DeviceOb1Win::initialize(std::shared_ptr<InitPayload> initPayload) {
   }
 
   this->initFinished = true;
+  this->onInitialized("ob1_mocked", KeyMapping(), SpectrumMapping());
   this->deviceState = DeviceStatus::INITIALIZED;
+
   return true;
 }
 
@@ -62,27 +72,21 @@ void DeviceOb1Win::configureWorker(
 }
 
 bool DeviceOb1Win::start() {
-  if (this->initFinished == true && this->configurationFinished == true) {
-    if (this->deviceState == DeviceStatus::IDLE) {
-      LOG(DEBUG) << "Starting OB1...";
-      // Restore cached pressures.
-      for (auto it : this->cachedPressures) {
-        int retVal =
-            OB1_Set_Press(this->ob1Id, it.first, it.second, this->calibration,
-                          Constants::Ob1CalibrationArrayLen);
-        LOG(DEBUG) << "Set pressure " << it.second << " on channel " << it.first
-                   << ", with return value " << retVal;
-      }
-      this->deviceState = DeviceStatus::OPERATING;
-      return true;
-    } else {
-      LOG(WARNING) << "OB1 can not be started, as it is already running, or in "
-                      "an invalid state.";
-      return false;
+  if (this->deviceState == DeviceStatus::IDLE) {
+    LOG(DEBUG) << "Starting OB1...";
+    // Restore cached pressures.
+    for (auto it : this->cachedPressures) {
+      int retVal =
+          OB1_Set_Press(this->ob1Id, it.first, it.second, this->calibration,
+                        Constants::Ob1CalibrationArrayLen);
+      LOG(DEBUG) << "Set pressure " << it.second << " on channel " << it.first
+                 << ", with return value " << retVal;
     }
+    this->deviceState = DeviceStatus::OPERATING;
+    return true;
   } else {
-    LOG(WARNING)
-        << "OB1 cannot be started, as it is not yet initialized or configured.";
+    LOG(WARNING) << "OB1 can not be started, as it is already running, or in "
+                    "an invalid state.";
     return false;
   }
 }
@@ -111,6 +115,37 @@ bool DeviceOb1Win::stop() {
 
 bool DeviceOb1Win::configure(
     std::shared_ptr<ConfigurationPayload> configPayload) {
+  // Set up the key mappings. There are three data keys for each channel. One
+  // for the setpoint, one for the current pressure and one for the unit.
+  TimePoint now = Core::getNow();
+  std::string nowStr = std::format("{:%Y%m%d%H%M}", now);
+  this->currentMeasurementTimestamp = nowStr;
+  KeyMapping keyMapping{
+      {nowStr + "/channel1/setpoint", DATAMANAGER_DATA_TYPE_DOUBLE},
+      {nowStr + "/channel1/currPressure", DATAMANAGER_DATA_TYPE_DOUBLE},
+      // {nowStr + "/channel1/unit", DATAMANAGER_DATA_TYPE_STRING},
+      {nowStr + "/channel2/setpoint", DATAMANAGER_DATA_TYPE_DOUBLE},
+      {nowStr + "/channel2/currPressure", DATAMANAGER_DATA_TYPE_DOUBLE},
+      // {nowStr + "/channel2/unit", DATAMANAGER_DATA_TYPE_STRING},
+      {nowStr + "/channel3/setpoint", DATAMANAGER_DATA_TYPE_DOUBLE},
+      {nowStr + "/channel3/currPressure", DATAMANAGER_DATA_TYPE_DOUBLE},
+      // {nowStr + "/channel3/unit", DATAMANAGER_DATA_TYPE_STRING},
+      {nowStr + "/channel4/setpoint", DATAMANAGER_DATA_TYPE_DOUBLE},
+      {nowStr + "/channel4/currPressure", DATAMANAGER_DATA_TYPE_DOUBLE}
+      // {nowStr + "/channel4/unit", DATAMANAGER_DATA_TYPE_STRING}};
+  };
+  SpectrumMapping spectrumMapping;
+
+  this->onConfigured(keyMapping, spectrumMapping);
+
+  // Start the worker thread.
+  this->doWork = false;
+  if (this->workerThread && this->workerThread->joinable()) {
+    this->workerThread->join();
+  }
+  this->doWork = true;
+  this->workerThread.reset(new std::thread(&DeviceOb1Win::worker, this));
+
   this->deviceState = DeviceStatus::IDLE;
 
   return true;
@@ -164,6 +199,50 @@ bool DeviceOb1Win::specificWrite(std::shared_ptr<WriteDeviceMessage> writeMsg) {
 
 std::string DeviceOb1Win::getDeviceSerialNumber() {
   return this->ob1DeviceName;
+}
+
+void DeviceOb1Win::worker() {
+  int counter = 0;
+  std::uniform_real_distribution<double> unif(0.0, 2.0);
+  std::default_random_engine re;
+
+  while (this->doWork) {
+
+    TimePoint now = Core::getNow();
+
+    // Write to the current values.
+    this->dataManager->write(
+        now, this->currentMeasurementTimestamp + "/channel1/currPressure",
+        Value(unif(re)));
+    this->dataManager->write(
+        now, this->currentMeasurementTimestamp + "/channel2/currPressure",
+        Value(unif(re)));
+    this->dataManager->write(
+        now, this->currentMeasurementTimestamp + "/channel3/currPressure",
+        Value(unif(re)));
+    this->dataManager->write(
+        now, this->currentMeasurementTimestamp + "/channel4/currPressure",
+        Value(unif(re)));
+
+    // Write to the set points.
+    counter++;
+    if (counter > 5) {
+      this->dataManager->write(
+          now, this->currentMeasurementTimestamp + "/channel1/setpoint",
+          Value(unif(re)));
+      this->dataManager->write(
+          now, this->currentMeasurementTimestamp + "/channel2/setpoint",
+          Value(unif(re)));
+      this->dataManager->write(
+          now, this->currentMeasurementTimestamp + "/channel3/setpoint",
+          Value(unif(re)));
+      this->dataManager->write(
+          now, this->currentMeasurementTimestamp + "/channel4/setpoint",
+          Value(unif(re)));
+      counter = 0;
+    }
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+  }
 }
 
 } // namespace Devices

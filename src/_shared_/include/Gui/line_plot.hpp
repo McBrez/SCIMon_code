@@ -14,13 +14,20 @@
 
 namespace Gui {
 /**
- * @brief A line plot that allows to display multiple time series data.
+ * @brief A line plot that allows to display multiple time series data rows.
  */
 class LinePlot : public QwtPlot {
   Q_OBJECT
 
 public:
-  LinePlot(QWidget *parent = Q_NULLPTR);
+  /**
+   * @brief Creates the object.
+   * @param parent The Qt parent.
+   * @param duration Data that is older than this duration, will be removed from
+   * the plot.
+   */
+  LinePlot(QWidget *parent = Q_NULLPTR,
+           Core::Duration duration = Core::Duration());
 
 public slots:
 
@@ -29,10 +36,12 @@ public slots:
   void resetData();
   bool createCurve(const QString &title, QPen pen);
   bool removeCurve(const QString &title);
-  QStringList getCurveTitle() const;
+  QStringList getCurveTitles() const;
+
 private:
   QList<QwtPlotCurve *> curves;
   QMap<QString, QPolygonF *> curveData;
+  Core::Duration duration;
 };
 } // namespace Gui
 #endif

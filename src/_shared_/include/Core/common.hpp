@@ -34,6 +34,9 @@ using TimePoint = std::chrono::time_point<std::chrono::system_clock, Duration>;
  */
 TimePoint getNow();
 
+TimePoint getTimeFromStr(const std::string &dateString,
+                         const std::string &formatString = "%Y%m%d%H%M");
+
 /**
  * @brief Formats the given timepoint into a string.
  * @return String representing the given timepoint.

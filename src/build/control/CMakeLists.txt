@@ -31,6 +31,7 @@ qt_add_executable(control
 )
 
 target_include_directories(control PUBLIC
+    .
     ${INCLUDE_DIR}/Workers/control_worker
     ${INCLUDE_DIR}/Gui
 )
@@ -90,7 +91,7 @@ if (WIN32)
     # add_compile_definitions(_HAS_STD_BYTE=0)
 
     # Copy the DLLs to the output directory
-    find_library(DLL_ELVEFLOW Elveflow64.dll ${3RDPARTY_DIR}/elveflow/x64)
+    find_library(DLL_ELVEFLOW Elveflow64 ${3RDPARTY_DIR}/elveflow/x64)
     add_custom_command(
         TARGET control
          POST_BUILD

@@ -1,6 +1,6 @@
 // 3rd party includes
 // Qt
-#include "dialog.h"
+#include <QSet>
 // Qwt
 #include <qwt_scale_widget.h>
 
@@ -9,19 +9,22 @@
 
 // Project includes
 #include <device.hpp>
+#include <dialog.h>
 
 Dialog::Dialog(QWidget *parent)
     : QDialog(parent), ui(new Ui::Dialog), controlWorkerWrapper(100, parent),
-      spectroplot(new Gui::Spectroplot(std::vector<double>{0.0}, this)),
-      linePlot(new Gui::ControllerPlot(this)) {
+      spectroplot(new Gui::Spectroplot(std::vector<double>{0.0},
+                                       std::chrono::minutes(1), this)),
+      linePlot(new Gui::ControllerPlot("currPressure", "setpoint",
+                                       std::chrono::minutes(1), this)) {
 
   ui->setupUi(this);
 
   this->spectroplot->setContentsMargins(0, 5, 0, 10);
-  this->spectroplot->resize(400, 200);
+  this->spectroplot->resize(400, 220);
 
-  this->linePlot->resize(400, 200);
-  this->linePlot->move(500, 0);
+  this->linePlot->resize(450, 220);
+  this->linePlot->move(450, 0);
   this->linePlot->enableAxis(QwtAxis::YLeft, false);
   this->linePlot->enableAxis(QwtAxis::YRight, true);
   this->linePlot->axisWidget(QwtAxis::YRight)->setTitle("Pressure (bar)");
@@ -105,18 +108,42 @@ void Dialog::handleNewPressureData(
     const std::map<std::string, std::vector<std::tuple<TimePoint, double>>>
         &data) {
 
-  // Check if there are new curves.
-  QStringList knownCurveTitles = this->linePlot->getCurveTitle();
+  // Define a lamba, that strips user id and timestamp from the data key.
+  auto strip = [](std::string str) {
+    QString qStr = QString::fromStdString(str);
+    QStringList strSplit = qStr.split("/");
+    QStringList strListStripped(strSplit.begin() + 2, strSplit.end());
+
+    return strListStripped.join("/");
+  };
+
+  // Check if there are new curves ...
+  // ... First build string lists that contain the curve title ...
+  QStringList knownCurveTitles = this->linePlot->getCurveTitles();
   QStringList dataCurveTitles;
   for (auto &keyValuePair : data) {
-    dataCurveTitles << QString(keyValuePair.first);
+    // ... Remove the user id from the tag ...
+    dataCurveTitles << strip(keyValuePair.first);
   }
+
   // Curves that are in dataCurveTitles, but not in knownCurveTitles are new.
-  QSet
+  QSet<QString> knownCurveTitlesSet(knownCurveTitles.begin(),
+                                    knownCurveTitles.end());
+  QSet<QString> dataCurveTitlesSet(dataCurveTitles.begin(),
+                                   dataCurveTitles.end());
+  QSet<QString> newCurveTitles = dataCurveTitlesSet - knownCurveTitlesSet;
 
   // Add new curves.
+  if (!newCurveTitles.empty()) {
+    for (auto &newCurveTitle : newCurveTitles) {
+      this->linePlot->createCurvePair(newCurveTitle);
+    }
+  }
 
   // Push data.
+  for (auto &keyValuePair : data) {
+    this->linePlot->pushData(strip(keyValuePair.first), keyValuePair.second);
+  }
 }
 
 void Dialog::onControlSubStateChanged(ControlWorkerSubState oldState,

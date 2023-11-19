@@ -1,8 +1,10 @@
 // 3rd party includes
 #include <qwt_date_scale_draw.h>
+#include <qwt_date_scale_engine.h>
 #include <qwt_legend.h>
 #include <qwt_plot_grid.h>
 #include <qwt_plot_layout.h>
+#include <qwt_scale_engine.h>
 #include <qwt_scale_widget.h>
 
 // Project includes
@@ -10,29 +12,36 @@
 
 namespace Gui {
 
-LinePlot::LinePlot(QWidget *parent) : QwtPlot(parent) {
+LinePlot::LinePlot(QWidget *parent, Core::Duration duration)
+    : QwtPlot(parent), duration(duration) {
   // Set up axes.
-  QwtScaleWidget *bottomAxis = this->axisWidget(QwtAxis::XBottom);
-  bottomAxis->setTitle("Time");
+  this->axisWidget(QwtAxis::XBottom)->setTitle("Time");
 
-  QwtDateScaleDraw *scaleDraw = new QwtDateScaleDraw();
-  scaleDraw->setDateFormat(QwtDate::IntervalType::Minute, "hh:mm:ss");
-  scaleDraw->setDateFormat(QwtDate::Millisecond, "hh:mm:ss");
-  scaleDraw->setDateFormat(QwtDate::Second, "hh:mm:ss");
-  scaleDraw->setDateFormat(QwtDate::Minute, "hh:mm:ss");
-  scaleDraw->setDateFormat(QwtDate::Hour, "hh:mm:ss");
-  scaleDraw->setDateFormat(QwtDate::Day, "hh:mm:ss");
-  scaleDraw->setDateFormat(QwtDate::Week, "hh:mm:ss");
-  scaleDraw->setDateFormat(QwtDate::Month, "hh:mm:ss");
+  QwtDateScaleDraw *scaleXDraw = new QwtDateScaleDraw();
+  scaleXDraw->setDateFormat(QwtDate::IntervalType::Minute, "hh:mm:ss");
+  scaleXDraw->setDateFormat(QwtDate::Millisecond, "hh:mm:ss");
+  scaleXDraw->setDateFormat(QwtDate::Second, "hh:mm:ss");
+  scaleXDraw->setDateFormat(QwtDate::Minute, "hh:mm:ss");
+  scaleXDraw->setDateFormat(QwtDate::Hour, "hh:mm:ss");
+  scaleXDraw->setDateFormat(QwtDate::Day, "hh:mm:ss");
+  scaleXDraw->setDateFormat(QwtDate::Week, "hh:mm:ss");
+  scaleXDraw->setDateFormat(QwtDate::Month, "hh:mm:ss");
+  this->setAxisScaleDraw(QwtAxis::XBottom, scaleXDraw);
 
-  this->setAxisScaleDraw(QwtAxis::XBottom, scaleDraw);
+  QwtScaleDraw *scaleYDraw = new QwtScaleDraw();
+  this->setAxisScaleDraw(QwtAxis::YRight, scaleYDraw);
+
+  QwtDateScaleEngine *scaleEngine = new QwtDateScaleEngine();
+  this->setAxisScaleEngine(QwtAxis::XBottom, scaleEngine);
 
   this->insertLegend(new QwtLegend());
 
   QwtPlotGrid *grid = new QwtPlotGrid();
   grid->attach(this);
 
+  this->plotLayout()->setAlignCanvasToScales(true);
   this->setAxisAutoScale(QwtAxis::YRight, true);
+  this->setAxisAutoScale(QwtAxis::XBottom, true);
 }
 
 void LinePlot::pushData(
@@ -45,7 +54,7 @@ void LinePlot::pushData(
       [title](QwtPlotCurve *curve) { return curve->title() == title; });
 
   if (it == this->curves.end()) {
-    // Curve does exist. Do nothing.
+    // Curve does not exist. Do nothing.
 
     return;
   }
@@ -58,10 +67,23 @@ void LinePlot::pushData(
     points << QPointF(timestamp, value);
   }
 
+  // Remove old data.
+  if (this->duration.count() != 0) {
+    Core::TimePoint minTimestamp = Core::getNow() - this->duration;
+    for (auto &curve : this->curveData) {
+      Core::Duration durationTemp = this->duration;
+      curve->removeIf([minTimestamp](QPointF point) {
+        return static_cast<long long>(point.x()) <
+               minTimestamp.time_since_epoch().count();
+      });
+    }
+  }
+
   // Append the constructed polygon to the data.
   (*this->curveData[title]) << points;
-
   (*it)->setSamples((*this->curveData[title]));
+
+  this->replot();
 }
 
 bool LinePlot::createCurve(const QString &title, QPen pen) {
@@ -80,6 +102,7 @@ bool LinePlot::createCurve(const QString &title, QPen pen) {
     newCurve->setPen(pen);
     newCurve->setRenderHint(QwtPlotItem::RenderAntialiased, true);
     newCurve->setSamples(*this->curveData[title]);
+    newCurve->setAxes(QwtAxis::XBottom, QwtAxis::YRight);
     newCurve->attach(this);
 
     this->curves.append(newCurve);
@@ -89,21 +112,23 @@ bool LinePlot::createCurve(const QString &title, QPen pen) {
 }
 
 bool LinePlot::removeCurve(const QString &title) {
-  // Check if a curve with the given title exists.
-  auto it = std::find_if(
+
+  size_t oldSize = this->curves.size();
+
+  auto it = std::remove_if(
       this->curves.begin(), this->curves.end(),
       [title](QwtPlotCurve *curve) { return curve->title() == title; });
 
-  if (it == this->curves.end()) {
-    // Curve does not exist. Return here.
-    return false;
+  if (oldSize > this->curves.size()) {
+    return true;
   } else {
+    return false;
   }
 }
 
 void LinePlot::resetData() {}
 
-QStringList LinePlot::getCurveTitle() const {
+QStringList LinePlot::getCurveTitles() const {
   QStringList retVal;
 
   for (auto &curve : this->curves) {

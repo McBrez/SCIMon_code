@@ -9,6 +9,15 @@ Core::TimePoint Core::getNow() {
       std::chrono::system_clock::now().time_since_epoch()));
 }
 
+Core::TimePoint Core::getTimeFromStr(const std::string &dateString,
+                                     const std::string &formatString) {
+  std::istringstream ss(dateString);
+  Core::TimePoint timestamp;
+  ss >> std::chrono::parse(formatString, timestamp);
+
+  return timestamp;
+}
+
 std::string Core::getTimestampString(TimePoint timepoints) {
   return std::format("{:%FT%T%z}", timepoints);
 }

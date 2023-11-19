@@ -896,19 +896,13 @@ ControlWorker::getPressures(TimePoint from, TimePoint to) {
       std::get<KeyMapping>(this->remoteDataKeys[pumpControllerId.id()]);
 
   // Find the node that contains the most recent measurment.
-  TimePoint mostRecentMeasurement = TimePoint();
+  TimePoint mostRecentMeasurement;
   for (auto &keyValue : keyMap) {
     std::vector<std::string> split = Utilities::split(keyValue.first, '/');
     if (split.size() != 3) {
       continue;
     }
-    int year, month, day, hour, minute;
-    sscanf_s(split.front().c_str(), "%4i%2i%2i%2i%2i", &year, &month, &day,
-             &hour, &minute);
-    TimePoint timestamp;
-    timestamp += std::chrono::years(year) + std::chrono::months(month) +
-                 std::chrono::days(day) + std::chrono::hours(hour) +
-                 std::chrono::minutes(minute);
+    TimePoint timestamp = Core::getTimeFromStr(split.front());
 
     if (timestamp > mostRecentMeasurement) {
       mostRecentMeasurement = timestamp;
@@ -940,6 +934,10 @@ ControlWorker::getPressures(TimePoint from, TimePoint to) {
     if (!success) {
       LOG(ERROR)
           << "Could not receive new pressure values from the data manager.";
+      continue;
+    }
+    if (timestamps.empty()) {
+      // Skip this key, if read returned nothing.
       continue;
     }
 
