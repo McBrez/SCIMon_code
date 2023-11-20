@@ -8,6 +8,8 @@
 #include "ui_dialog.h"
 
 // Project includes
+#include <config_tab_isx3.hpp>
+#include <config_tab_ob1.hpp>
 #include <device.hpp>
 #include <dialog.h>
 
@@ -20,15 +22,18 @@ Dialog::Dialog(QWidget *parent)
 
   ui->setupUi(this);
 
+  // Add the spectroplot.
   this->spectroplot->setContentsMargins(0, 5, 0, 10);
   this->spectroplot->resize(400, 220);
 
+  // Add the line plot.
   this->linePlot->resize(450, 220);
   this->linePlot->move(450, 0);
   this->linePlot->enableAxis(QwtAxis::YLeft, false);
   this->linePlot->enableAxis(QwtAxis::YRight, true);
   this->linePlot->axisWidget(QwtAxis::YRight)->setTitle("Pressure (bar)");
 
+  // Add the state table.
   this->ui->tbl_control_workers->setRowCount(1);
   this->ui->tbl_control_workers->setColumnCount(2);
 
@@ -36,6 +41,10 @@ Dialog::Dialog(QWidget *parent)
                                                     << "Ch2"
                                                     << "Ch3"
                                                     << "Ch4");
+
+  // Set up the configuration tabs.
+  this->ui->tab_config->addTab(new Gui::ConfigTabIsx3(), "Isx3");
+  this->ui->tab_config->addTab(new Gui::ConfigTabOb1(), "Ob1");
 
   QObject::connect(this->ui->btn_set_pressure, &QPushButton::clicked, this,
                    &Dialog::onSetPressure);

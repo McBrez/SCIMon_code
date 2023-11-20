@@ -19,6 +19,10 @@ qt_add_executable(control
     ${INCLUDE_DIR}/Gui/spectroplot_data.hpp
     ${INCLUDE_DIR}/Gui/line_plot.hpp
     ${INCLUDE_DIR}/Gui/controller_plot.hpp
+    ${INCLUDE_DIR}/Gui/config_tab.hpp
+    ${INCLUDE_DIR}/Gui/config_tab_isx3.hpp
+    ${INCLUDE_DIR}/Gui/config_tab_ob1.hpp
+
 
     dialog.cpp
     ${SOURCE_DIR}/Workers/control_worker/control_worker_wrapper.cpp
@@ -26,6 +30,9 @@ qt_add_executable(control
     ${SOURCE_DIR}/Gui/spectroplot_data.cpp
     ${SOURCE_DIR}/Gui/line_plot.cpp
     ${SOURCE_DIR}/Gui/controller_plot.cpp
+    ${SOURCE_DIR}/Gui/config_tab.cpp
+    ${SOURCE_DIR}/Gui/config_tab_isx3.cpp
+    ${SOURCE_DIR}/Gui/config_tab_ob1.cpp
 
     dialog.ui
 )

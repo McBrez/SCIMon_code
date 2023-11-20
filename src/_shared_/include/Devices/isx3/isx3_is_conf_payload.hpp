@@ -51,8 +51,8 @@ public:
   MeasurmentConfigurationRange measurementConfRange;
   MeasurmentConfigurationChannel measurementConfChannel;
   MeasurementConfiguration measurementConfiguration;
-  const double precision;
-  const double amplitude;
+  double precision;
+  double amplitude;
 };
 } // namespace Devices
 
