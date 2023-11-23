@@ -15,6 +15,8 @@ public:
   virtual std::shared_ptr<InitPayload> getInitPayload() override;
 
   virtual std::shared_ptr<ConfigurationPayload> getConfigPayload() override;
+
+  virtual QString configTabName() const override;
 };
 
 } // namespace Gui

@@ -43,8 +43,12 @@ Dialog::Dialog(QWidget *parent)
                                                     << "Ch4");
 
   // Set up the configuration tabs.
-  this->ui->tab_config->addTab(new Gui::ConfigTabIsx3(), "Isx3");
-  this->ui->tab_config->addTab(new Gui::ConfigTabOb1(), "Ob1");
+  this->configTabs.append(new Gui::ConfigTabIsx3());
+  this->configTabs.append(new Gui::ConfigTabOb1());
+
+  for (auto &configTab : this->configTabs) {
+    this->ui->tab_config->addTab(configTab, configTab->configTabName());
+  }
 
   QObject::connect(this->ui->btn_set_pressure, &QPushButton::clicked, this,
                    &Dialog::onSetPressure);

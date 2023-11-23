@@ -20,6 +20,8 @@ public:
   virtual std::shared_ptr<InitPayload> getInitPayload() = 0;
 
   virtual std::shared_ptr<ConfigurationPayload> getConfigPayload() = 0;
+
+  virtual QString configTabName() const = 0;
 };
 
 } // namespace Gui

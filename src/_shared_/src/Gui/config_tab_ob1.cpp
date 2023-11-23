@@ -12,3 +12,5 @@ std::shared_ptr<InitPayload> ConfigTabOb1::getInitPayload() {
 std::shared_ptr<ConfigurationPayload> ConfigTabOb1::getConfigPayload() {
   return std::shared_ptr<ConfigurationPayload>();
 }
+
+QString ConfigTabOb1::configTabName() const { return "Ob1"; }

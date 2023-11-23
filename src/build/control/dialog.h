@@ -5,6 +5,7 @@
 #include <QDialog>
 
 // Project inclues
+#include <config_tab.hpp>
 #include <control_worker_wrapper.hpp>
 #include <controller_plot.hpp>
 #include <spectroplot.hpp>
@@ -36,6 +37,7 @@ private:
   ControlWorkerWrapper controlWorkerWrapper;
   Gui::Spectroplot *spectroplot;
   Gui::ControllerPlot *linePlot;
+  QList<Gui::ConfigTab *> configTabs;
 };
 
 #endif // DIALOG_H
