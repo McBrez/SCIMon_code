@@ -4,6 +4,7 @@
 // Project includes
 #include <device_ob1_win.hpp>
 #include <easylogging++.h>
+#include <ob1_conf_payload.hpp>
 #include <ob1_constants.hpp>
 #include <ob1_init_payload.hpp>
 #include <read_payload_ob1.hpp>
@@ -186,8 +187,26 @@ bool DeviceOb1Win::stop() {
 
 bool DeviceOb1Win::configure(
     std::shared_ptr<ConfigurationPayload> configPayload) {
+
+  // Cast down the payload.
+  auto ob1ConfigPayload =
+      std::dynamic_pointer_cast<Ob1ConfPayload>(configPayload);
+  if (!ob1ConfigPayload) {
+    return false;
+  }
+
   // Create a new thread and start it.
   this->deviceState = DeviceStatus::CONFIGURING;
+
+  this->cachedPressures[1] =
+      std::get<0>(ob1ConfigPayload->getChannelPressures());
+  this->cachedPressures[2] =
+      std::get<1>(ob1ConfigPayload->getChannelPressures());
+  this->cachedPressures[3] =
+      std::get<2>(ob1ConfigPayload->getChannelPressures());
+  this->cachedPressures[4] =
+      std::get<3>(ob1ConfigPayload->getChannelPressures());
+
   this->configurationThread.reset(
       new std::thread(&DeviceOb1Win::configureWorker, this, configPayload));
   return true;

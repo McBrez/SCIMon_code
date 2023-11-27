@@ -2,6 +2,8 @@
 #define CONFIG_TAB_OB1_HPP
 
 // 3rd party includes
+// Qt
+#include <QDoubleSpinBox>
 #include <QLineEdit>
 
 // Project includes
@@ -27,6 +29,10 @@ private:
   QComboBox *cmbCh2;
   QComboBox *cmbCh3;
   QComboBox *cmbCh4;
+  QDoubleSpinBox *cmbPressCh1;
+  QDoubleSpinBox *cmbPressCh2;
+  QDoubleSpinBox *cmbPressCh3;
+  QDoubleSpinBox *cmbPressCh4;
 };
 
 } // namespace Gui

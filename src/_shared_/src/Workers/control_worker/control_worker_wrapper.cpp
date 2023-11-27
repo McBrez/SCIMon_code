@@ -234,3 +234,8 @@ void ControlWorkerWrapper::stop_ob1() {
 void ControlWorkerWrapper::setPressure(int channel, double pressure) {
   this->controlWorker->setPressure(channel, pressure);
 }
+
+bool ControlWorkerWrapper::setRemoteRunState(UserId userId, bool state) {
+
+  return this->controlWorker->setRemoteWorkerState(userId, state);
+}

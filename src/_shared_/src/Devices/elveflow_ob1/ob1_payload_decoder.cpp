@@ -46,7 +46,11 @@ Ob1PayloadDecoder::decodeConfigPayload(const std::vector<unsigned char> &data,
     const Serialization::Devices::Ob1ConfPayloadT *ob1Payload =
         Serialization::Devices::GetOb1ConfPayload(buffer)->UnPack();
 
-    return new Ob1ConfPayload();
+    ChannelPressures channelPressures =
+        std::make_tuple(ob1Payload->pressureCh1, ob1Payload->pressureCh2,
+                        ob1Payload->pressureCh3, ob1Payload->pressureCh4);
+
+    return new Ob1ConfPayload(channelPressures);
   } else {
     return nullptr;
   }

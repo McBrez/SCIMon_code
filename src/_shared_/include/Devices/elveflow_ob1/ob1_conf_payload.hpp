@@ -5,6 +5,9 @@
 
 using namespace Messages;
 
+/// typedef defining a type that holds pressure values.
+using ChannelPressures = std::tuple<double, double, double, double>;
+
 namespace Devices {
 /**
  * @brief Encapsulates the configuration data of an OB1 device.
@@ -14,7 +17,7 @@ public:
   /**
    * @brief Construct a new Ob 1 Conf Payload object
    */
-  Ob1ConfPayload();
+  Ob1ConfPayload(ChannelPressures channelPressures);
 
   /**
    * @brief Destroy the Ob 1 Conf Payload object
@@ -33,6 +36,11 @@ public:
    * @return Byte vector, that depicts the payload.
    */
   virtual std::vector<unsigned char> bytes() override;
+
+  ChannelPressures getChannelPressures();
+
+private:
+  ChannelPressures channelPressures;
 };
 } // namespace Devices
 

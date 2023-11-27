@@ -76,6 +76,8 @@ public slots:
 
   void stop_ob1();
 
+  bool setRemoteRunState(UserId userId, bool state);
+
   void setPressure(int channel, double pressure);
 
   /**

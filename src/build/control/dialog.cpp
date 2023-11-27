@@ -82,6 +82,7 @@ Dialog::Dialog(QWidget *parent)
                    &this->controlWorkerWrapper, &ControlWorkerWrapper::start);
   QObject::connect(this->ui->btn_stop, &QPushButton::clicked,
                    &this->controlWorkerWrapper, &ControlWorkerWrapper::stop);
+  /*
   QObject::connect(this->ui->btn_start_isx3, &QPushButton::clicked,
                    &this->controlWorkerWrapper,
                    &ControlWorkerWrapper::start_isx3);
@@ -94,7 +95,7 @@ Dialog::Dialog(QWidget *parent)
   QObject::connect(this->ui->btn_stop_ob1, &QPushButton::clicked,
                    &this->controlWorkerWrapper,
                    &ControlWorkerWrapper::stop_ob1);
-
+*/
   QObject::connect(
       &this->controlWorkerWrapper, &ControlWorkerWrapper::newSpectrumData,
       this->spectroplot,
@@ -177,7 +178,7 @@ void Dialog::onRemoteStatesChanged(
     QList<std::shared_ptr<StatusPayload>> oldStates,
     QList<std::shared_ptr<StatusPayload>> newStates) {
   this->ui->tbl_remote_workers->setRowCount(newStates.count() + 1);
-  this->ui->tbl_remote_workers->setColumnCount(3);
+  this->ui->tbl_remote_workers->setColumnCount(5);
 
   int row = 0;
   for (auto newState : newStates) {
@@ -186,12 +187,32 @@ void Dialog::onRemoteStatesChanged(
     QString state = QString::fromStdString(
         Device::deviceStatusToString(newState->getDeviceStatus()));
     int deviceType = static_cast<int>(newState->getDeviceType());
+    UserId userId = newState->getDeviceId();
 
     this->ui->tbl_remote_workers->setItem(row, 0,
                                           new QTableWidgetItem(deviceName));
     this->ui->tbl_remote_workers->setItem(row, 1, new QTableWidgetItem(state));
     this->ui->tbl_remote_workers->setItem(row, 2,
                                           new QTableWidgetItem(deviceType));
+
+    QPushButton *startButton = new QPushButton(this);
+    startButton->setText("Start");
+    this->ui->tbl_remote_workers->setCellWidget(row, 3, startButton);
+
+    QObject::connect(
+        startButton, &QPushButton::clicked, this, [this, userId]() {
+          this->controlWorkerWrapper.setRemoteRunState(userId, true);
+        });
+
+    QPushButton *stopButton = new QPushButton(this);
+    stopButton->setText("Stop");
+    this->ui->tbl_remote_workers->setCellWidget(row, 4, stopButton);
+
+    QObject::connect(
+        startButton, &QPushButton::clicked, this, [this, userId]() {
+          this->controlWorkerWrapper.setRemoteRunState(userId, false);
+        });
+
     row++;
   }
 }

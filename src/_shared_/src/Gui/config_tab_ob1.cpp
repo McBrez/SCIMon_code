@@ -75,6 +75,45 @@ ConfigTabOb1::ConfigTabOb1(QWidget *parent) : ConfigTab(parent) {
                                        << "-1000-1000mBar");
   hLayout2->addWidget(this->cmbCh4);
 
+  // Configuration label
+  QLabel *labelConfig = new QLabel(this);
+  labelConfig->setText("<b>Configuration Data</b>");
+  mainLayout->addWidget(labelConfig);
+  // Preset pressures
+  QLabel *labelPresetPressure = new QLabel(this);
+  labelPresetPressure->setText("Preset Pressures");
+  mainLayout->addWidget(labelPresetPressure);
+
+  QHBoxLayout *hLayout3 = new QHBoxLayout(this);
+
+  mainLayout->addLayout(hLayout3);
+  QLabel *labelPressCh1 = new QLabel(this);
+  labelPressCh1->setText("Ch1");
+  hLayout3->addWidget(labelPressCh1);
+  this->cmbPressCh1 = new QDoubleSpinBox(this);
+  hLayout3->addWidget(this->cmbPressCh1);
+
+  mainLayout->addLayout(hLayout3);
+  QLabel *labelPressCh2 = new QLabel(this);
+  labelPressCh2->setText("Ch2");
+  hLayout3->addWidget(labelPressCh2);
+  this->cmbPressCh2 = new QDoubleSpinBox(this);
+  hLayout3->addWidget(this->cmbPressCh2);
+
+  mainLayout->addLayout(hLayout3);
+  QLabel *labelPressCh3 = new QLabel(this);
+  labelPressCh3->setText("Ch3");
+  hLayout3->addWidget(labelPressCh3);
+  this->cmbPressCh3 = new QDoubleSpinBox(this);
+  hLayout3->addWidget(this->cmbPressCh3);
+
+  mainLayout->addLayout(hLayout3);
+  QLabel *labelPressCh4 = new QLabel(this);
+  labelPressCh4->setText("Ch4");
+  hLayout3->addWidget(labelPressCh4);
+  this->cmbPressCh4 = new QDoubleSpinBox(this);
+  hLayout3->addWidget(this->cmbPressCh4);
+
   QSpacerItem *spacer =
       new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding);
   mainLayout->addItem(spacer);

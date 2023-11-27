@@ -1,6 +1,10 @@
 namespace Serialization.Devices;
 
 table Ob1ConfPayload {
+	pressureCh1:double;
+	pressureCh2:double;
+	pressureCh3:double;
+	pressureCh4:double;
 }
 
 root_type Ob1ConfPayload;
