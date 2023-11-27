@@ -164,28 +164,9 @@ QString ControlWorkerWrapper::controlWorkerSubStateToString(
   }
 }
 
-void ControlWorkerWrapper::startConfig(QString comPort, QString ob1DeviceName) {
-
-  std::shared_ptr<SentryInitPayload> initPayload(new SentryInitPayload(
-      new Isx3InitPayload(comPort.toStdString(), 115200),
-      new Isx3IsConfPayload(
-          10.0, 1000000.0, 1000, 0,
-          std::map<ChannelFunction, int>{{ChannelFunction::CHAN_FUNC_CP, 0x0C},
-                                         {ChannelFunction::CHAN_FUNC_RP, 39},
-                                         {ChannelFunction::CHAN_FUNC_WP, 0x0F},
-                                         {ChannelFunction::CHAN_FUNC_WS, 39}},
-          IsScale::LINEAR_SCALE,
-          MeasurmentConfigurationRange::MEAS_CONFIG_RANGE_10MA,
-          MeasurmentConfigurationChannel::MEAS_CONFIG_CHANNEL_EXT_PORT,
-          MeasurementConfiguration::MEAS_CONFIG_2_POINT, 1.0, 1.0),
-      new Ob1InitPayload(ob1DeviceName.toStdString(),
-                         std::make_tuple(Z_regulator_type_m1000_1000_mbar,
-                                         Z_regulator_type_none,
-                                         Z_regulator_type_none,
-                                         Z_regulator_type_none)),
-      new Ob1ConfPayload()));
-  std::shared_ptr<SentryConfigPayload> configPayload(new SentryConfigPayload(
-      SentryWorkerMode::SENTRY_WORKER_MODE_MANUAL, Duration(), Duration()));
+void ControlWorkerWrapper::startConfig(
+    std::shared_ptr<SentryInitPayload> initPayload,
+    std::shared_ptr<SentryConfigPayload> configPayload) {
 
   this->controlWorker->startConfig(initPayload, configPayload);
 }

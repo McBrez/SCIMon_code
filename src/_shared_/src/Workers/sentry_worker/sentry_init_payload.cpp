@@ -17,6 +17,15 @@ SentryInitPayload::SentryInitPayload(
       pumpControllerInitPayload(pumpControllerInitPayload),
       pumpControllerConfigPayload(pumpControllerConfigPayload) {}
 
+SentryInitPayload::SentryInitPayload(
+    std::shared_ptr<InitPayload> isInitPayload,
+    std::shared_ptr<ConfigurationPayload> isConfigPayload,
+    std::shared_ptr<InitPayload> pumpControllerInitPayload,
+    std::shared_ptr<ConfigurationPayload> pumpControllerConfigPayload)
+    : isSpecInitPayload(isInitPayload), isSpecConfPayload(isConfigPayload),
+      pumpControllerInitPayload(pumpControllerInitPayload),
+      pumpControllerConfigPayload(pumpControllerConfigPayload) {}
+
 std::string SentryInitPayload::serialize() { return ""; }
 
 std::vector<unsigned char> SentryInitPayload::bytes() {

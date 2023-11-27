@@ -1,6 +1,4 @@
 // 3rd party includes
-#include <QComboBox>
-#include <QDoubleSpinBox>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QLineEdit>
@@ -10,6 +8,10 @@
 
 // Project includes
 #include <config_tab_isx3.hpp>
+#include <is_configuration.hpp>
+#include <isx3_constants.hpp>
+#include <isx3_init_payload.hpp>
+#include <isx3_is_conf_payload.hpp>
 
 using namespace Devices;
 using namespace Gui;
@@ -27,26 +29,26 @@ ConfigTabIsx3::ConfigTabIsx3(QWidget *parent) : ConfigTab(parent) {
   QLabel *labelComPort = new QLabel(this);
   labelComPort->setText("COM Port");
   hLayout1->addWidget(labelComPort);
-  QComboBox *cmbComPort = new QComboBox(this);
-  cmbComPort->addItems(QStringList() << "COM1"
-                                     << "COM2"
-                                     << "COM3"
-                                     << "COM4"
-                                     << "COM5"
-                                     << "COM6"
-                                     << "COM7"
-                                     << "COM8"
-                                     << "COM9"
-                                     << "COM10"
-                                     << "COM11"
-                                     << "COM12"
-                                     << "COM13"
-                                     << "COM14"
-                                     << "COM15"
-                                     << "COM16"
-                                     << "COM17"
-                                     << "COM18"
-                                     << "COM19");
+  this->cmbComPort = new QComboBox(this);
+  this->cmbComPort->addItems(QStringList() << "COM1"
+                                           << "COM2"
+                                           << "COM3"
+                                           << "COM4"
+                                           << "COM5"
+                                           << "COM6"
+                                           << "COM7"
+                                           << "COM8"
+                                           << "COM9"
+                                           << "COM10"
+                                           << "COM11"
+                                           << "COM12"
+                                           << "COM13"
+                                           << "COM14"
+                                           << "COM15"
+                                           << "COM16"
+                                           << "COM17"
+                                           << "COM18"
+                                           << "COM19");
   hLayout1->addWidget(cmbComPort);
 
   // Config Label
@@ -60,7 +62,7 @@ ConfigTabIsx3::ConfigTabIsx3(QWidget *parent) : ConfigTab(parent) {
   QLabel *labelStartFreq = new QLabel(this);
   labelStartFreq->setText("Starting Frequency");
   hLayout2->addWidget(labelStartFreq);
-  QSpinBox *spnStartFreq = new QSpinBox(this);
+  this->spnStartFreq = new QSpinBox(this);
   spnStartFreq->setMinimum(0);
   spnStartFreq->setMaximum(20000000);
   spnStartFreq->setSuffix("Hz");
@@ -72,7 +74,7 @@ ConfigTabIsx3::ConfigTabIsx3(QWidget *parent) : ConfigTab(parent) {
   QLabel *labelStopFreq = new QLabel(this);
   labelStopFreq->setText("Stopping Frequency");
   hLayout3->addWidget(labelStopFreq);
-  QSpinBox *spnStopFreq = new QSpinBox(this);
+  this->spnStopFreq = new QSpinBox(this);
   spnStopFreq->setMinimum(0);
   spnStopFreq->setMaximum(20000000);
   spnStopFreq->setSuffix("Hz");
@@ -84,7 +86,7 @@ ConfigTabIsx3::ConfigTabIsx3(QWidget *parent) : ConfigTab(parent) {
   QLabel *labelFreqPoints = new QLabel(this);
   labelFreqPoints->setText("Frequency Points");
   hLayout6->addWidget(labelFreqPoints);
-  QSpinBox *spnFreqPoints = new QSpinBox(this);
+  this->spnFreqPoints = new QSpinBox(this);
   spnFreqPoints->setMinimum(0);
   spnFreqPoints->setMaximum(100000);
   hLayout6->addWidget(spnFreqPoints);
@@ -95,7 +97,7 @@ ConfigTabIsx3::ConfigTabIsx3(QWidget *parent) : ConfigTab(parent) {
   QLabel *labelScale = new QLabel(this);
   labelScale->setText("Scale");
   hLayout8->addWidget(labelScale);
-  QComboBox *cmbScale = new QComboBox(this);
+  this->cmbScale = new QComboBox(this);
   cmbScale->addItems(QStringList() << "Linear"
                                    << "Logarithmic");
   hLayout8->addWidget(cmbScale);
@@ -106,7 +108,7 @@ ConfigTabIsx3::ConfigTabIsx3(QWidget *parent) : ConfigTab(parent) {
   QLabel *labelRepetitions = new QLabel(this);
   labelRepetitions->setText("Repetitions");
   hLayout7->addWidget(labelRepetitions);
-  QSpinBox *spnRepetitions = new QSpinBox(this);
+  this->spnRepetitions = new QSpinBox(this);
   spnRepetitions->setMinimum(0);
   spnRepetitions->setMaximum(100000);
   hLayout7->addWidget(spnRepetitions);
@@ -117,7 +119,7 @@ ConfigTabIsx3::ConfigTabIsx3(QWidget *parent) : ConfigTab(parent) {
   QLabel *labelPrecision = new QLabel(this);
   labelPrecision->setText("Precision");
   hLayout4->addWidget(labelPrecision);
-  QDoubleSpinBox *spnPrecision = new QDoubleSpinBox(this);
+  this->spnPrecision = new QDoubleSpinBox(this);
   spnPrecision->setMinimum(0.0);
   spnPrecision->setMaximum(5.0);
   hLayout4->addWidget(spnPrecision);
@@ -128,18 +130,103 @@ ConfigTabIsx3::ConfigTabIsx3(QWidget *parent) : ConfigTab(parent) {
   QLabel *labelAmplitude = new QLabel(this);
   labelAmplitude->setText("Amplitude");
   hLayout5->addWidget(labelAmplitude);
-  QDoubleSpinBox *spnAmplitude = new QDoubleSpinBox(this);
+  this->spnAmplitude = new QDoubleSpinBox(this);
   spnAmplitude->setMinimum(0.0);
   spnAmplitude->setMaximum(5.0);
   hLayout5->addWidget(spnAmplitude);
+
+  // Measurement configuration
+  QHBoxLayout *hLayout10 = new QHBoxLayout(this);
+  mainLayout->addLayout(hLayout10);
+  QLabel *labelMeasConf = new QLabel(this);
+  labelMeasConf->setText("Measurement Conf");
+  hLayout10->addWidget(labelMeasConf);
+  this->cmbMeasConf = new QComboBox(this);
+  cmbMeasConf->addItems(QStringList() << "2 Point"
+                                      << "3 Point"
+                                      << "4 Point");
+  hLayout10->addWidget(cmbMeasConf);
+
+  // Pin numbers
+  QHBoxLayout *hLayout9 = new QHBoxLayout(this);
+  mainLayout->addLayout(hLayout9);
+  QLabel *labelCp = new QLabel(this);
+  labelCp->setText("CP");
+  hLayout9->addWidget(labelCp);
+  this->spnCp = new QSpinBox(this);
+  spnCp->setMinimum(0);
+  spnCp->setMaximum(64);
+  hLayout9->addWidget(spnCp);
+  QLabel *labelRp = new QLabel(this);
+  labelRp->setText("RP");
+  hLayout9->addWidget(labelRp);
+  this->spnRp = new QSpinBox(this);
+  spnRp->setMinimum(0);
+  spnRp->setMaximum(64);
+  hLayout9->addWidget(spnRp);
+  QLabel *labelWs = new QLabel(this);
+  labelWs->setText("WS");
+  hLayout9->addWidget(labelWs);
+  this->spnWs = new QSpinBox(this);
+  spnWs->setMinimum(0);
+  spnWs->setMaximum(64);
+  hLayout9->addWidget(spnWs);
+  QLabel *labelWp = new QLabel(this);
+  labelWp->setText("WP");
+  hLayout9->addWidget(labelWp);
+  this->spnWp = new QSpinBox(this);
+  spnWp->setMinimum(0);
+  spnWp->setMaximum(64);
+  hLayout9->addWidget(spnWp);
+
+  // Config range
+  QHBoxLayout *hLayout11 = new QHBoxLayout(this);
+  mainLayout->addLayout(hLayout11);
+  QLabel *labelConfigRange = new QLabel(this);
+  labelConfigRange->setText("Measurement Range");
+  hLayout11->addWidget(labelConfigRange);
+  this->cmbMeasRange = new QComboBox(this);
+  cmbMeasRange->addItems(QStringList() << "10 mA"
+                                       << "100 µA"
+                                       << "1 µA"
+                                       << "10 nA");
+  hLayout11->addWidget(cmbMeasRange);
 }
 
 std::shared_ptr<InitPayload> ConfigTabIsx3::getInitPayload() {
-  return std::shared_ptr<InitPayload>();
+  return std::shared_ptr<InitPayload>(new Isx3InitPayload(
+      this->cmbComPort->currentText().toStdString(), 256000));
 }
 
 std::shared_ptr<ConfigurationPayload> ConfigTabIsx3::getConfigPayload() {
-  return std::shared_ptr<ConfigurationPayload>();
+  std::map<ChannelFunction, int> channelFunction;
+  channelFunction[CHAN_FUNC_CP] = this->spnCp->value();
+  channelFunction[CHAN_FUNC_RP] = this->spnRp->value();
+  channelFunction[CHAN_FUNC_WS] = this->spnWs->value();
+  channelFunction[CHAN_FUNC_WP] = this->spnWp->value();
+
+  IsScale isScale = this->cmbScale->currentText() == "Linear"
+                        ? LINEAR_SCALE
+                        : LOGARITHMIC_SCALE;
+
+  QString measRange = this->cmbMeasRange->currentText();
+  MeasurmentConfigurationRange measurementConfRange;
+  if (measRange == "10 mA") {
+    measurementConfRange = MEAS_CONFIG_RANGE_10MA;
+  } else if ("100 µA") {
+    measurementConfRange = MEAS_CONFIG_RANGE_100UA;
+  } else if ("1 µA") {
+    measurementConfRange = MEAS_CONFIG_RANGE_1UA;
+  } else if ("10 nA") {
+    measurementConfRange = MEAS_CONFIG_RANGE_10NA;
+  }
+
+  return std::shared_ptr<ConfigurationPayload>(new Isx3IsConfPayload(
+      this->spnStartFreq->value(), this->spnStopFreq->value(),
+      this->spnFreqPoints->value(), this->spnRepetitions->value(),
+      channelFunction, isScale, measurementConfRange,
+      MEAS_CONFIG_CHANNEL_EXT_PORT_2, MEAS_CONFIG_2_POINT,
+      this->spnPrecision->value(), this->spnAmplitude->value()));
 }
 
 QString ConfigTabIsx3::configTabName() const { return "Isx3"; }

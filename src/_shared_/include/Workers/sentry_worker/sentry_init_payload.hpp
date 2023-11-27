@@ -20,6 +20,11 @@ public:
                     ConfigurationPayload *isConfigPayload,
                     InitPayload *pumpControllerInitPayload,
                     ConfigurationPayload *pumpControllerConfigPayload);
+  SentryInitPayload(
+      std::shared_ptr<InitPayload> isInitPayload,
+      std::shared_ptr<ConfigurationPayload> isConfigPayload,
+      std::shared_ptr<InitPayload> pumpControllerInitPayload,
+      std::shared_ptr<ConfigurationPayload> pumpControllerConfigPayload);
 
   /**
    * @brief Serializes the payload into a human readable string.

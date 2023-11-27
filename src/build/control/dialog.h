@@ -31,6 +31,7 @@ public slots:
       const std::map<std::string, std::vector<std::tuple<TimePoint, double>>>
           &data);
   void onSetPressure();
+  void startConfig();
 
 private:
   Ui::Dialog *ui;

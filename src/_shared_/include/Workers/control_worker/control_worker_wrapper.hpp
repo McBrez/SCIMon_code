@@ -55,7 +55,8 @@ public slots:
    */
   void startConnection(QString ip, int port);
 
-  void startConfig(QString comPort, QString ob1DeviceName);
+  void startConfig(std::shared_ptr<SentryInitPayload> initPayload,
+                   std::shared_ptr<SentryConfigPayload> configPayload);
 
   /**
    * @brief Sends a start command to the underlying worker.

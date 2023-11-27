@@ -261,7 +261,7 @@ if (WIN32)
         PUBLIC ELPP_WINSOCK2
     )
     # Find the elveflow library.
-    find_library(LIB_ELVEFLOW Elveflow64 ${3RDPARTY_DIR}/elveflow/x64)
+    find_library(LIB_ELVEFLOW Elveflow64.dll ${3RDPARTY_DIR}/elveflow/x64)
     # Link to libraries.
     target_link_libraries(scimon_message
       PRIVATE Ws2_32

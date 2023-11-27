@@ -10,6 +10,7 @@
 // Project includes
 #include <config_tab_isx3.hpp>
 #include <config_tab_ob1.hpp>
+#include <config_tab_sentry.hpp>
 #include <device.hpp>
 #include <dialog.h>
 
@@ -45,7 +46,7 @@ Dialog::Dialog(QWidget *parent)
   // Set up the configuration tabs.
   this->configTabs.append(new Gui::ConfigTabIsx3());
   this->configTabs.append(new Gui::ConfigTabOb1());
-
+  this->configTabs.append(new Gui::ConfigTabSentry());
   for (auto &configTab : this->configTabs) {
     this->ui->tab_config->addTab(configTab, configTab->configTabName());
   }
@@ -62,12 +63,8 @@ Dialog::Dialog(QWidget *parent)
                          this->ui->txt_ip->text(),
                          this->ui->txt_port->text().toInt());
                    });
-  QObject::connect(this->ui->btn_configControl, &QPushButton::clicked,
-                   &this->controlWorkerWrapper, [this]() {
-                     this->controlWorkerWrapper.startConfig(
-                         this->ui->txt_isxComPort->text(),
-                         this->ui->txt_ob1DeviceName->text());
-                   });
+  QObject::connect(this->ui->btn_configControl, &QPushButton::clicked, this,
+                   &Dialog::startConfig);
 
   QObject::connect(&this->controlWorkerWrapper,
                    &ControlWorkerWrapper::stateChanged, this,
@@ -204,4 +201,39 @@ void Dialog::onSetPressure() {
   double pressure = this->ui->spn_pressure->value();
 
   this->controlWorkerWrapper.setPressure(channel, pressure);
+}
+
+void Dialog::startConfig() {
+
+  // Build the SentryInit payload ...
+  // ... First get the ISX3 payloads ...
+  auto isx3It = std::find_if(this->configTabs.begin(), this->configTabs.end(),
+                             [](Gui::ConfigTab *configTab) {
+                               return configTab->configTabName() == "Isx3";
+                             });
+  std::shared_ptr<InitPayload> isx3Init = (*isx3It)->getInitPayload();
+  std::shared_ptr<ConfigurationPayload> isx3Config =
+      (*isx3It)->getConfigPayload();
+  // ... then the OB1 ...
+  auto ob1It = std::find_if(this->configTabs.begin(), this->configTabs.end(),
+                            [](Gui::ConfigTab *configTab) {
+                              return configTab->configTabName() == "Ob1";
+                            });
+  std::shared_ptr<InitPayload> ob1Init = (*isx3It)->getInitPayload();
+  std::shared_ptr<ConfigurationPayload> ob1Config =
+      (*isx3It)->getConfigPayload();
+  // ... Now build the payload.
+  std::shared_ptr<SentryInitPayload> sentryInit(
+      new SentryInitPayload(isx3Init, isx3Config, ob1Init, ob1Config));
+
+  // Build the SentryConfig payload
+  auto sentryIt = std::find_if(this->configTabs.begin(), this->configTabs.end(),
+                               [](Gui::ConfigTab *configTab) {
+                                 return configTab->configTabName() == "Sentry";
+                               });
+  std::shared_ptr<Workers::SentryConfigPayload> sentryConfig =
+      dynamic_pointer_cast<Workers::SentryConfigPayload>(
+          (*sentryIt)->getConfigPayload());
+
+  this->controlWorkerWrapper.startConfig(sentryInit, sentryConfig);
 }

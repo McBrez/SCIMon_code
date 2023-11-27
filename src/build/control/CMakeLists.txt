@@ -22,6 +22,7 @@ qt_add_executable(control
     ${INCLUDE_DIR}/Gui/config_tab.hpp
     ${INCLUDE_DIR}/Gui/config_tab_isx3.hpp
     ${INCLUDE_DIR}/Gui/config_tab_ob1.hpp
+    ${INCLUDE_DIR}/Gui/config_tab_sentry.hpp
 
 
     dialog.cpp
@@ -33,6 +34,7 @@ qt_add_executable(control
     ${SOURCE_DIR}/Gui/config_tab.cpp
     ${SOURCE_DIR}/Gui/config_tab_isx3.cpp
     ${SOURCE_DIR}/Gui/config_tab_ob1.cpp
+    ${SOURCE_DIR}/Gui/config_tab_sentry.cpp
 
     dialog.ui
 )
@@ -98,7 +100,7 @@ if (WIN32)
     # add_compile_definitions(_HAS_STD_BYTE=0)
 
     # Copy the DLLs to the output directory
-    find_library(DLL_ELVEFLOW Elveflow64 ${3RDPARTY_DIR}/elveflow/x64)
+    find_library(DLL_ELVEFLOW Elveflow64.dll ${3RDPARTY_DIR}/elveflow/x64)
     add_custom_command(
         TARGET control
          POST_BUILD
