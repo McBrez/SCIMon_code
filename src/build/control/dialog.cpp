@@ -163,6 +163,10 @@ void Dialog::onControlSubStateChanged(ControlWorkerSubState oldState,
       ControlWorkerWrapper::controlWorkerSubStateToString(newState);
   this->ui->tbl_control_workers->setItem(0, 1,
                                          new QTableWidgetItem(newStateStr));
+
+  if (CONTROL_WORKER_SUBSTATE_WAITING_FOR_CONNECTION == newState) {
+    this->ui->tbl_remote_workers->clear();
+  }
 }
 
 void Dialog::onControlStateChanged(DeviceStatus oldState,
@@ -186,14 +190,14 @@ void Dialog::onRemoteStatesChanged(
     QString deviceName = QString::fromStdString(newState->getDeviceName());
     QString state = QString::fromStdString(
         Device::deviceStatusToString(newState->getDeviceStatus()));
-    int deviceType = static_cast<int>(newState->getDeviceType());
     UserId userId = newState->getDeviceId();
-
+    QString deviceTypeStr = QString::fromStdString(
+        ConfigurationPayload::deviceTypeToString(newState->getDeviceType()));
     this->ui->tbl_remote_workers->setItem(row, 0,
                                           new QTableWidgetItem(deviceName));
     this->ui->tbl_remote_workers->setItem(row, 1, new QTableWidgetItem(state));
     this->ui->tbl_remote_workers->setItem(row, 2,
-                                          new QTableWidgetItem(deviceType));
+                                          new QTableWidgetItem(deviceTypeStr));
 
     QPushButton *startButton = new QPushButton(this);
     startButton->setText("Start");
@@ -208,10 +212,9 @@ void Dialog::onRemoteStatesChanged(
     stopButton->setText("Stop");
     this->ui->tbl_remote_workers->setCellWidget(row, 4, stopButton);
 
-    QObject::connect(
-        startButton, &QPushButton::clicked, this, [this, userId]() {
-          this->controlWorkerWrapper.setRemoteRunState(userId, false);
-        });
+    QObject::connect(stopButton, &QPushButton::clicked, this, [this, userId]() {
+      this->controlWorkerWrapper.setRemoteRunState(userId, false);
+    });
 
     row++;
   }

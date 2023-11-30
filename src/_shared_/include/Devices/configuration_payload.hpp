@@ -14,16 +14,16 @@ namespace Devices {
  * @brief Identifies the different device types.
  */
 enum DeviceType {
-  // Invalid device type.
+  /// Invalid device type.
   INVALID = -1,
 
   /// Unspecified device type.
   UNSPECIFIED = 0,
 
-  // A pump controller
+  /// A pump controller
   PUMP_CONTROLLER = 1,
 
-  // An impedance spectrometer.
+  /// An impedance spectrometer.
   IMPEDANCE_SPECTROMETER = 2
 };
 
@@ -73,6 +73,13 @@ public:
    * @param keyMapping The key mapping that shall be set.
    */
   void setKeyMapping(const KeyMapping &keyMapping);
+
+  /**
+   * @brief Returns the string representation of the given device type.
+   * @param type The device type whose text representation shall be retrieved.
+   * @return The string representation of the given device type.
+   */
+  static std::string deviceTypeToString(DeviceType type);
 
 protected:
   /// The device type this object is targeting.

@@ -28,4 +28,18 @@ void ConfigurationPayload::setKeyMapping(const KeyMapping &keyMapping) {
   this->keyMapping = keyMapping;
 }
 
+std::string ConfigurationPayload::deviceTypeToString(DeviceType type) {
+  if (DeviceType::INVALID == type) {
+    return "INVALID";
+  } else if (DeviceType::UNSPECIFIED == type) {
+    return "UNSPECIFIED";
+  } else if (DeviceType::PUMP_CONTROLLER == type) {
+    return "Pump Controller";
+  } else if (DeviceType::IMPEDANCE_SPECTROMETER == type) {
+    return "Impedance Spectrometer";
+  } else {
+    return "INVALID";
+  }
+}
+
 } // namespace Devices
