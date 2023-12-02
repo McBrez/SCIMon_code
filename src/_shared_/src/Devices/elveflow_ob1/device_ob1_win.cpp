@@ -234,8 +234,6 @@ DeviceOb1Win::specificRead(TimePoint timestamp) {
 
   ReadPayloadOb1 *readPayload = new ReadPayloadOb1(
       std::make_tuple(pressureCh1, pressureCh2, pressureCh3, pressureCh4));
-
-  LOG(DEBUG) << readPayload->serialize();
   std::list<std::shared_ptr<DeviceMessage>> retVal;
   retVal.emplace_back(new ReadDeviceMessage(
       this->self->getUserId(), this->startMessageCache->getSource(),

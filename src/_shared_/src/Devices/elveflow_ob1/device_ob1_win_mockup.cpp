@@ -7,6 +7,7 @@
 // Project includes
 #include <device_ob1_win.hpp>
 #include <easylogging++.h>
+#include <ob1_conf_payload.hpp>
 #include <ob1_constants.hpp>
 #include <ob1_init_payload.hpp>
 #include <read_payload_ob1.hpp>
@@ -115,8 +116,17 @@ bool DeviceOb1Win::stop() {
 
 bool DeviceOb1Win::configure(
     std::shared_ptr<ConfigurationPayload> configPayload) {
-  // Set up the key mappings. There are three data keys for each channel. One
-  // for the setpoint, one for the current pressure and one for the unit.
+
+  // Cast down the payload.
+  auto ob1ConfigPayload = dynamic_pointer_cast<Ob1ConfPayload>(configPayload);
+  if (!ob1ConfigPayload) {
+    LOG(ERROR) << "OB1 received unexpected config payload.";
+    return false;
+  }
+
+  // Set up the key mappings. There are three data keys for each channel.
+  // One for the setpoint, one for the current pressure and one for the
+  // unit.
   TimePoint now = Core::getNow();
   std::string nowStr = std::format("{:%Y%m%d%H%M}", now);
   this->currentMeasurementTimestamp = nowStr;
@@ -135,6 +145,15 @@ bool DeviceOb1Win::configure(
       // {nowStr + "/channel4/unit", DATAMANAGER_DATA_TYPE_STRING}};
   };
   SpectrumMapping spectrumMapping;
+
+  this->cachedPressures[1] =
+      std::get<0>(ob1ConfigPayload->getChannelPressures());
+  this->cachedPressures[2] =
+      std::get<1>(ob1ConfigPayload->getChannelPressures());
+  this->cachedPressures[3] =
+      std::get<2>(ob1ConfigPayload->getChannelPressures());
+  this->cachedPressures[4] =
+      std::get<3>(ob1ConfigPayload->getChannelPressures());
 
   this->onConfigured(keyMapping, spectrumMapping);
 
@@ -166,12 +185,11 @@ DeviceOb1Win::specificRead(TimePoint timestamp) {
   ReadPayloadOb1 *readPayload = new ReadPayloadOb1(
       std::make_tuple(pressureCh1, pressureCh2, pressureCh3, pressureCh4));
 
-  LOG(DEBUG) << readPayload->serialize();
   std::list<std::shared_ptr<DeviceMessage>> retVal;
-  retVal.emplace_back(new ReadDeviceMessage(
+  /*retVal.emplace_back(new ReadDeviceMessage(
       this->self->getUserId(), this->startMessageCache->getSource(),
       ReadDeviceTopic::READ_TOPIC_DEVICE_SPECIFIC_MSG, readPayload,
-      this->startMessageCache));
+      this->startMessageCache));*/
   return retVal;
 }
 

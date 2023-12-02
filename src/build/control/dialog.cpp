@@ -243,9 +243,9 @@ void Dialog::startConfig() {
                             [](Gui::ConfigTab *configTab) {
                               return configTab->configTabName() == "Ob1";
                             });
-  std::shared_ptr<InitPayload> ob1Init = (*isx3It)->getInitPayload();
+  std::shared_ptr<InitPayload> ob1Init = (*ob1It)->getInitPayload();
   std::shared_ptr<ConfigurationPayload> ob1Config =
-      (*isx3It)->getConfigPayload();
+      (*ob1It)->getConfigPayload();
   // ... Now build the payload.
   std::shared_ptr<SentryInitPayload> sentryInit(
       new SentryInitPayload(isx3Init, isx3Config, ob1Init, ob1Config));

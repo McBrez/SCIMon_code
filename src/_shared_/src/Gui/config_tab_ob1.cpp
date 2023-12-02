@@ -10,6 +10,7 @@
 
 // Project includes
 #include <config_tab_ob1.hpp>
+#include <ob1_conf_payload.hpp>
 #include <ob1_init_payload.hpp>
 
 using namespace Gui;
@@ -132,7 +133,15 @@ std::shared_ptr<InitPayload> ConfigTabOb1::getInitPayload() {
 }
 
 std::shared_ptr<ConfigurationPayload> ConfigTabOb1::getConfigPayload() {
-  return std::shared_ptr<ConfigurationPayload>();
+
+  ChannelPressures channelPressures =
+      std::make_tuple(this->cmbPressCh1->value(), this->cmbPressCh2->value(),
+                      this->cmbPressCh3->value(), this->cmbPressCh4->value());
+
+  std::shared_ptr<ConfigurationPayload> ob1ConfPayload(
+      new Ob1ConfPayload(channelPressures));
+
+  return ob1ConfPayload;
 }
 
 QString ConfigTabOb1::configTabName() const { return "Ob1"; }
