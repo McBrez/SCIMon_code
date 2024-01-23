@@ -41,6 +41,7 @@ ConfigTabSentry::ConfigTabSentry(QWidget *parent) : ConfigTab(parent) {
   hLayout2->addWidget(labelOnTime);
   this->spnOnTime = new QSpinBox(this);
   this->spnOnTime->setMinimum(0);
+  this->spnOnTime->setValue(5);
   this->spnOnTime->setSuffix("s");
   hLayout2->addWidget(this->spnOnTime);
 
@@ -52,6 +53,7 @@ ConfigTabSentry::ConfigTabSentry(QWidget *parent) : ConfigTab(parent) {
   hLayout3->addWidget(labelOffTime);
   this->spnOffTime = new QSpinBox(this);
   this->spnOffTime->setMinimum(0);
+  this->spnOffTime->setValue(5);
   this->spnOffTime->setSuffix("s");
   hLayout3->addWidget(this->spnOffTime);
 

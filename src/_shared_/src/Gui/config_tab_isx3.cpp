@@ -65,6 +65,7 @@ ConfigTabIsx3::ConfigTabIsx3(QWidget *parent) : ConfigTab(parent) {
   this->spnStartFreq = new QSpinBox(this);
   spnStartFreq->setMinimum(0);
   spnStartFreq->setMaximum(20000000);
+  spnStartFreq->setValue(1);
   spnStartFreq->setSuffix("Hz");
   hLayout2->addWidget(spnStartFreq);
 
@@ -77,6 +78,7 @@ ConfigTabIsx3::ConfigTabIsx3(QWidget *parent) : ConfigTab(parent) {
   this->spnStopFreq = new QSpinBox(this);
   spnStopFreq->setMinimum(0);
   spnStopFreq->setMaximum(20000000);
+  spnStopFreq->setValue(1000);
   spnStopFreq->setSuffix("Hz");
   hLayout3->addWidget(spnStopFreq);
 
@@ -89,6 +91,7 @@ ConfigTabIsx3::ConfigTabIsx3(QWidget *parent) : ConfigTab(parent) {
   this->spnFreqPoints = new QSpinBox(this);
   spnFreqPoints->setMinimum(0);
   spnFreqPoints->setMaximum(100000);
+  spnFreqPoints->setValue(10);
   hLayout6->addWidget(spnFreqPoints);
 
   // Scale
@@ -111,6 +114,7 @@ ConfigTabIsx3::ConfigTabIsx3(QWidget *parent) : ConfigTab(parent) {
   this->spnRepetitions = new QSpinBox(this);
   spnRepetitions->setMinimum(0);
   spnRepetitions->setMaximum(100000);
+  spnRepetitions->setValue(0);
   hLayout7->addWidget(spnRepetitions);
 
   // Precision
@@ -122,6 +126,7 @@ ConfigTabIsx3::ConfigTabIsx3(QWidget *parent) : ConfigTab(parent) {
   this->spnPrecision = new QDoubleSpinBox(this);
   spnPrecision->setMinimum(0.0);
   spnPrecision->setMaximum(5.0);
+  spnPrecision->setValue(1.0);
   hLayout4->addWidget(spnPrecision);
 
   // Amplitude
@@ -133,6 +138,7 @@ ConfigTabIsx3::ConfigTabIsx3(QWidget *parent) : ConfigTab(parent) {
   this->spnAmplitude = new QDoubleSpinBox(this);
   spnAmplitude->setMinimum(0.0);
   spnAmplitude->setMaximum(5.0);
+  spnAmplitude->setValue(1.0);
   hLayout5->addWidget(spnAmplitude);
 
   // Measurement configuration
