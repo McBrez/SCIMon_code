@@ -379,7 +379,7 @@ bool DeviceIsx3::handleReadPayload(std::shared_ptr<ReadPayload> readPayload) {
   if (isPayload) {
     // Impedance spectra are only handled, if the device is currently operating.
     if (DeviceStatus::OPERATING != this->deviceState) {
-      return false;
+      return true;
     }
 
     // Impedance spectrum data from an ISX3 device is received one
