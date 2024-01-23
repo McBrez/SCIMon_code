@@ -225,7 +225,7 @@ std::shared_ptr<ConfigurationPayload> ConfigTabIsx3::getConfigPayload() {
       this->spnStartFreq->value(), this->spnStopFreq->value(),
       this->spnFreqPoints->value(), this->spnRepetitions->value(),
       channelFunction, isScale, measurementConfRange,
-      MEAS_CONFIG_CHANNEL_EXT_PORT_2, MEAS_CONFIG_2_POINT,
+      MEAS_CONFIG_CHANNEL_EXT_PORT, MEAS_CONFIG_2_POINT,
       this->spnPrecision->value(), this->spnAmplitude->value()));
 }
 
