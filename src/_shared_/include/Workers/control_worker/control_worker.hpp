@@ -177,6 +177,12 @@ public:
   std::vector<std::string>
   getLocalDataKey(size_t userId, const std::vector<std::string> &dataKey) const;
 
+  /**
+   * @brief Returns the device type of the remote device with the given user id.
+   * @return The device type of the remote device with the given user id.
+   */
+  DeviceType getDeviceTypeFromId(UserId userId) const;
+
   bool setPressure(int channel, double pressure);
 
 private:
@@ -185,7 +191,7 @@ private:
    * @return The user id of the remote sentry worker. May return invalid user
    * id, if id of the sentry worker has not yet been resolved.
    */
-  UserId getSentryId();
+  UserId getSentryId() const;
 
   /**
    * @brief Returns the User id of the remote pump controller from the remote id
@@ -193,7 +199,7 @@ private:
    * @return The user id of the remote pump controller. May return invalid user
    * id, if id of the pump controller has not yet been resolved.
    */
-  UserId getPumpControllerId();
+  UserId getPumpControllerId() const;
 
   /**
    * @brief Returns the User id of the remote spectrometer from the remote id
@@ -201,7 +207,7 @@ private:
    * @return The user id of the remote spectrometer. May return invalid user
    * id, if id of the spectrometer has not yet been resolved.
    */
-  UserId getSpectrometerId();
+  UserId getSpectrometerId() const;
 
   /**
    * @brief Checks if the given read device message contains a status payload

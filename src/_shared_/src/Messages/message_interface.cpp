@@ -184,7 +184,10 @@ bool MessageInterface::onConfigured(const KeyMapping &keyMapping,
   for (auto keyValuePair : keyMapping) {
     bool createKeySuccess =
         this->dataManager->createKey(keyValuePair.first, keyValuePair.second);
-    if (!createKeySuccess) {
+    bool createGroupSuccess = this->dataManager->createGroup(
+        "asd", {{DataManager::DATA_MANAGER_DEVICETYPE_ATTR_NAME,
+                 static_cast<int>(this->getDeviceType())}});
+    if (!createKeySuccess || !createGroupSuccess) {
       return false;
     }
   }

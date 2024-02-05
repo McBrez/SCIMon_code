@@ -624,7 +624,8 @@ bool DataManagerHdf::extendingWrite(const std::vector<TimePoint> &timestamp,
   return true;
 }
 
-bool DataManagerHdf::createKey(std::string key, DataManagerDataType dataType) {
+bool DataManagerHdf::createKey(std::string key, DataManagerDataType dataType,
+                               Devices::DeviceType deviceType) {
   if (this->typeMapping.contains(key)) {
     return false;
   }
@@ -671,10 +672,10 @@ bool DataManagerHdf::createKey(std::string key, DataManagerDataType dataType) {
     this->hdfFile->createDataSet("/data/" + key + "/values", dataspace,
                                  create_datatype<std::string>(), props);
   } else if (dataType == DATAMANAGER_DATA_TYPE_SPECTRUM) {
-    // Nothing to do. Dataset will be created in setupSpectrumSpecific().
-  }
-
-  else {
+    // Dataset will be created in setupSpectrumSpecific(). For now, create the
+    // node.
+    this->hdfFile->createGroup("/data/" + key);
+  } else {
     return false;
   }
 
@@ -788,4 +789,65 @@ TimerangeMapping DataManagerHdf::getTimerangeMapping() const {
   }
 
   return retVal;
+}
+
+bool DataManagerHdf::writeToCsv(std::vector<std::stringstream> &ss,
+                                char separator,
+                                const std::string &impedanceFormat) {
+  if (!this->isOpen()) {
+    return false;
+  }
+
+  // Get the keys.
+  std::vector<std::string> keys =
+      this->hdfFile->getDataSet("/data").listAttributeNames();
+
+  // Iterate over device ids.
+  for (auto &key : keys) {
+    LOG(INFO) << key;
+  }
+  // Iterate over measurements.
+
+  // Iterate over rows.
+
+  return true;
+}
+
+bool DataManagerHdf::createGroup(
+    const std::string &groupName, const std::map<std::string, int> &intProps,
+    const std::map<std::string, double> &doubleProps,
+    const std::map<std::string, std::string> &strProps) {
+
+  // Try to get the group
+
+  // Set the device type as attribute.
+  Group group;
+  try {
+    group = this->hdfFile->getGroup("/data/" + groupName);
+  } catch (GroupException &e) {
+    // Group seems to
+    group = this->hdfFile->createGroup("/data/" + groupName);
+  } catch (...) {
+    return false;
+  }
+
+  for (auto &intProp : intProps) {
+    if (!group.hasAttribute(intProp.first)) {
+      group.createAttribute<int>(intProp.first, intProp.second);
+    }
+  }
+
+  for (auto &doubleProp : doubleProps) {
+    if (!group.hasAttribute(doubleProp.first)) {
+      group.createAttribute<double>(doubleProp.first, doubleProp.second);
+    }
+  }
+
+  for (auto &strProp : strProps) {
+    if (!group.hasAttribute(strProp.first)) {
+      group.createAttribute<std::string>(strProp.first, strProp.second);
+    }
+  }
+
+  return true;
 }

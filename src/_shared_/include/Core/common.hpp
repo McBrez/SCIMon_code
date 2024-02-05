@@ -82,6 +82,25 @@ const int NetworkWorkerDefaultPort = 4545;
 #define MAGIC_NUMBER_SENTRY_CONF_PAYLOAD 0x0302
 } // namespace Core
 
+namespace Devices {
+
+/**
+ * @brief Identifies the different device types.
+ */
+enum DeviceType {
+  // Invalid device type.
+  INVALID = -1,
+
+  /// Unspecified device type.
+  UNSPECIFIED = 0,
+
+  // A pump controller
+  PUMP_CONTROLLER = 1,
+
+  // An impedance spectrometer.
+  IMPEDANCE_SPECTROMETER = 2
+};
+} // namespace Devices
 /**
  * @brief Overloaded lesser than operator for impedances
  * @param lhs The left hand side.

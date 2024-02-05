@@ -7,6 +7,7 @@
 #include <variant>
 
 // Project includes
+#include <common.hpp>
 #include <utilities.hpp>
 
 namespace Utilities {
@@ -58,6 +59,8 @@ typedef std::map<std::string, std::pair<TimePoint, TimePoint>> TimerangeMapping;
  */
 class DataManager {
 public:
+  static const std::string DATA_MANAGER_DEVICETYPE_ATTR_NAME;
+
   /**
    * @brief Destroy the Data Manager object
    */
@@ -173,9 +176,19 @@ public:
    * @brief Creates a key with the given name and data type.
    * @param key The name of the key.
    * @param dataType The datatype this key is associated with.
+   * @param deviceType The type of device.
    * @return Whether the creation of the key succeded.
    */
   virtual bool createKey(std::string key, DataManagerDataType dataType) = 0;
+
+  /**
+   * @brief Creates a group and assigns properties to it.
+   */
+  virtual bool
+  createGroup(const std::string &groupName,
+              const std::map<std::string, int> &intProps = {},
+              const std::map<std::string, double> &doubleProps = {},
+              const std::map<std::string, std::string> &strProps = {}) = 0;
 
   /**
    * @brief setupSpectrum
@@ -203,6 +216,15 @@ public:
    * @return The timerange mapping at the time this method is called.
    */
   virtual TimerangeMapping getTimerangeMapping() const = 0;
+
+  /**
+   * @brief Writes the current content of the data manager to a CSV file.
+   * @param file Path to the file.
+   * @param separator The CSV separator that shall be used.
+   * @return Whether the operation was successfull.
+   */
+  virtual bool writeToCsv(std::vector<std::stringstream> &ss, char separator,
+                          const std::string &impedanceFormat) = 0;
 
 protected:
   /**

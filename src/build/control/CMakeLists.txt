@@ -77,7 +77,7 @@ endif()
 
 
 # Enforce C++20
-set_property(TARGET sentry PROPERTY CXX_STANDARD 20)
+set_property(TARGET control PROPERTY CXX_STANDARD 20)
 
 # Add some defines
 target_compile_definitions(control

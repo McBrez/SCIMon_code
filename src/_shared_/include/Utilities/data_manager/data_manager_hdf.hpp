@@ -112,11 +112,23 @@ public:
                          DataManagerDataType dataType) override;
 
   /**
+   * @brief Creates a group and assigns properties to it.
+   */
+  virtual bool
+  createGroup(const std::string &groupName,
+              const std::map<std::string, int> &intProps = {},
+              const std::map<std::string, double> &doubleProps = {},
+              const std::map<std::string, std::string> &strProps = {}) override;
+
+  /**
    * @brief Returns the timerange mapping of the data manager. The timerange
    * mapping contains the oldest and the most recent timestamp per data key.
    * @return The timerange mapping at the time this method is called.
    */
   virtual TimerangeMapping getTimerangeMapping() const override;
+
+  virtual bool writeToCsv(std::vector<std::stringstream> &ss, char separator,
+                          const std::string &impedanceFormat) override;
 
 protected:
   /**

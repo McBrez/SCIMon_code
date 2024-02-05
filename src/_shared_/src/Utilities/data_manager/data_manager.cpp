@@ -4,14 +4,16 @@
 
 using namespace Utilities;
 
+const std::string DataManager::DATA_MANAGER_DEVICETYPE_ATTR_NAME =
+    "device_type";
+
 DataManager::~DataManager() {}
 
 bool DataManager::isOpen() const { return this->openFlag; }
 
 KeyMapping DataManager::getKeyMapping() const { return this->typeMapping; }
 
-DataManager*
-DataManager::getDataManager(DataManagerType dataManagerType) {
+DataManager *DataManager::getDataManager(DataManagerType dataManagerType) {
   if (DataManagerType::DATAMANAGER_TYPE_HDF == dataManagerType) {
     return new DataManagerHdf();
   } else {

@@ -2,6 +2,7 @@
 #define CONFIGURATION_PAYLOAD_HPP
 
 // Project includes
+#include <common.hpp>
 #include <data_manager.hpp>
 #include <payload.hpp>
 #include <user_id.hpp>
@@ -10,22 +11,6 @@ using namespace Messages;
 using namespace Utilities;
 
 namespace Devices {
-/**
- * @brief Identifies the different device types.
- */
-enum DeviceType {
-  /// Invalid device type.
-  INVALID = -1,
-
-  /// Unspecified device type.
-  UNSPECIFIED = 0,
-
-  /// A pump controller
-  PUMP_CONTROLLER = 1,
-
-  /// An impedance spectrometer.
-  IMPEDANCE_SPECTROMETER = 2
-};
 
 /**
  * @brief Base class that encapsulates any device configuration.

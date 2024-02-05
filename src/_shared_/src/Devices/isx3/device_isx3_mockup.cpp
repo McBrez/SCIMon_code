@@ -93,7 +93,11 @@ bool DeviceIsx3::configure(
     std::shared_ptr<ConfigurationPayload> deviceConfiguration) {
 
   // Check if device is in correct state.
-  if (this->deviceState != DeviceStatus::INITIALIZED) {
+  // Devices can be configured, if they are initialized, configured or idle. If
+  // they are in any other state, configure should fail.
+  if (this->deviceState != DeviceStatus::INITIALIZED &&
+      this->deviceState != DeviceStatus::IDLE &&
+      this->deviceState != DeviceStatus::INITIALIZED) {
     LOG(WARNING) << "Could not configure ISX3 Device, as it is in state \""
                  << Device::deviceStatusToString(this->deviceState) << "\".";
     return false;

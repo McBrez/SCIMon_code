@@ -360,7 +360,9 @@ bool ControlWorker::handleResponse(
           for (auto &keys : keyMapping) {
             std::string keyName =
                 this->getLocalDataKey(remoteDataKeysEntry.first, keys.first);
-            this->dataManager->createKey(keyName, keys.second);
+            this->dataManager->createKey(
+                keyName, keys.second,
+                this->getDeviceTypeFromId(remoteDataKeysEntry.first));
             // If the key corresponds to a spectrum, it has to be set up.
             if (keys.second == Utilities::DATAMANAGER_DATA_TYPE_SPECTRUM) {
               SpectrumMapping spectrumMapping =
@@ -513,7 +515,7 @@ ControlWorkerSubState ControlWorker::getControlWorkerState() const {
   return this->controlWorkerSubState;
 }
 
-UserId ControlWorker::getSentryId() {
+UserId ControlWorker::getSentryId() const {
   UserId retVal;
   for (auto keyValuePair : this->remoteHostIds) {
     if (get<1>(keyValuePair.second) == SENTRY_WORKER_TYPE_NAME) {
@@ -594,7 +596,7 @@ bool ControlWorker::setRemoteWorkerState(UserId remoteId, bool state) {
   return true;
 }
 
-UserId ControlWorker::getPumpControllerId() {
+UserId ControlWorker::getPumpControllerId() const {
   auto it = std::find_if(
       this->remoteHostIds.begin(), this->remoteHostIds.end(),
       [](std::pair<size_t, std::tuple<bool, std::string, DeviceType>> pair) {
@@ -608,7 +610,7 @@ UserId ControlWorker::getPumpControllerId() {
   }
 }
 
-UserId ControlWorker::getSpectrometerId() {
+UserId ControlWorker::getSpectrometerId() const {
   auto it = std::find_if(
       this->remoteHostIds.begin(), this->remoteHostIds.end(),
       [](std::pair<size_t, std::tuple<bool, std::string, DeviceType>> pair) {
@@ -986,4 +988,16 @@ ControlWorker::getLocalDataKey(size_t userId,
   }
 
   return retVal;
+}
+
+DeviceType ControlWorker::getDeviceTypeFromId(UserId userId) const {
+  if (userId == this->getSpectrometerId()) {
+    return DeviceType::IMPEDANCE_SPECTROMETER;
+  } else if (userId == this->getPumpControllerId()) {
+    return DeviceType::PUMP_CONTROLLER;
+  } else if (userId == this->getSentryId()) {
+    return DeviceType::UNSPECIFIED;
+  } else {
+    return DeviceType::INVALID;
+  }
 }

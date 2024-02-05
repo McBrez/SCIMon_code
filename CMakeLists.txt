@@ -41,6 +41,11 @@ set(Boost_COMPILER ${Boost_COMPILER} vc143)
 set(BOOST_ROOT ${BOOST_ROOT} C:/local/boost_1_83_0)
 find_package(Boost 1.83.0 COMPONENTS thread)
 
+# argparse
+add_subdirectory(
+    ${3RDPARTY_DIR}/argparse
+)
+
 # --------------------------------------------------------- Project Libraries --
 
 add_subdirectory(${PROJECT_DIR}/scimon_message_lib)
@@ -48,6 +53,7 @@ add_subdirectory(${PROJECT_DIR}/scimon_message_lib)
 # ------------------------------------------------------- Project Executables --
 add_subdirectory(${PROJECT_DIR}/sentry)
 add_subdirectory(${PROJECT_DIR}/control)
+add_subdirectory(${PROJECT_DIR}/extract_tool)
 
 # --------------------------------------------------------------------- Tests --
 add_subdirectory(${TEST_DIR}/test_ob1)
