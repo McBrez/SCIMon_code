@@ -13,7 +13,7 @@
 
 namespace Workers {
 SentryWorker::SentryWorker()
-    : initSubState(InitSubState::INIT_SUB_STATE_INVALID),
+    : Worker(1), initSubState(InitSubState::INIT_SUB_STATE_INVALID),
       pumpControllerState(DeviceStatus::UNKNOWN_DEVICE_STATUS),
       spectrometerState(DeviceStatus::UNKNOWN_DEVICE_STATUS),
       threadWaiting(true), runThread(false),

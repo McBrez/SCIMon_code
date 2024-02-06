@@ -10,11 +10,12 @@
 namespace Messages {
 
 MessageInterface::MessageInterface(DeviceType deviceType,
+                                   unsigned int dataManagerMeasurementLevel,
                                    DataManagerType dataManagerType)
     : id(UserId(this)), messageDistributor(nullptr),
       dataManager(DataManager::getDataManager(dataManagerType)),
-      deviceType(deviceType), deviceState(DeviceStatus::UNKNOWN_DEVICE_STATUS) {
-}
+      deviceType(deviceType), deviceState(DeviceStatus::UNKNOWN_DEVICE_STATUS),
+      dataManagerMeasurementLevel(dataManagerMeasurementLevel) {}
 
 UserId MessageInterface::getUserId() const { return this->id; }
 
@@ -184,9 +185,16 @@ bool MessageInterface::onConfigured(const KeyMapping &keyMapping,
   for (auto keyValuePair : keyMapping) {
     bool createKeySuccess =
         this->dataManager->createKey(keyValuePair.first, keyValuePair.second);
+
+    // Check where to create the group.
+    std::string groupKey;
+    for (size_t i = 0; i < this->dataManagerMeasurementLevel; i++) {
+      size_t pos = keyValuePair.first.find("/");
+      groupKey = keyValuePair.first.substr(0, pos);
+    }
     bool createGroupSuccess = this->dataManager->createGroup(
-        "asd", {{DataManager::DATA_MANAGER_DEVICETYPE_ATTR_NAME,
-                 static_cast<int>(this->getDeviceType())}});
+        groupKey, {{DataManager::DATA_MANAGER_DEVICETYPE_ATTR_NAME,
+                    static_cast<int>(this->getDeviceType())}});
     if (!createKeySuccess || !createGroupSuccess) {
       return false;
     }

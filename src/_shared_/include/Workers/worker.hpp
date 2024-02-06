@@ -24,7 +24,8 @@ public:
   /**
    * @brief Constructs a new Worker object
    */
-  Worker(Utilities::DataManagerType dataManagerType =
+  Worker(unsigned int dataManagerMeasurementLevel,
+         Utilities::DataManagerType dataManagerType =
              DataManagerType::DATAMANAGER_TYPE_HDF);
 
   /**

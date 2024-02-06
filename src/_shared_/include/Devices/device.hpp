@@ -30,8 +30,9 @@ public:
    * @param deviceType The device type of the constructed object.
    * @param dataManagerType The type of datamanager that shall be used.
    */
-  Device(DeviceType deviceType, DataManagerType dataManagerType =
-                                    DataManagerType::DATAMANAGER_TYPE_HDF);
+  Device(
+      DeviceType deviceType, unsigned int dataManagerMeasurementLevel,
+      DataManagerType dataManagerType = DataManagerType::DATAMANAGER_TYPE_HDF);
 
   /**
    * Destroys the device object.

@@ -17,8 +17,8 @@ using namespace Workers;
 const std::string ControlWorker::UnknownDeviceSpecifier = "UNKNOWN DEVICE";
 
 ControlWorker::ControlWorker()
-    : controlWorkerSubState(
-          ControlWorkerSubState::CONTROL_WORKER_SUBSTATE_IVALID),
+    : Worker(2), controlWorkerSubState(
+                     ControlWorkerSubState::CONTROL_WORKER_SUBSTATE_IVALID),
       doQueryState(false), dataQueryInterval(std::chrono::seconds(5)),
       doQueryData(false) {}
 
@@ -360,9 +360,7 @@ bool ControlWorker::handleResponse(
           for (auto &keys : keyMapping) {
             std::string keyName =
                 this->getLocalDataKey(remoteDataKeysEntry.first, keys.first);
-            this->dataManager->createKey(
-                keyName, keys.second,
-                this->getDeviceTypeFromId(remoteDataKeysEntry.first));
+            this->dataManager->createKey(keyName, keys.second);
             // If the key corresponds to a spectrum, it has to be set up.
             if (keys.second == Utilities::DATAMANAGER_DATA_TYPE_SPECTRUM) {
               SpectrumMapping spectrumMapping =

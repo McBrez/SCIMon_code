@@ -40,7 +40,7 @@ public:
    * be used.
    */
   MessageInterface(
-      DeviceType deviceType,
+      DeviceType deviceType, unsigned int dataManagerMeasurementLevel,
       DataManagerType dataManagerType = DataManagerType::DATAMANAGER_TYPE_HDF);
 
   /**
@@ -347,6 +347,9 @@ private:
 
   /// Mutex that guards the messageOut queue.
   std::mutex messageOutMutex;
+
+  /// The hierarchy level at which measurements are saved in the
+  unsigned int dataManagerMeasurementLevel;
 };
 
 } // namespace Messages

@@ -3,7 +3,7 @@
 
 namespace Devices {
 
-DummyDevice::DummyDevice() : Device(DeviceType::INVALID) {}
+DummyDevice::DummyDevice() : Device(DeviceType::INVALID, 1) {}
 
 DummyDevice::~DummyDevice() {}
 

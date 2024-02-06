@@ -12,7 +12,7 @@ using namespace Messages;
 
 namespace Workers {
 NetworkWorker::NetworkWorker()
-    : Worker(), socketWrapper(SocketWrapper::getSocketWrapper()),
+    : Worker(1), socketWrapper(SocketWrapper::getSocketWrapper()),
       commState(NetworkWorkerCommState::NETWORK_WOKER_COMM_STATE_INVALID),
       commThread(nullptr), doComm(false), listenerThread(nullptr) {}
 

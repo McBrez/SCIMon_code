@@ -8,8 +8,10 @@ namespace Workers {
 
 WorkerId Worker::workerIdCounter = 0;
 
-Worker::Worker(Utilities::DataManagerType dataManagerType)
-    : MessageInterface(DeviceType::UNSPECIFIED, dataManagerType),
+Worker::Worker(unsigned int dataManagerMeasurementLevel,
+               Utilities::DataManagerType dataManagerType)
+    : MessageInterface(DeviceType::UNSPECIFIED, dataManagerMeasurementLevel,
+                       dataManagerType),
       workerId(++Worker::workerIdCounter) {}
 
 Worker::~Worker() {}

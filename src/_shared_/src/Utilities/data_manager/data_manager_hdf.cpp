@@ -624,8 +624,7 @@ bool DataManagerHdf::extendingWrite(const std::vector<TimePoint> &timestamp,
   return true;
 }
 
-bool DataManagerHdf::createKey(std::string key, DataManagerDataType dataType,
-                               Devices::DeviceType deviceType) {
+bool DataManagerHdf::createKey(std::string key, DataManagerDataType dataType) {
   if (this->typeMapping.contains(key)) {
     return false;
   }

@@ -4,7 +4,7 @@
 
 namespace Devices {
 
-DeviceOb1::DeviceOb1() : Device(DeviceType::PUMP_CONTROLLER) {}
+DeviceOb1::DeviceOb1() : Device(DeviceType::PUMP_CONTROLLER, 1) {}
 
 DeviceOb1::~DeviceOb1() {}
 
