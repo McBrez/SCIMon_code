@@ -358,9 +358,28 @@ bool ControlWorker::handleResponse(
           KeyMapping keyMapping =
               std::get<KeyMapping>(remoteDataKeysEntry.second);
           for (auto &keys : keyMapping) {
+            // Create the key.
             std::string keyName =
                 this->getLocalDataKey(remoteDataKeysEntry.first, keys.first);
             this->dataManager->createKey(keyName, keys.second);
+
+            // Create the group.
+            // First, build the group name from the key.
+            std::string groupKey;
+            for (size_t i = 0; i <= this->dataManagerMeasurementLevel; i++) {
+              size_t pos = keyName.find("/");
+              groupKey = keyName.substr(0, pos);
+            }
+
+            // Get the devicet type of the current device.
+            const DeviceType currentDeviceType =
+                this->getDeviceTypeFromId(remoteDataKeysEntry.first);
+
+            // Finally create the group.
+            this->dataManager->createGroup(
+                groupKey, {{DataManager::DATA_MANAGER_DEVICETYPE_ATTR_NAME,
+                            currentDeviceType}});
+
             // If the key corresponds to a spectrum, it has to be set up.
             if (keys.second == Utilities::DATAMANAGER_DATA_TYPE_SPECTRUM) {
               SpectrumMapping spectrumMapping =

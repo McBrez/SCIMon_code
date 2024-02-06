@@ -38,7 +38,7 @@ void writeThreadWorker(DataManager *dataManager, DeviceIsx3 *device) {
 }
 
 DeviceIsx3::DeviceIsx3(boost::asio::io_service &io)
-    : Device(DeviceType::IMPEDANCE_SPECTROMETER),
+    : Device(DeviceType::IMPEDANCE_SPECTROMETER, 1),
       isx3CommThreadState(ISX3_COMM_THREAD_STATE_INVALID), doComm(false),
       io(io) {}
 

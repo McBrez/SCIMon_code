@@ -335,6 +335,9 @@ protected:
   /// The type of the device.
   DeviceType deviceType;
 
+  /// The hierarchy level at which measurements are saved in the
+  unsigned int dataManagerMeasurementLevel;
+
 private:
   /// The unique id of the object that implements this interface.
   UserId id;
@@ -347,9 +350,6 @@ private:
 
   /// Mutex that guards the messageOut queue.
   std::mutex messageOutMutex;
-
-  /// The hierarchy level at which measurements are saved in the
-  unsigned int dataManagerMeasurementLevel;
 };
 
 } // namespace Messages
