@@ -365,11 +365,10 @@ bool ControlWorker::handleResponse(
 
             // Create the group.
             // First, build the group name from the key.
-            std::string groupKey;
-            for (size_t i = 0; i <= this->dataManagerMeasurementLevel; i++) {
-              size_t pos = keyName.find("/");
-              groupKey = keyName.substr(0, pos);
-            }
+
+            auto splittedKeyName = Utilities::split(keyName, '/');
+            std::string groupKey = Utilities::join(
+                splittedKeyName, '/', this->dataManagerMeasurementLevel);
 
             // Get the devicet type of the current device.
             const DeviceType currentDeviceType =

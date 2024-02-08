@@ -1,3 +1,6 @@
+// Standard includes
+#include <span>
+
 // 3rd party includes
 #include <easylogging++.h>
 
@@ -187,11 +190,10 @@ bool MessageInterface::onConfigured(const KeyMapping &keyMapping,
         this->dataManager->createKey(keyValuePair.first, keyValuePair.second);
 
     // Check where to create the group.
-    std::string groupKey;
-    for (size_t i = 0; i < this->dataManagerMeasurementLevel; i++) {
-      size_t pos = keyValuePair.first.find("/");
-      groupKey = keyValuePair.first.substr(0, pos);
-    }
+    auto splittedKey = Utilities::split(keyValuePair.first, '/');
+    std::string groupKey =
+        Utilities::join(splittedKey, '/', this->dataManagerMeasurementLevel);
+
     bool createGroupSuccess = this->dataManager->createGroup(
         groupKey, {{DataManager::DATA_MANAGER_DEVICETYPE_ATTR_NAME,
                     static_cast<int>(this->getDeviceType())}});
@@ -239,13 +241,15 @@ int MessageInterface::removeFromMessageQueue(
 bool MessageInterface::write(std::shared_ptr<WriteDeviceMessage> writeMsg) {
 
   if (WriteDeviceTopic::WRITE_TOPIC_INVALID == writeMsg->getTopic()) {
-    LOG(WARNING) << "Received a message with invalid topic.";
+    LOG(WARNING) << "Received a message with "
+                    "invalid topic.";
     return false;
   }
 
   else if (WriteDeviceTopic::WRITE_TOPIC_DEVICE_SPECIFIC ==
            writeMsg->getTopic()) {
-    // Message topic is too specific. Pass it to the sub class.
+    // Message topic is too specific. Pass it to
+    // the sub class.
     return this->specificWrite(writeMsg);
   }
 
@@ -272,12 +276,13 @@ bool MessageInterface::write(std::shared_ptr<WriteDeviceMessage> writeMsg) {
   }
 
   else if (WriteDeviceTopic::WRITE_TOPIC_REQUEST_DATA == writeMsg->getTopic()) {
-    // Data is requested. Try to cast down the payload.
+    // Data is requested. Try to cast down the
+    // payload.
     auto requestedDataPayload =
         dynamic_pointer_cast<RequestDataPayload>(writeMsg->getPayload());
     if (!requestedDataPayload) {
-      LOG(ERROR)
-          << "Received malformed request data message. This will be ignored.";
+      LOG(ERROR) << "Received malformed request data "
+                    "message. This will be ignored.";
       return false;
     }
 
@@ -290,7 +295,8 @@ bool MessageInterface::write(std::shared_ptr<WriteDeviceMessage> writeMsg) {
 
     if (!readSuccess) {
 
-      LOG(ERROR) << "Read from data manager was not successfull.";
+      LOG(ERROR) << "Read from data manager was "
+                    "not successfull.";
       return false;
     }
 
@@ -332,15 +338,18 @@ bool MessageInterface::write(std::shared_ptr<WriteDeviceMessage> writeMsg) {
   }
 
   else {
-    // Could not identify the topic of the message. Return false.
-    LOG(ERROR) << "Could not identify the topic of the message.";
+    // Could not identify the topic of the message.
+    // Return false.
+    LOG(ERROR) << "Could not identify the topic "
+                  "of the message.";
     return false;
   }
 }
 
 bool MessageInterface::write(std::shared_ptr<InitDeviceMessage> initMsg) {
   if (initMsg->getDestination() != this->getUserId()) {
-    LOG(WARNING) << "Message Interface received an unsolicited init "
+    LOG(WARNING) << "Message Interface received an "
+                    "unsolicited init "
                     "message. This will be ignored.";
     return false;
   }
@@ -352,7 +361,8 @@ bool MessageInterface::write(std::shared_ptr<InitDeviceMessage> initMsg) {
 bool MessageInterface::write(std::shared_ptr<ConfigDeviceMessage> configMsg) {
 
   if (configMsg->getDestination() != this->getUserId()) {
-    LOG(WARNING) << "Message Interface received an unsolicited configuration "
+    LOG(WARNING) << "Message Interface received an "
+                    "unsolicited configuration "
                     "message. This will be ignored.";
 
     return false;

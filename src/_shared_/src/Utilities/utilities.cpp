@@ -1,3 +1,5 @@
+#include <span>
+
 #include <utilities.hpp>
 
 namespace Utilities {
@@ -27,6 +29,22 @@ std::vector<std::string> split(const std::string &str, unsigned char token) {
     retVal.push_back(splitStr);
     if (strEnd != str.cend()) {
       strStart = ++strEnd;
+    }
+  }
+
+  return retVal;
+}
+
+std::string join(const std::vector<std::string> &data, unsigned char token,
+                 size_t num) {
+  std::string retVal;
+
+  size_t countElements = num == -1 ? data.size() : std::min(num, data.size());
+
+  for (size_t i = 0; i < countElements; i++) {
+    retVal += data[i];
+    if (i < countElements - 1) {
+      retVal += token;
     }
   }
 

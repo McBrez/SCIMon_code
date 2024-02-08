@@ -24,6 +24,9 @@ namespace Utilities {
  */
 std::vector<std::string> split(const std::string &str, unsigned char token);
 
+std::string join(const std::vector<std::string> &data, unsigned char token,
+                 size_t num = -1);
+
 /**
  * @brief Joins a 3D array into a vector of impedance spectra.
  * @param array The array that shall be joined.
