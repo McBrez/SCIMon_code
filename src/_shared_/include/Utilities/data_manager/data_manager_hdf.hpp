@@ -127,7 +127,8 @@ public:
    */
   virtual TimerangeMapping getTimerangeMapping() const override;
 
-  virtual bool writeToCsv(std::vector<std::stringstream> &ss, char separator,
+  virtual bool writeToCsv(std::map<std::string, std::stringstream *> &ss,
+                          char separator,
                           const std::string &impedanceFormat) override;
 
 protected:
@@ -139,6 +140,19 @@ protected:
                                      std::vector<double> frequencies) override;
 
 private:
+  void traverseNodes(HighFive::Group &node,
+                     std::vector<std::string> &nodeNames);
+
+  std::map<std::string, Devices::DeviceType>
+  filterMeasurements(std::vector<std::string> &groupNames);
+
+  void printImpdedanceSpectrum(std::stringstream &ss,
+                               HighFive::DataSet &spectrumMapping,
+                               HighFive::DataSet &timestamp,
+                               HighFive::DataSet &spectra,
+                               const std::string &impdenaceFormat,
+                               char separator);
+
   /**
    * @brief Extends the given dataset by the given count of elements.
    * @param name The name of the dataset that shall be extended.

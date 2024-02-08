@@ -1,9 +1,12 @@
+#include <fstream>
+
 // 3rd party includes
 #include <argparse/argparse.hpp>
 #include <easylogging++.h>
 
 // Project includes
 #include "data_manager_hdf.hpp"
+#include "utilities.hpp"
 
 INITIALIZE_EASYLOGGINGPP
 
@@ -49,9 +52,16 @@ int main(int argc, char *argv[]) {
   }
 
   if ("CSV" == program.get<std::string>("output-format")) {
-    std::vector<std::stringstream> ss;
-    dataManager.writeToCsv(ss, program.get<char>("--csv-separator"),
-                           program.get<std::string>("--impedance-format"));
+    std::map<std::string, std::stringstream *> ss;
+    dataManager.writeToCsv(ss, program.get<std::string>("csv-separator")[0],
+                           program.get<std::string>("impedance-format"));
+    for (auto stream : ss) {
+      auto nameSplit = Utilities::split(stream.first, '/');
+      std::string fileName = nameSplit.back() + ".csv";
+      std::ofstream fileStream(fileName);
+      fileStream << stream.second->str();
+      fileStream.close();
+    }
   } else {
     LOG(ERROR) << "Invalid output format.";
     return 1;

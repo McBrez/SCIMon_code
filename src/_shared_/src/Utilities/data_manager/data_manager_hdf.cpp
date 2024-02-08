@@ -790,24 +790,129 @@ TimerangeMapping DataManagerHdf::getTimerangeMapping() const {
   return retVal;
 }
 
-bool DataManagerHdf::writeToCsv(std::vector<std::stringstream> &ss,
+void DataManagerHdf::traverseNodes(Group &node,
+                                   std::vector<std::string> &nodeNames) {
+
+  // Get the names of the children.
+  auto childrenNames = node.listObjectNames();
+
+  const std::string nodePath = node.getPath();
+  for (auto &childrenName : childrenNames) {
+    // Prepend the path of the parent to the child.
+    childrenName = nodePath + "/" + childrenName;
+
+    // Is this child a group?
+    if (ObjectType::Group != this->hdfFile->getObjectType(childrenName)) {
+      continue;
+    }
+
+    nodeNames.push_back(childrenName);
+    Group subNode = this->hdfFile->getGroup(childrenName);
+
+    traverseNodes(subNode, nodeNames);
+  }
+}
+
+std::map<std::string, Devices::DeviceType>
+DataManagerHdf::filterMeasurements(std::vector<std::string> &groupNames) {
+  std::map<std::string, Devices::DeviceType> retVal;
+
+  for (auto &groupName : groupNames) {
+    Group group = this->hdfFile->getGroup(groupName);
+    if (group.hasAttribute(DataManager::DATA_MANAGER_DEVICETYPE_ATTR_NAME)) {
+      retVal[groupName] = static_cast<Devices::DeviceType>(
+          group.getAttribute(DataManager::DATA_MANAGER_DEVICETYPE_ATTR_NAME)
+              .read<int>());
+    }
+  }
+
+  return retVal;
+}
+
+void DataManagerHdf::printImpdedanceSpectrum(std::stringstream &ss,
+                                             HighFive::DataSet &spectrumMapping,
+                                             HighFive::DataSet &timestamp,
+                                             HighFive::DataSet &spectra,
+                                             const std::string &impdenaceFormat,
+                                             char separator) {
+
+  std::vector<double> spectrumMappingVec;
+  spectrumMapping.read(spectrumMappingVec);
+
+  // Print the header.
+
+  ss << "timestamps" << separator;
+  for (auto spectrumPoint : spectrumMappingVec) {
+    if (impdenaceFormat == "cartesian") {
+      ss << spectrumPoint << "_real" << separator << spectrumPoint << "_imag"
+         << separator;
+    } else {
+      ss << spectrumPoint << "_value" << separator << spectrumPoint << "_phase"
+         << separator;
+    }
+  }
+  ss << std::endl;
+
+  auto dims = timestamp.getDimensions();
+  for (size_t i = 0; i < dims[0]; i++) {
+
+    auto timestampInt = timestamp.select({i, 0}, {1, 1}).read<long long>();
+    auto spectrumArray =
+        spectra.select({i, 0, 0}, {1, spectrumMappingVec.size(), 2})
+            .read<std::vector<std::vector<std::vector<double>>>>();
+
+    ss << timestampInt << separator;
+
+    if (impdenaceFormat == "cartesian") {
+      for (auto frequencyTuple : spectrumArray[0]) {
+        ss << frequencyTuple[0] << separator << frequencyTuple[1] << separator;
+      }
+    } else {
+      for (auto frequencyTuple : spectrumArray[0]) {
+        double value = std::sqrt(frequencyTuple[0] * frequencyTuple[0] +
+                                 frequencyTuple[1] * frequencyTuple[1]);
+        double phase = std::atan(frequencyTuple[1] / frequencyTuple[0]);
+
+        ss << value << separator << phase << separator;
+      }
+    }
+
+    ss << std::endl;
+  }
+}
+
+bool DataManagerHdf::writeToCsv(std::map<std::string, std::stringstream *> &ss,
                                 char separator,
                                 const std::string &impedanceFormat) {
   if (!this->isOpen()) {
     return false;
   }
 
-  // Get the keys.
-  std::vector<std::string> keys =
-      this->hdfFile->getDataSet("/data").listAttributeNames();
+  Group rootNode = this->hdfFile->getGroup("/data");
+  std::vector<std::string> groupNames;
+  traverseNodes(rootNode, groupNames);
 
-  // Iterate over device ids.
-  for (auto &key : keys) {
-    LOG(INFO) << key;
+  std::map<std::string, Devices::DeviceType> measurements =
+      filterMeasurements(groupNames);
+
+  for (auto measurement : measurements) {
+    std::stringstream *currentStream = new std::stringstream();
+    if (measurement.second == Devices::DeviceType::IMPEDANCE_SPECTROMETER) {
+
+      DataSet spectrumMapping =
+          this->hdfFile->getDataSet(measurement.first + "/spectrumMapping");
+      DataSet timestamps =
+          this->hdfFile->getDataSet(measurement.first + "/timestamps");
+      DataSet spectra =
+          this->hdfFile->getDataSet(measurement.first + "/values");
+      printImpdedanceSpectrum(*currentStream, spectrumMapping, timestamps,
+                              spectra, impedanceFormat, separator);
+    } else if (measurement.second ==
+               Devices::DeviceType::IMPEDANCE_SPECTROMETER) {
+    }
+
+    ss[measurement.first] = currentStream;
   }
-  // Iterate over measurements.
-
-  // Iterate over rows.
 
   return true;
 }

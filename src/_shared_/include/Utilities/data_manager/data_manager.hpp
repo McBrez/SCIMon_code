@@ -223,7 +223,8 @@ public:
    * @param separator The CSV separator that shall be used.
    * @return Whether the operation was successfull.
    */
-  virtual bool writeToCsv(std::vector<std::stringstream> &ss, char separator,
+  virtual bool writeToCsv(std::map<std::string, std::stringstream *> &ss,
+                          char separator,
                           const std::string &impedanceFormat) = 0;
 
 protected:
@@ -244,7 +245,7 @@ protected:
                                      std::vector<double> frequencies) = 0;
 
   /// Flag that indicates, whether the underlying data base has been opened.
-  bool openFlag;
+  bool openFlag = false;
   /// Holds the mapping betwenn key and data type.
   KeyMapping typeMapping;
   /// Holds the mapping from keys to the spectrum frequencies.
