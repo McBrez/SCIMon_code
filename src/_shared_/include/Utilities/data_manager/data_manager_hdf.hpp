@@ -153,6 +153,12 @@ private:
                                const std::string &impdenaceFormat,
                                char separator);
 
+  void printPumpData(std::stringstream &ss,
+                     HighFive::DataSet &currPressureValues,
+                     HighFive::DataSet &currPressureTimestamps,
+                     HighFive::DataSet &setPressureValue,
+                     HighFive::DataSet &setPressureTimestamps, char separator);
+
   /**
    * @brief Extends the given dataset by the given count of elements.
    * @param name The name of the dataset that shall be extended.

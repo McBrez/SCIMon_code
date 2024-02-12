@@ -58,14 +58,19 @@ int main(int argc, char *argv[]) {
     for (auto stream : ss) {
       auto nameSplit = Utilities::split(stream.first, '/');
       std::string fileName = nameSplit.back() + ".csv";
+      LOG(INFO) << "Writing to " << fileName;
       std::ofstream fileStream(fileName);
       fileStream << stream.second->str();
       fileStream.close();
     }
+
+    LOG(INFO) << "Wrote to " << ss.size() << " files.";
   } else {
     LOG(ERROR) << "Invalid output format.";
     return 1;
   }
+
+  LOG(INFO) << "Finished. Bye.";
 
   return 0;
 }

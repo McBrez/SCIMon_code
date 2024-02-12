@@ -881,6 +881,69 @@ void DataManagerHdf::printImpdedanceSpectrum(std::stringstream &ss,
   }
 }
 
+void DataManagerHdf::printPumpData(std::stringstream &ss,
+                                   HighFive::DataSet &currPressureValues,
+                                   HighFive::DataSet &currPressureTimestamps,
+                                   HighFive::DataSet &setPressureValue,
+                                   HighFive::DataSet &setPressureTimestamps,
+                                   char separator) {
+
+  // Print the header.
+  ss << "timestamps" << separator << "current_pressure" << separator
+     << "set_pressure" << separator << std::endl;
+
+  const auto currDims = currPressureTimestamps.getDimensions();
+  const auto setDims = setPressureTimestamps.getDimensions();
+  double actualSetPressure = 0.0;
+  double actualCurrentPressure = 0.0;
+  size_t actualSetPressureIdx = 0;
+  size_t actualCurrentPressureIdx = 0;
+  auto actualSetPressureTimestamp =
+      setPressureTimestamps.select({actualSetPressureIdx, 0}, {1, 1})
+          .read<long long>();
+  bool noMoreSetTimestamps = false;
+
+  // Run as long as there are current pressure values to print.
+  while (actualCurrentPressureIdx < currDims[0]) {
+    // Get the current pressure timestamp.
+    const auto currPressureTimestamp =
+        currPressureTimestamps.select({actualCurrentPressureIdx, 0}, {1, 1})
+            .read<long long>();
+
+    // Is the current pressure timestamp older than the actual set pressure
+    // timestamp?
+    if (currPressureTimestamp <= actualSetPressureTimestamp ||
+        noMoreSetTimestamps) {
+      // It is. Print the actual current pressure value and print set old set
+      // pressure value.
+      actualCurrentPressure =
+          currPressureValues.select({actualCurrentPressureIdx, 0}, {1, 1})
+              .read<double>();
+      ss << currPressureTimestamp << separator << actualCurrentPressure
+         << separator << actualSetPressure << separator << std::endl;
+
+      actualCurrentPressureIdx++;
+    } else {
+      // It is not. Fetch a new set pressure and print it. Use the old current
+      // pressure value.
+      actualSetPressure =
+          setPressureValue.select({actualSetPressureIdx, 0}, {1, 1})
+              .read<double>();
+      ss << actualSetPressureTimestamp << separator << actualCurrentPressure
+         << separator << actualSetPressure << separator << std::endl;
+
+      if (actualSetPressureIdx < setDims[0] - 1) {
+        actualSetPressureIdx++;
+        actualSetPressureTimestamp =
+            setPressureTimestamps.select({actualSetPressureIdx, 0}, {1, 1})
+                .read<long long>();
+      } else {
+        noMoreSetTimestamps = true;
+      }
+    }
+  }
+}
+
 bool DataManagerHdf::writeToCsv(std::map<std::string, std::stringstream *> &ss,
                                 char separator,
                                 const std::string &impedanceFormat) {
@@ -895,9 +958,10 @@ bool DataManagerHdf::writeToCsv(std::map<std::string, std::stringstream *> &ss,
   std::map<std::string, Devices::DeviceType> measurements =
       filterMeasurements(groupNames);
 
-  for (auto measurement : measurements) {
-    std::stringstream *currentStream = new std::stringstream();
+  for (auto &measurement : measurements) {
+
     if (measurement.second == Devices::DeviceType::IMPEDANCE_SPECTROMETER) {
+      std::stringstream *currentStream = new std::stringstream();
 
       DataSet spectrumMapping =
           this->hdfFile->getDataSet(measurement.first + "/spectrumMapping");
@@ -905,13 +969,36 @@ bool DataManagerHdf::writeToCsv(std::map<std::string, std::stringstream *> &ss,
           this->hdfFile->getDataSet(measurement.first + "/timestamps");
       DataSet spectra =
           this->hdfFile->getDataSet(measurement.first + "/values");
-      printImpdedanceSpectrum(*currentStream, spectrumMapping, timestamps,
-                              spectra, impedanceFormat, separator);
-    } else if (measurement.second ==
-               Devices::DeviceType::IMPEDANCE_SPECTROMETER) {
-    }
+      this->printImpdedanceSpectrum(*currentStream, spectrumMapping, timestamps,
+                                    spectra, impedanceFormat, separator);
 
-    ss[measurement.first] = currentStream;
+      ss[measurement.first] = currentStream;
+    } else if (measurement.second == Devices::DeviceType::PUMP_CONTROLLER) {
+
+      constexpr size_t COUNT_CHANNELS = 4;
+      for (size_t i = 1; i <= COUNT_CHANNELS; i++) {
+        std::stringstream *currentStream = new std::stringstream();
+
+        DataSet currPressTimestamps = this->hdfFile->getDataSet(
+            measurement.first + "/channel" + std::to_string(i) +
+            "/currPressure/timestamps");
+        DataSet currPressValues = this->hdfFile->getDataSet(
+            measurement.first + "/channel" + std::to_string(i) +
+            "/currPressure/values");
+        DataSet setPressTimestamps = this->hdfFile->getDataSet(
+            measurement.first + "/channel" + std::to_string(i) +
+            "/setpoint/timestamps");
+        DataSet setPressValues =
+            this->hdfFile->getDataSet(measurement.first + "/channel" +
+                                      std::to_string(i) + "/setpoint/values");
+
+        this->printPumpData(*currentStream, currPressValues,
+                            currPressTimestamps, setPressValues,
+                            setPressTimestamps, separator);
+
+        ss[measurement.first + "_ch" + std::to_string(i)] = currentStream;
+      }
+    }
   }
 
   return true;
