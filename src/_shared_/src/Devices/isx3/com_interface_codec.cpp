@@ -374,14 +374,21 @@ bool ComInterfaceCodec::decodeImpedanceData(
   }
 
   else if (payload.size() == 10) {
-    fNumber = (payload[0] << 8) + payload[1];
+    fNumber = (static_cast<unsigned short>(payload[0]) << 8) +
+              static_cast<unsigned short>(payload[1]);
 
-    int realPartIntermediate = (payload[2] << 24) + (payload[3] << 16) +
-                               (payload[4] << 8) + payload[5];
+    unsigned int realPartIntermediate =
+        (static_cast<unsigned int>(payload[2]) << 24) +
+        (static_cast<unsigned int>(payload[3]) << 16) +
+        (static_cast<unsigned int>(payload[4]) << 8) +
+        static_cast<unsigned int>(payload[5]);
     float realPart = *((float *)&realPartIntermediate);
 
-    int imagPartIntermediate = (payload[6] << 24) + (payload[7] << 16) +
-                               (payload[8] << 8) + payload[9];
+    unsigned int imagPartIntermediate =
+        (static_cast<unsigned int>(payload[6]) << 24) +
+        (static_cast<unsigned int>(payload[7]) << 16) +
+        (static_cast<unsigned int>(payload[8]) << 8) +
+        static_cast<unsigned int>(payload[9]);
     float imagPart = *((float *)&imagPartIntermediate);
 
     impedance = std::complex<float>(realPart, imagPart);
